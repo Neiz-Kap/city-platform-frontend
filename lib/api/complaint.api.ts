@@ -29,8 +29,6 @@ export class ComplaintAPI {
         params.status.forEach((status) => searchParams.append("status", status))
       }
 
-      // return mockComplaintData
-
       const response = await api
         .get(this.prefix, {
           searchParams: params,

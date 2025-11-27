@@ -83,7 +83,7 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const { data, pagination: serverPagination } = paginatedData
 
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([]) // TODO: { id: 'status', desc: false }
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [search, setSearch] = useState<string>("")

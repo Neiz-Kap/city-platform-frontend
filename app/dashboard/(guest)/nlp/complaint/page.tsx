@@ -9,17 +9,19 @@ import { columns } from "./columns"
 import { DataTable } from "./data-table"
 
 export default function ComplaintPage() {
-  const [pagination, setPagination] = useState({ page: 1, per_page: 3 })
+  const [pagination, setPagination] = useState({ page: 1, per_page: 5 })
   const [filters, setFilters] = useState<
     Pick<ComplaintQueryParams, "category" | "status">
   >({})
-  const [search, setSearch] = useState<string>("")
+  const [search, setSearch] = useState<string>()
+  const [sortParams, setSortParams] = useState({})
 
   const queryParams: ComplaintQueryParams = {
     page: pagination.page,
     per_page: pagination.per_page,
     ...filters,
     ...(search && { search }),
+    ...sortParams,
   }
 
   const { data, isLoading, error } = useComplaints(queryParams)
@@ -34,7 +36,11 @@ export default function ComplaintPage() {
   const handleSortChange = useCallback((sorting: SortingState) => {
     // For now, we'll just log the sorting since it's not fully implemented
     console.log("Sorting changed:", sorting)
-    // You can implement actual sorting by updating queryParams
+
+    setSortParams({
+      sort_by: sorting[0].id,
+      sort_order: sorting[0].desc ? "DESC" : "ASC",
+    })
   }, [])
 
   const handleSearchChange = useCallback((newSearch: string) => {
