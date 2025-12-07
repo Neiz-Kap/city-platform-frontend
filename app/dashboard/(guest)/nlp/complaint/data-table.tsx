@@ -71,16 +71,17 @@ const statuses = [
   { label: "Resolved", value: "resolved" },
 ]
 
-export function DataTable<TData, TValue>({
-  columns,
-  data: paginatedData,
-  onPaginationChange,
-  onSortChange,
-  onSearchChange,
-  onFilterChange,
-  pagination,
-  isLoading = false,
-}: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
+  const {
+    columns,
+    data: paginatedData,
+    onPaginationChange,
+    onSortChange,
+    onSearchChange,
+    onFilterChange,
+    pagination,
+    isLoading = false,
+  } = props
   const { data, pagination: serverPagination } = paginatedData
 
   const [sorting, setSorting] = useState<SortingState>([]) // TODO: { id: 'status', desc: false }

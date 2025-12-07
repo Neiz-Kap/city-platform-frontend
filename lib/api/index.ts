@@ -1,6 +1,6 @@
 import ky from "ky"
 
-const API_BASE_URL = "https://eternally-equitable-petrel.cloudpub.ru"
+export const API_BASE_URL = "https://eternally-equitable-petrel.cloudpub.ru"
 
 // Create a configured ky instance
 export const api = ky.create({

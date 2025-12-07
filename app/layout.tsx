@@ -1,24 +1,23 @@
-import { type ReactNode } from "react";
-import { cookies } from "next/headers";
-import { cn } from "@/lib/utils";
-import { ThemeProvider } from "next-themes";
-// import GoogleAnalyticsInit from "@/lib/ga";
-import { fontVariables } from "@/lib/fonts";
-import NextTopLoader from "nextjs-toploader";
+import { cn } from "@/lib/utils"
+import { ThemeProvider } from "next-themes"
+import { cookies } from "next/headers"
+import { type ReactNode } from "react"
+import { fontVariables } from "@/lib/fonts"
+import NextTopLoader from "nextjs-toploader"
 
-import "./globals.css";
+import "./globals.css"
 
-import { ActiveThemeProvider } from "@/components/active-theme";
-import { DEFAULT_THEME } from "@/lib/themes";
-import { Toaster } from "@/components/ui/sonner";
-import Providers from "./providers";
+import { ActiveThemeProvider } from "@/components/active-theme"
+import { Toaster } from "@/components/ui/sonner"
+import { DEFAULT_THEME } from "@/lib/themes"
+import Providers from "./providers"
 
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: ReactNode;
+  children: ReactNode
 }>) {
-  const cookieStore = await cookies();
+  const cookieStore = await cookies()
   const themeSettings = {
     preset: (cookieStore.get("theme_preset")?.value ??
       DEFAULT_THEME.preset) as any,
@@ -28,7 +27,7 @@ export default async function RootLayout({
       DEFAULT_THEME.radius) as any,
     contentLayout: (cookieStore.get("theme_content_layout")?.value ??
       DEFAULT_THEME.contentLayout) as any,
-  };
+  }
 
   const bodyAttributes = Object.fromEntries(
     Object.entries(themeSettings)
@@ -37,10 +36,17 @@ export default async function RootLayout({
         `data-theme-${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`,
         value,
       ]),
-  );
+  )
 
   return (
     <html lang="en" suppressHydrationWarning>
+      {/* <head>
+        <script
+          async
+          crossOrigin="anonymous"
+          src="https://tweakcn.com/live-preview.min.js"
+        />
+      </head> */}
       <body
         suppressHydrationWarning
         className={cn("bg-background group/layout font-sans", fontVariables)}
@@ -70,5 +76,5 @@ export default async function RootLayout({
         </Providers>
       </body>
     </html>
-  );
+  )
 }

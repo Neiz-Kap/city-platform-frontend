@@ -10,9 +10,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import Link from "next/link";
-import * as React from "react";
 import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
 
 export default function UserMenu() {
   return (

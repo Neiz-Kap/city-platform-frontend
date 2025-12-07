@@ -24,6 +24,10 @@ export const columns: ColumnDef<Complaint>[] = [
     header: "Название",
   },
   {
+    accessorKey: "description",
+    header: "Описание",
+  },
+  {
     accessorKey: "category",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Категория" />

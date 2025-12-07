@@ -1,6 +1,18 @@
 "use client";
 
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -14,61 +26,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  ActivityIcon,
-  ArchiveRestoreIcon,
-  BadgeDollarSignIcon,
-  BrainCircuitIcon,
   BrainIcon,
-  Building2Icon,
-  CalendarIcon,
-  ChartBarDecreasingIcon,
   ChartPieIcon,
   ChevronRight,
-  ClipboardCheckIcon,
-  ClipboardMinusIcon,
-  ComponentIcon,
-  CookieIcon,
-  FingerprintIcon,
-  FolderDotIcon,
-  FolderIcon,
-  GaugeIcon,
-  GraduationCapIcon,
-  ImagesIcon,
-  KeyIcon,
-  MailIcon,
-  MessageSquareIcon,
-  ProportionsIcon,
-  SettingsIcon,
-  ShoppingBagIcon,
-  SquareCheckIcon,
-  SquareKanbanIcon,
-  StickyNoteIcon,
-  UserIcon,
-  UsersIcon,
-  WalletMinimalIcon,
-  type LucideIcon,
-  GithubIcon,
-  RedoDotIcon,
-  BrushCleaningIcon,
-  CreditCardIcon,
-  SpeechIcon,
-  MessageSquareHeartIcon,
-  BookAIcon,
+  type LucideIcon
 } from "lucide-react";
 import Link from "next/link";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { usePathname } from "next/navigation";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 type NavGroup = {
   title: string;
@@ -92,7 +56,8 @@ export const navItems: NavGroup[] = [
     items: [
       {
         title: "Главная",
-        href: "/dashboard/default",
+        // href: "/dashboard/default",
+        href: "/dashboard/nlp/complaint",
         icon: ChartPieIcon,
       },
       {
@@ -101,8 +66,8 @@ export const navItems: NavGroup[] = [
         icon: BrainIcon,
         items: [
           { title: "Проблемы", href: "/dashboard/nlp/problem" },
-          { title: "Список жалоб", href: "/dashboard/nlp/complaint" },
-          { title: "Источники жалоб", href: "/dashboard/nlp/source" },
+          { title: "Список жалоб", href: "/dashboard/nlp/complaint", isNew: true },
+          { title: "Источники жалоб", href: "/dashboard/nlp/source",  isComing: true },
           // { title: "Product Detail", href: "/dashboard/pages/products/1" },
           // { title: "Add Product", href: "/dashboard/pages/products/create" },
           // { title: "Order List", href: "/dashboard/pages/orders" },
