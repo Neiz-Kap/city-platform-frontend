@@ -3,7 +3,7 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useSourceManagement } from "@/lib/hooks/useSourceManagement"
-import { TelegramForm } from "../forms/telegram-form"
+import { TelegramForm } from "../features/forms/telegram-form"
 
 interface TelegramDialogProps {
   open: boolean

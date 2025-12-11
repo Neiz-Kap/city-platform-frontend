@@ -1,5 +1,10 @@
 import { Complaint } from "../types/complaint.type"
 
+export const DEFAULT_PAGINATED_DATA = {
+  data: [],
+  pagination: { page: 0, pages: 0, per_page: 0, total: 0 },
+}
+
 export const mockComplaintData: Complaint[] = [
   {
     category: "auto_detected",

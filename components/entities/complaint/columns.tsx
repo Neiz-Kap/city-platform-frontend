@@ -12,8 +12,9 @@ import {
 import { Complaint } from "@/lib/types/complaint.type"
 import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
+import Link from "next/link"
 
-export const columns: ColumnDef<Complaint>[] = [
+export const complaintColumns: ColumnDef<Complaint>[] = [
   {
     accessorKey: "id",
     header: "#",
@@ -22,10 +23,16 @@ export const columns: ColumnDef<Complaint>[] = [
   {
     accessorKey: "name",
     header: "Название",
+    cell: ({ cell, row }) => {
+      return <Link href={`/dashboard/nlp/complaint/${row.original.id}`} className="truncate max-w-[400px]">{row.original.name}</Link>
+    }
   },
   {
     accessorKey: "description",
     header: "Описание",
+    cell: ({ cell, row }) => {
+      return <div className="truncate max-w-[400px]" title={row.original.description}>{row.original.description}</div>
+    }
   },
   {
     accessorKey: "category",
@@ -44,7 +51,7 @@ export const columns: ColumnDef<Complaint>[] = [
   {
     accessorKey: "platform",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Платформа источник" />
+      <DataTableColumnHeader column={column} title="Платформа" />
     ),
     cell: ({ row }) => row.getValue("platform"),
   },

@@ -6,6 +6,11 @@ import {
   CreateComplaintRequest,
 } from "../types/complaint.type"
 
+import {
+  StatItem,
+  StatsQueryParams
+} from "@/lib/types/complaint-stats.type"
+
 /** @class Complaint API to interact with backend */
 export class ComplaintAPI {
   private static prefix = "complaints"
@@ -74,4 +79,14 @@ export class ComplaintAPI {
       throw error
     }
   }
+}
+
+export const ComplaintStatsApi = {
+  async getStats(params: StatsQueryParams) {
+    const response = await api
+      .post("complaints/statistics", { json: params })
+      .json<PaginatedData<StatItem>>()
+
+      return response;
+  },
 }

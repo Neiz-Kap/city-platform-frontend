@@ -47,6 +47,7 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.66.1",
     "react-table,": "link:@tanstack/react-table,",
+    "recharts": "2.15.4",
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",

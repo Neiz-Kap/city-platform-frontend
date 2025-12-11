@@ -3,7 +3,7 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useSourceManagement } from "@/lib/hooks/useSourceManagement"
-import { EmailForm } from "../forms/t_email-form"
+import { EmailForm } from "../features/forms/t_email-form"
 
 interface EmailDialogProps {
   open: boolean

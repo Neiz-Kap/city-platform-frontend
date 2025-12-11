@@ -43,6 +43,7 @@ import {
 import { PaginatedData } from "@/lib/types"
 import { ChevronDown, PlusCircle } from "lucide-react"
 import { useState } from "react"
+import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -74,7 +75,7 @@ const statuses = [
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
   const {
     columns,
-    data: paginatedData,
+    data: paginatedData = DEFAULT_PAGINATED_DATA,
     onPaginationChange,
     onSortChange,
     onSearchChange,

@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useSourceManagement } from "@/lib/hooks/useSourceManagement"
-import { VkForm } from "../forms/vk-form"
+import { VkForm } from "../features/forms/vk-form"
 
 interface VkDialogProps {
   open: boolean
