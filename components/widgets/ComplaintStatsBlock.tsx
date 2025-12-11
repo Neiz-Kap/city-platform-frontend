@@ -86,7 +86,7 @@ export default function ComplaintStatsBlock() {
     : []
 
   // Общее количество жалоб
-  const totalComplaints = paginatedData ? getTotalComplaints(paginatedData, period) : 0
+  const totalComplaints = paginatedData ? getTotalComplaints(paginatedData) : 0
 
   // Описание периода
   const periodDescription = getPeriodDescription(period)

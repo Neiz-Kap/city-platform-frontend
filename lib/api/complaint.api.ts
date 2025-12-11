@@ -27,12 +27,12 @@ export class ComplaintAPI {
       if (params.sort) searchParams.append("sort", params.sort)
 
       // Add array params
-      if (params.category?.length) {
-        params.category.forEach((cat) => searchParams.append("category", cat))
-      }
-      if (params.status?.length) {
-        params.status.forEach((status) => searchParams.append("status", status))
-      }
+      // if (params.category?.length) {
+      //   params.category.forEach((cat) => searchParams.append("category", cat))
+      // }
+      // if (params.status?.length) {
+      //   params.status.forEach((status) => searchParams.append("status", status))
+      // }
 
       const response = await api
         .get(this.prefix, {

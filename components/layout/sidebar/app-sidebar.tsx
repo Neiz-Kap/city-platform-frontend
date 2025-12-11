@@ -41,7 +41,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             {/*<DropdownMenu>
               <DropdownMenuTrigger asChild>*/}
-            <SidebarMenuButton className="hover:text-foreground h-10 group-data-[collapsible=icon]:px-0! hover:bg-[var(--primary)]/5">
+            <SidebarMenuButton className="hover:text-foreground h-10 group-data-[collapsible=icon]:px-0! hover:bg-(--primary)/5">
               {/* TODO: Replace Logo with a custom icon */}
               <Logo />
               <span className="font-semibold">City Platform</span>

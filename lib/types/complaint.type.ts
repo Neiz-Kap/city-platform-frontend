@@ -1,5 +1,4 @@
 import { ExportableData } from "@/components/data-table/utils"
-import { SearchParamsOption } from "ky"
 
 export enum Platform {
   VK = "vk",
@@ -50,13 +49,14 @@ export interface CreateComplaintRequest {
   tags?: string[]
 }
 
-export type ComplaintQueryParams = SearchParamsOption & {
+// SearchParamsOption
+export type ComplaintQueryParams =  {
   page?: number
   per_page?: number
   search?: string
   sort?: string
-  category?: string[]
-  status?: string[]
+  // category?: string[]
+  // status?: string[]
 }
 
 export type TCreateTelegram = {

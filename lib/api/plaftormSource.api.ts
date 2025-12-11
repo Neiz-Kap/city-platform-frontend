@@ -1,5 +1,9 @@
 import { api } from "."
-import { PlatformGroup, SourcePlatform } from "../types/complaint.type"
+import {
+  PlatformGroup,
+  PlatformSource,
+  SourcePlatform,
+} from "../types/complaint.type"
 
 export class SourceService {
   // --- VK Groups ---

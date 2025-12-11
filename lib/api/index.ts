@@ -1,6 +1,7 @@
+// import "@/app/envConfig"
 import ky from "ky"
 
-export const API_BASE_URL = "https://eternally-equitable-petrel.cloudpub.ru"
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 // Create a configured ky instance
 export const api = ky.create({

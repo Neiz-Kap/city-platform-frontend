@@ -1,10 +1,11 @@
+import { fontVariables } from "@/lib/fonts"
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "next-themes"
 import { cookies } from "next/headers"
-import { type ReactNode } from "react"
-import { fontVariables } from "@/lib/fonts"
 import NextTopLoader from "nextjs-toploader"
+import { type ReactNode } from "react"
 
+import './envConfig.ts'
 import "./globals.css"
 
 import { ActiveThemeProvider } from "@/components/active-theme"
@@ -40,13 +41,13 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      {/* <head>
+      <head>
         <script
           async
           crossOrigin="anonymous"
           src="https://tweakcn.com/live-preview.min.js"
         />
-      </head> */}
+      </head>
       <body
         suppressHydrationWarning
         className={cn("bg-background group/layout font-sans", fontVariables)}

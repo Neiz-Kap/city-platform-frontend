@@ -16,9 +16,7 @@ import { DataTable } from "../features/complaint/data-table"
 
 export default function ComplaintDataTable() {
   const [pagination, setPagination] = useState({ page: 1, per_page: 10 })
-  const [filters, setFilters] = useState<
-    Pick<ComplaintQueryParams, "category" | "status">
-  >({})
+  const [filters, setFilters] = useState<ComplaintQueryParams>({})
   const [search, setSearch] = useState<string>("")
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [newComplaintsCount, setNewComplaintsCount] = useState(0)
@@ -26,13 +24,13 @@ export default function ComplaintDataTable() {
 
   const router = useRouter()
 
-  const queryParams: ComplaintQueryParams = {
+  const queryParams = {
     page: pagination.page,
     per_page: pagination.per_page,
     ...filters,
     ...(search && { search }),
     ...sortParams,
-  }
+  } satisfies ComplaintQueryParams
 
   const { data, isLoading, error, refetch } = useComplaints(queryParams)
 
@@ -73,13 +71,13 @@ export default function ComplaintDataTable() {
     setPagination((prev) => ({ ...prev, page: 1 }))
   }, [])
 
-  const handleFilterChange = useCallback(
-    (newFilters: { category?: string[]; status?: string[] }) => {
-      setFilters(newFilters)
-      setPagination((prev) => ({ ...prev, page: 1 }))
-    },
-    [],
-  )
+  // const handleFilterChange = useCallback(
+  //   (newFilters: { category?: string[]; status?: string[] }) => {
+  //     setFilters(newFilters)
+  //     setPagination((prev) => ({ ...prev, page: 1 }))
+  //   },
+  //   [],
+  // )
 
   const handleManualRefresh = useCallback(() => {
     refetch()
@@ -169,7 +167,7 @@ export default function ComplaintDataTable() {
           onPaginationChange={handlePaginationChange}
           onSearchChange={handleSearchChange}
           onSortChange={handleSortChange}
-          onFilterChange={handleFilterChange}
+          // onFilterChange={handleFilterChange}
           isLoading={isLoading}
         />
         // <DataTable<Complaint, any>

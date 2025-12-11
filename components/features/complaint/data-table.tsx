@@ -40,10 +40,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
 import { PaginatedData } from "@/lib/types"
 import { ChevronDown, PlusCircle } from "lucide-react"
 import { useState } from "react"
-import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -292,7 +292,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md shadow-2xl border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
