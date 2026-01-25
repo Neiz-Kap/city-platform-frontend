@@ -1,0 +1,152 @@
+---
+description: React component patterns and best practices
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# React Component Patterns
+
+## Component Structure
+
+Use functional components with explicit prop types:
+
+```tsx
+// ✅ GOOD
+interface PlatformCardProps {
+  platform: PlatformSource;
+  onUpdate?: (id: string) => void;
+}
+
+export function PlatformCard({ platform, onUpdate }: PlatformCardProps) {
+  // Component logic
+}
+
+// ❌ BAD
+export function PlatformCard(props) {
+  // Component logic
+}
+```
+
+## Client vs Server Components
+
+- Add `"use client"` only when necessary (hooks, event handlers, browser APIs)
+- Keep Server Components as default for better performance
+
+```tsx
+// ✅ GOOD - Client component (uses hooks)
+"use client";
+
+import { useState } from "react";
+
+export function InteractiveCard() {
+  const [isOpen, setIsOpen] = useState(false);
+  // ...
+}
+
+// ✅ GOOD - Server component (no "use client")
+import { Suspense } from "react";
+
+export default async function Page() {
+  const data = await fetchData();
+  return <div>{data.title}</div>;
+}
+```
+
+## State Management
+
+Use hooks appropriately:
+
+```tsx
+// ✅ GOOD - Destructured state
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState<Error | null>(null);
+
+// ❌ BAD - Single object state for independent values
+const [state, setState] = useState({ isLoading: false, error: null });
+```
+
+## Event Handlers
+
+Use descriptive handler names with `handle` prefix:
+
+```tsx
+// ✅ GOOD
+const handleToggle = (id: string, enabled: boolean) => {
+  updateGroupStatus({ id, enabled });
+};
+
+// ❌ BAD
+const toggle = (id, enabled) => {
+  updateGroupStatus({ id, enabled });
+};
+```
+
+## Conditional Rendering
+
+Use early returns for loading and error states:
+
+```tsx
+// ✅ GOOD
+export function ComplaintList() {
+  const { data, isLoading, error } = useComplaints();
+
+  if (isLoading) {
+    return <Skeleton />;
+  }
+
+  if (error) {
+    return <ErrorAlert message={error.message} />;
+  }
+
+  return <div>{/* Render data */}</div>;
+}
+
+// ❌ BAD
+export function ComplaintList() {
+  const { data, isLoading, error } = useComplaints();
+
+  return (
+    <div>
+      {isLoading ? <Skeleton /> : error ? <ErrorAlert /> : <div>{/* data */}</div>}
+    </div>
+  );
+}
+```
+
+## Props Destructuring
+
+Destructure props in function signature:
+
+```tsx
+// ✅ GOOD
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  variant?: "primary" | "secondary";
+}
+
+export function Button({ label, onClick, variant = "primary" }: ButtonProps) {
+  return <button onClick={onClick}>{label}</button>;
+}
+
+// ❌ BAD
+export function Button(props: ButtonProps) {
+  return <button onClick={props.onClick}>{props.label}</button>;
+}
+```
+
+## Memoization
+
+Use `useMemo` and `useCallback` for expensive computations and stable references:
+
+```tsx
+// ✅ GOOD - Memoize expensive computation
+const sortedData = useMemo(() => {
+  return data.sort((a, b) => a.date.localeCompare(b.date));
+}, [data]);
+
+// ✅ GOOD - Stable callback reference
+const handleClick = useCallback((id: string) => {
+  updateItem(id);
+}, [updateItem]);
+```

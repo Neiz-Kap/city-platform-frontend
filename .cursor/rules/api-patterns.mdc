@@ -1,0 +1,120 @@
+---
+description: API client patterns using class-based architecture
+globs: lib/api/**/*.ts
+alwaysApply: false
+---
+
+# API Patterns
+
+## API Class Structure
+
+Use static class methods for API clients:
+
+```typescript
+// ✅ GOOD
+export class ComplaintAPI {
+  private static prefix = "complaints";
+
+  static async getAll(params: ComplaintQueryParams = {}) {
+    try {
+      const response = await api
+        .get(this.prefix, { searchParams: params })
+        .json<PaginatedData<Complaint>>();
+      return response;
+    } catch (error) {
+      console.error("Error retrieving complaints:", error);
+      throw error;
+    }
+  }
+
+  static async getById(id: string) {
+    try {
+      const response = await api
+        .get(`${this.prefix}/${id}`)
+        .json<Complaint>();
+      return response;
+    } catch (error) {
+      console.error("Error retrieving complaint:", error);
+      throw error;
+    }
+  }
+}
+```
+
+## Error Handling
+
+Always wrap API calls in try-catch and log errors:
+
+```typescript
+// ✅ GOOD
+static async delete(id: string) {
+  try {
+    await api.delete(`${this.prefix}/${id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting complaint:", error);
+    throw error;
+  }
+}
+
+// ❌ BAD
+static async delete(id: string) {
+  await api.delete(`${this.prefix}/${id}`);
+  return { success: true };
+}
+```
+
+## Query Parameters
+
+Use searchParams for GET requests:
+
+```typescript
+// ✅ GOOD
+static async getAll(params: QueryParams = {}) {
+  const response = await api.get(this.prefix, {
+    searchParams: params,
+  }).json<PaginatedData<T>>();
+  return response;
+}
+
+// ❌ BAD - Manual URL construction
+static async getAll(params: QueryParams = {}) {
+  const url = `${this.prefix}?page=${params.page}&limit=${params.limit}`;
+  const response = await api.get(url).json<PaginatedData<T>>();
+  return response;
+}
+```
+
+## Type Safety
+
+Always provide generic types for responses:
+
+```typescript
+// ✅ GOOD
+const response = await api
+  .get("complaints")
+  .json<PaginatedData<Complaint>>();
+
+// ❌ BAD
+const response = await api.get("complaints").json();
+```
+
+## API Organization
+
+Group related endpoints in the same class:
+
+```typescript
+// ✅ GOOD - Single class for VK API
+export class VkApi {
+  private static prefix = "parsers/vk";
+
+  static async getGroups() { /* ... */ }
+  static async createGroup(data: VkFormData) { /* ... */ }
+  static async deleteGroup(id: string) { /* ... */ }
+  static async updateGroupStatus(id: string, action: string) { /* ... */ }
+}
+
+// ❌ BAD - Separate functions
+export async function getVkGroups() { /* ... */ }
+export async function createVkGroup() { /* ... */ }
+```

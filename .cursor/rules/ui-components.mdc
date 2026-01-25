@@ -1,0 +1,191 @@
+---
+description: shadcn/ui component usage patterns
+globs: components/**/*.tsx
+alwaysApply: false
+---
+
+# shadcn/ui Component Patterns
+
+## Component Imports
+
+Import from `@/components/ui`:
+
+```tsx
+// ✅ GOOD
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+
+// ❌ BAD - Direct file imports
+import Button from "@/components/ui/button.tsx";
+```
+
+## Button Variants
+
+Use appropriate button variants:
+
+```tsx
+// ✅ GOOD
+<Button variant="default">Сохранить</Button>
+<Button variant="destructive">Удалить</Button>
+<Button variant="outline">Отмена</Button>
+<Button variant="ghost">Закрыть</Button>
+
+// Size variants
+<Button size="default">Обычная</Button>
+<Button size="sm">Маленькая</Button>
+<Button size="lg">Большая</Button>
+<Button size="icon"><Icon /></Button>
+```
+
+## Dialog/Modal Pattern
+
+Use Dialog components for modals:
+
+```tsx
+// ✅ GOOD
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+export function CreateModal({ open, onOpenChange }: ModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Создать источник</DialogTitle>
+          <DialogDescription>
+            Заполните форму для добавления нового источника
+          </DialogDescription>
+        </DialogHeader>
+        <VkForm onSubmit={handleSubmit} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+```
+
+## Card Component
+
+Use Card for content grouping:
+
+```tsx
+// ✅ GOOD
+<Card>
+  <CardHeader>
+    <CardTitle>Статистика</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p>Всего жалоб: {count}</p>
+  </CardContent>
+</Card>
+```
+
+## Toast Notifications
+
+Use sonner for toast notifications:
+
+```tsx
+// ✅ GOOD
+import { toast } from "sonner";
+
+// Success
+toast.success("Группа успешно добавлена");
+
+// Error
+toast.error("Не удалось добавить группу");
+
+// With description
+toast.success("Операция выполнена", {
+  description: "Изменения сохранены успешно",
+});
+
+// ❌ BAD - Custom toast implementation
+alert("Группа добавлена");
+```
+
+## Dropdown Menu
+
+Use DropdownMenu for action menus:
+
+```tsx
+// ✅ GOOD
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="ghost" size="icon">
+      <MoreHorizontal className="h-4 w-4" />
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end">
+    <DropdownMenuItem onClick={handleEdit}>
+      Редактировать
+    </DropdownMenuItem>
+    <DropdownMenuItem 
+      className="text-red-600"
+      onClick={handleDelete}
+    >
+      <Trash2 className="h-4 w-4 mr-2" />
+      Удалить
+    </DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+## Accordion
+
+Use Accordion for collapsible content:
+
+```tsx
+// ✅ GOOD
+<Accordion type="single" collapsible>
+  <AccordionItem value="item-1">
+    <AccordionTrigger>ВКонтакте</AccordionTrigger>
+    <AccordionContent>
+      <GroupList groups={vkGroups} />
+    </AccordionContent>
+  </AccordionItem>
+</Accordion>
+```
+
+## Switch Component
+
+Use Switch for toggles:
+
+```tsx
+// ✅ GOOD
+<div className="flex items-center gap-2">
+  <span className="text-sm">Включить</span>
+  <Switch
+    checked={enabled}
+    onCheckedChange={handleToggle}
+    aria-label="Включить парсер"
+  />
+</div>
+
+// ❌ BAD - Checkbox for toggles
+<input type="checkbox" onChange={handleToggle} />
+```
+
+## Styling with Tailwind
+
+Use Tailwind classes with cn() utility:
+
+```tsx
+// ✅ GOOD
+import { cn } from "@/lib/utils";
+
+<div className={cn(
+  "flex items-center gap-2",
+  isActive && "bg-primary text-primary-foreground",
+  className
+)}>
+  {children}
+</div>
+
+// ❌ BAD - String concatenation
+<div className={`flex items-center ${isActive ? 'bg-primary' : ''}`}>
+```

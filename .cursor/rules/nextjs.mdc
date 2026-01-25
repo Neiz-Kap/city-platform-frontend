@@ -1,0 +1,175 @@
+---
+description: Next.js App Router patterns and best practices
+globs: app/**/*.tsx,middleware.ts
+alwaysApply: false
+---
+
+# Next.js Patterns
+
+## Page Components
+
+Use default exports for pages with proper types:
+
+```tsx
+// ✅ GOOD - Client page with "use client"
+"use client";
+
+import { Suspense } from "react";
+
+export default function ComplaintPage() {
+  return (
+    <div>
+      <Suspense fallback={<Loading />}>
+        <ComplaintList />
+      </Suspense>
+    </div>
+  );
+}
+
+// ✅ GOOD - Server page (no "use client")
+export default async function DashboardPage() {
+  const data = await fetchData();
+  return <DashboardView data={data} />;
+}
+```
+
+## Layout Components
+
+Use layout.tsx for shared layouts:
+
+```tsx
+// ✅ GOOD
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+      <main className="flex-1">{children}</main>
+    </div>
+  );
+}
+```
+
+## Route Groups
+
+Use route groups `()` for organization without affecting URL:
+
+```
+app/
+  dashboard/
+    (guest)/       # Route group - doesn't affect URL
+      layout.tsx   # Shared layout for guest pages
+      nlp/
+        source/
+          page.tsx # URL: /dashboard/nlp/source
+```
+
+## Loading States
+
+Create loading.tsx for automatic loading UI:
+
+```tsx
+// ✅ GOOD - app/dashboard/loading.tsx
+export default function Loading() {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <Spinner />
+    </div>
+  );
+}
+```
+
+## Error Handling
+
+Create error.tsx for error boundaries:
+
+```tsx
+// ✅ GOOD - app/dashboard/error.tsx
+"use client";
+
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return (
+    <div>
+      <h2>Что-то пошло не так!</h2>
+      <button onClick={() => reset()}>Попробовать снова</button>
+    </div>
+  );
+}
+```
+
+## Metadata
+
+Define metadata for SEO:
+
+```tsx
+// ✅ GOOD
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Источники жалоб",
+  description: "Управление источниками жалоб граждан",
+};
+
+export default function SourcePage() {
+  // ...
+}
+```
+
+## Dynamic Imports
+
+Use dynamic imports for code splitting:
+
+```tsx
+// ✅ GOOD
+import dynamic from "next/dynamic";
+
+const VkDialog = dynamic(
+  () => import("@/components/modals/create-vk-modal"),
+  { ssr: false }
+);
+
+// ❌ BAD - No code splitting
+import { VkDialog } from "@/components/modals/create-vk-modal";
+```
+
+## Environment Variables
+
+Access env vars through envConfig:
+
+```typescript
+// ✅ GOOD - app/envConfig.ts
+export const envConfig = {
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+  wsUrl: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000",
+};
+
+// Usage
+import { envConfig } from "@/app/envConfig";
+const response = await fetch(`${envConfig.apiUrl}/complaints`);
+
+// ❌ BAD - Direct access
+const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/complaints`);
+```
+
+## Path Aliases
+
+Use `@/` alias for imports:
+
+```tsx
+// ✅ GOOD
+import { Button } from "@/components/ui/button";
+import { ComplaintAPI } from "@/lib/api/complaint.api";
+import type { Complaint } from "@/lib/types/complaint.type";
+
+// ❌ BAD - Relative imports
+import { Button } from "../../../components/ui/button";
+```

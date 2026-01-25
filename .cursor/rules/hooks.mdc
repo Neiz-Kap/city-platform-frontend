@@ -1,0 +1,169 @@
+---
+description: Custom React hooks patterns with TanStack Query
+globs: lib/hooks/**/*.ts
+alwaysApply: false
+---
+
+# Custom Hooks Patterns
+
+## Hook Structure
+
+Custom hooks should encapsulate related logic:
+
+```typescript
+// ✅ GOOD - Complete data management
+export function useSourceManagement() {
+  const queryClient = useQueryClient();
+
+  const { data: sources = [], isLoading, error } = useQuery<PlatformSource[]>({
+    queryKey: ["sources"],
+    queryFn: async () => {
+      const [vkGroups, tgBots, emailParsers] = await Promise.all([
+        VkApi.getGroups().catch(() => []),
+        TelegramApi.getBots().catch(() => []),
+        EmailApi.getParsers().catch(() => []),
+      ]);
+
+      return [/* transformed data */];
+    },
+  });
+
+  const updateGroupStatus = useMutation({
+    mutationFn: async (params) => { /* ... */ },
+    onMutate: async (params) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ["sources"] });
+      const prevSources = queryClient.getQueryData(["sources"]);
+      queryClient.setQueryData(["sources"], (old) => /* update */);
+      return { prevSources };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.prevSources) {
+        queryClient.setQueryData(["sources"], context.prevSources);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["sources"] });
+    },
+  });
+
+  return {
+    sources,
+    isLoading,
+    error,
+    updateGroupStatus: updateGroupStatus.mutate,
+  };
+}
+```
+
+## Optimistic Updates
+
+Always implement optimistic updates with rollback:
+
+```typescript
+// ✅ GOOD - With rollback
+const mutation = useMutation({
+  mutationFn: updateFn,
+  onMutate: async (newData) => {
+    await queryClient.cancelQueries({ queryKey: ["items"] });
+    const prevItems = queryClient.getQueryData(["items"]);
+    
+    queryClient.setQueryData(["items"], (old) => {
+      // Optimistic update
+    });
+    
+    return { prevItems };
+  },
+  onError: (err, variables, context) => {
+    if (context?.prevItems) {
+      queryClient.setQueryData(["items"], context.prevItems);
+    }
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ["items"] });
+  },
+});
+
+// ❌ BAD - No rollback
+const mutation = useMutation({
+  mutationFn: updateFn,
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["items"] });
+  },
+});
+```
+
+## Query Keys
+
+Use consistent, hierarchical query keys:
+
+```typescript
+// ✅ GOOD
+const { data } = useQuery({
+  queryKey: ["complaints", "stats", { from_date, to_date }],
+  queryFn: () => ComplaintStatsApi.getStats({ from_date, to_date }),
+});
+
+// ❌ BAD
+const { data } = useQuery({
+  queryKey: ["stats"],
+  queryFn: () => ComplaintStatsApi.getStats({ from_date, to_date }),
+});
+```
+
+## Error Handling
+
+Provide error states in hook returns:
+
+```typescript
+// ✅ GOOD
+export function useComplaints() {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["complaints"],
+    queryFn: ComplaintAPI.getAll,
+  });
+
+  return {
+    complaints: data?.data ?? [],
+    pagination: data?.pagination,
+    isLoading,
+    error,
+    refetch,
+  };
+}
+
+// ❌ BAD - No error handling
+export function useComplaints() {
+  const { data } = useQuery({
+    queryKey: ["complaints"],
+    queryFn: ComplaintAPI.getAll,
+  });
+
+  return { complaints: data?.data };
+}
+```
+
+## Parallel Requests
+
+Use `Promise.all` for independent parallel requests:
+
+```typescript
+// ✅ GOOD
+queryFn: async () => {
+  const [vkGroups, tgBots, emailParsers] = await Promise.all([
+    VkApi.getGroups().catch(() => []),
+    TelegramApi.getBots().catch(() => []),
+    EmailApi.getParsers().catch(() => []),
+  ]);
+  return [/* combined data */];
+}
+
+// ❌ BAD - Sequential requests
+queryFn: async () => {
+  const vkGroups = await VkApi.getGroups().catch(() => []);
+  const tgBots = await TelegramApi.getBots().catch(() => []);
+  const emailParsers = await EmailApi.getParsers().catch(() => []);
+  return [/* combined data */];
+}
+```

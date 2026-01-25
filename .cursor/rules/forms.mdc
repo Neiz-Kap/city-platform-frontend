@@ -1,0 +1,137 @@
+---
+description: Form handling with React Hook Form and Zod validation
+globs: components/features/forms/**/*.tsx,components/modals/**/*.tsx
+alwaysApply: false
+---
+
+# Form Patterns
+
+## Form Schema Definition
+
+Define Zod schemas with clear validation messages:
+
+```typescript
+// ✅ GOOD
+const vkFormSchema = z.object({
+  url: z
+    .string()
+    .min(1, "Введите ссылку на группу")
+    .regex(
+      /^(https?:\/\/)?(www\.)?vk\.com\/[a-zA-Z0-9_]+/,
+      "Некорректная ссылка на группу ВКонтакте"
+    ),
+  name: z
+    .string()
+    .min(1, "Введите название группы")
+    .max(100, "Название слишком длинное"),
+});
+
+type VkFormValues = z.infer<typeof vkFormSchema>;
+
+// ❌ BAD - No validation messages
+const vkFormSchema = z.object({
+  url: z.string(),
+  name: z.string(),
+});
+```
+
+## Form Component Structure
+
+Use shadcn/ui Form components with React Hook Form:
+
+```tsx
+// ✅ GOOD
+export function VkForm({ onSubmit, isSubmitting }: VkFormProps) {
+  const form = useForm<VkFormValues>({
+    resolver: zodResolver(vkFormSchema),
+    defaultValues: {
+      url: "",
+      name: "",
+    },
+  });
+
+  function handleSubmit(data: VkFormValues) {
+    try {
+      onSubmit(data);
+    } catch (error) {
+      toast.error("Не удалось отправить форму");
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Ссылка на группу</FormLabel>
+              <FormControl>
+                <Input placeholder="https://vk.com/group" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Добавление..." : "Добавить"}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+```
+
+## Error Handling
+
+Show user-friendly error messages with toast:
+
+```typescript
+// ✅ GOOD
+function handleSubmit(data: FormValues) {
+  try {
+    onSubmit(data);
+    toast.success("Форма успешно отправлена");
+  } catch (error) {
+    toast.error("Не удалось отправить форму");
+  }
+}
+
+// ❌ BAD - Silent failure
+function handleSubmit(data: FormValues) {
+  onSubmit(data);
+}
+```
+
+## Form Props Interface
+
+Define clear prop interfaces:
+
+```typescript
+// ✅ GOOD
+interface VkFormProps {
+  onSubmit: (data: VkFormValues) => void;
+  isSubmitting?: boolean;
+  defaultValues?: Partial<VkFormValues>;
+}
+
+// ❌ BAD
+interface VkFormProps {
+  onSubmit: (data: any) => void;
+}
+```
+
+## Submit Button States
+
+Handle loading states in submit buttons:
+
+```tsx
+// ✅ GOOD
+<Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+  {isSubmitting ? "Сохранение..." : "Сохранить"}
+</Button>
+
+// ❌ BAD
+<Button type="submit">Сохранить</Button>
+```

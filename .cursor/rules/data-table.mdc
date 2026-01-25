@@ -1,0 +1,181 @@
+---
+description: TanStack Table patterns for data-table components
+globs: components/data-table/**/*.tsx,components/entities/**/columns.tsx,components/features/**/data-table.tsx
+alwaysApply: false
+---
+
+# Data Table Patterns
+
+## Column Definition
+
+Define columns with proper types and cell renderers:
+
+```tsx
+// ✅ GOOD
+export const columns: ColumnDef<Complaint>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Выбрать все"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Выбрать строку"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "title",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Заголовок" />
+    ),
+    cell: ({ row }) => {
+      const title = row.getValue("title") as string;
+      return <div className="max-w-[500px] truncate">{title}</div>;
+    },
+  },
+];
+```
+
+## Data Fetching Function
+
+Implement server-side pagination, sorting, and filtering:
+
+```typescript
+// ✅ GOOD
+const fetchComplaints = async (params: DataFetchParams) => {
+  try {
+    const result = await ComplaintAPI.getAll({
+      page: params.page,
+      per_page: params.limit,
+      search: params.search,
+      from_date: params.from_date,
+      to_date: params.to_date,
+      sort_by: params.sort_by,
+      sort_order: params.sort_order,
+    });
+
+    return {
+      success: true,
+      data: result.data,
+      pagination: {
+        page: result.page,
+        limit: result.per_page,
+        total_pages: result.total_pages,
+        total_items: result.total_items,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching complaints:", error);
+    throw error;
+  }
+};
+```
+
+## Export Configuration
+
+Provide complete export configuration for data export:
+
+```typescript
+// ✅ GOOD
+const exportConfig = {
+  entityName: "complaints",
+  columnMapping: {
+    id: "ID",
+    title: "Заголовок",
+    description: "Описание",
+    status: "Статус",
+    created_at: "Дата создания",
+  },
+  columnWidths: [
+    { wch: 10 }, // ID
+    { wch: 30 }, // Title
+    { wch: 50 }, // Description
+    { wch: 15 }, // Status
+    { wch: 20 }, // Created at
+  ],
+  headers: ["ID", "Заголовок", "Описание", "Статус", "Дата создания"],
+  transformFunction: (data: Complaint[]) => {
+    return data.map((item) => ({
+      id: item.id,
+      title: item.title,
+      description: item.description || "—",
+      status: getStatusLabel(item.status),
+      created_at: formatDate(item.created_at),
+    }));
+  },
+};
+```
+
+## Table Configuration
+
+Use the table config object for features:
+
+```typescript
+// ✅ GOOD
+<DataTable
+  config={{
+    enableToolbar: true,
+    enablePagination: true,
+    enableRowSelection: true,
+    enableColumnResizing: true,
+    enableUrlState: true,
+    defaultSortBy: "created_at",
+    defaultSortOrder: "desc",
+  }}
+  getColumns={getColumns}
+  fetchDataFn={fetchComplaints}
+  exportConfig={exportConfig}
+  idField="id"
+/>
+```
+
+## Custom Toolbar Content
+
+Provide custom toolbar components when needed:
+
+```tsx
+// ✅ GOOD
+renderToolbarContent={({ selectedRows, totalSelectedCount, resetSelection }) => (
+  <div className="flex gap-2">
+    <Button
+      variant="destructive"
+      size="sm"
+      disabled={totalSelectedCount === 0}
+      onClick={() => {
+        handleDeleteSelected(selectedRows);
+        resetSelection();
+      }}
+    >
+      Удалить ({totalSelectedCount})
+    </Button>
+  </div>
+)}
+```
+
+## Loading and Error States
+
+Handle loading and error states appropriately:
+
+```tsx
+// ✅ GOOD - Handled internally by DataTable
+<DataTable
+  fetchDataFn={fetchComplaints}
+  // Loading skeleton and error alerts are automatic
+/>
+
+// For external state management
+const { data, isLoading, error } = useComplaints();
+
+if (error) {
+  return <ErrorAlert message={error.message} />;
+}
+```

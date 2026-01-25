@@ -1,0 +1,106 @@
+---
+description: TypeScript coding standards for ODS City Platform
+globs: **/*.ts,**/*.tsx
+alwaysApply: false
+---
+
+# TypeScript Standards
+
+## Type Definitions
+
+Always define explicit types for function parameters and return values:
+
+```typescript
+// ✅ GOOD
+function fetchData(id: string): Promise<Complaint> {
+  return api.get(`complaints/${id}`).json<Complaint>();
+}
+
+// ❌ BAD
+function fetchData(id) {
+  return api.get(`complaints/${id}`).json();
+}
+```
+
+## Interface vs Type
+
+- Use `interface` for object shapes that may be extended
+- Use `type` for unions, intersections, and utility types
+
+```typescript
+// ✅ GOOD
+interface Complaint {
+  id: string;
+  title: string;
+  status: ComplaintStatus;
+}
+
+type ComplaintStatus = "pending" | "resolved" | "rejected";
+
+// ✅ GOOD - Extending interface
+interface ExtendedComplaint extends Complaint {
+  metadata: Record<string, unknown>;
+}
+```
+
+## Avoid `any`
+
+Never use `any` - use `unknown` if the type is truly unknown:
+
+```typescript
+// ❌ BAD
+function processData(data: any) {
+  return data.value;
+}
+
+// ✅ GOOD
+function processData(data: unknown) {
+  if (typeof data === 'object' && data !== null && 'value' in data) {
+    return (data as { value: string }).value;
+  }
+  throw new Error('Invalid data structure');
+}
+```
+
+## Null Safety
+
+Always handle nullable values explicitly:
+
+```typescript
+// ✅ GOOD
+const result = data?.pagination?.total_items ?? 0;
+
+// ❌ BAD
+const result = data.pagination.total_items || 0;
+```
+
+## Type Imports
+
+Use `type` keyword for type-only imports:
+
+```typescript
+// ✅ GOOD
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Complaint } from "@/lib/types/complaint.type";
+
+// ❌ BAD
+import { Complaint } from "@/lib/types/complaint.type";
+```
+
+## Generic Types
+
+Provide meaningful generic constraints:
+
+```typescript
+// ✅ GOOD
+function createAPI<T extends { id: string | number }>(
+  endpoint: string
+): APIClient<T> {
+  // ...
+}
+
+// ❌ BAD
+function createAPI<T>(endpoint: string): APIClient<T> {
+  // ...
+}
+```
