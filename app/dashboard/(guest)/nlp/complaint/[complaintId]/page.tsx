@@ -1,34 +1,56 @@
-// app/dashboard/(guest)/nlp/complaint/[complaintId]/page.tsx
-// import { ComplaintSkeleton } from "@/lib/components/skeletons/ComplaintSkeleton"
-// import { ComplaintContent } from "./ComplaintContent"
-// import { getComplaintServerSnapshot } from "./server-actions"
+"use client"
 
-type Props = {
-  params: {
+import { ComplaintContent } from "@/components/entities/complaint/ComplaintContent"
+import { ComplaintDetailSkeleton } from "@/components/entities/complaint/ComplaintDetailSkeleton"
+import { Button } from "@/components/ui/button"
+import { useComplaint } from "@/lib/hooks/useComplaints"
+import { ArrowLeft } from "lucide-react"
+import { notFound, useRouter } from "next/navigation"
+import { use } from "react"
+
+interface Props {
+  params: Promise<{
     complaintId: string
-  }
+  }>
 }
 
-// Server Component
-export default async function ComplaintDetailPage({ params }: Props) {
-  const { complaintId } = params
+export default function ComplaintDetailPage({ params }: Props) {
+  const { complaintId } = use(params)
+  console.debug(`complaintId: ${complaintId}`)
+  const router = useRouter()
 
-  // Получаем данные на сервере для начального рендеринга
-  // const initialData = await getComplaintServerSnapshot(complaintId)
-  // const initialData = []
+  // useComplaint автоматически проверяет кэш и делает запрос на сервер
+  const { data: complaint, isLoading, error } = useComplaint(complaintId)
 
-  // if (!initialData || !initialData.complaint) {
-  //   notFound()
-  // }
+  if (error) {
+    notFound()
+  }
+
+  // Показываем skeleton только если данных нет в кэше
+  if (isLoading && !complaint) {
+    return <ComplaintDetailSkeleton />
+  }
+
+  // Если данные есть в кэше, показываем сразу (фоновое обновление идет параллельно)
+  if (!complaint) {
+    console.warn(`complaint not found: ${complaintId}`)
+    notFound()
+  }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      {/* <Suspense fallback={<ComplaintSkeleton />}>
-        <ComplaintContent
-          complaintId={complaintId}
-          initialData={initialData}
-        />
-      </Suspense> */}
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      {/* Breadcrumb */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.back()}
+        className="mb-6"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Назад
+      </Button>
+
+      <ComplaintContent complaint={complaint} />
     </div>
   )
 }
