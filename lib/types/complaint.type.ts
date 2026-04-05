@@ -1,12 +1,15 @@
 import { ExportableData } from "@/components/data-table/utils"
 
+/** Подключаемые источники мониторинга (VK, email). Telegram с бэкенда снят. */
 export enum Platform {
   VK = "vk",
-  TELEGRAM = "telegram",
   EMAIL = "email",
 }
 
 export type SourcePlatform = `${Platform}`
+
+/** Значение `platform` из API (в БД могут остаться старые `telegram_bot`). */
+export type ComplaintPlatform = SourcePlatform | "telegram_bot"
 
 // Types for complaints (adjust based on your actual API response)
 export interface Complaint extends ExportableData{
@@ -16,7 +19,7 @@ export interface Complaint extends ExportableData{
   category: string
   status: string
   url: string
-  platform: SourcePlatform
+  platform: ComplaintPlatform
   tags: string[]
   createdAt: string
   updatedAt: string
@@ -49,19 +52,14 @@ export interface CreateComplaintRequest {
   tags?: string[]
 }
 
-// SearchParamsOption
-export type ComplaintQueryParams =  {
+// GET /complaints query (контракт бэкенда)
+export type ComplaintQueryParams = {
   page?: number
   per_page?: number
-  search?: string
-  sort?: string
-  // category?: string[]
-  // status?: string[]
-}
-
-export type TCreateTelegram = {
-  token: string
-  name: string
+  q?: string
+  tags?: string[]
+  sort_by?: string
+  sort_order?: "ASC" | "DESC"
 }
 
 export type TCreateVK = {

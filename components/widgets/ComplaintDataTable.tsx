@@ -28,7 +28,7 @@ export default function ComplaintDataTable() {
     page: pagination.page,
     per_page: pagination.per_page,
     ...filters,
-    ...(search && { search }),
+    ...(search && { q: search }),
     ...sortParams,
   } satisfies ComplaintQueryParams
 
@@ -112,12 +112,15 @@ export default function ComplaintDataTable() {
         <div className="flex items-center gap-2">
           <h3 className="text-2xl font-bold">Таблица жалоб</h3>
 
-          <Badge
-            variant={isConnected ? "default" : "secondary"}
-            className={isConnected ? "bg-green-500" : "bg-gray-500"}
-          >
-            {isConnected ? "🟢 Онлайн" : "🔴 Офлайн"}
-          </Badge>
+          {/* Статус подключения (только в dev-режиме) */}
+          {process.env.NODE_ENV === "development" && (
+            <Badge
+              variant={isConnected ? "default" : "secondary"}
+              className={isConnected ? "bg-green-500" : "bg-gray-500"}
+            >
+              {isConnected ? "🟢 Онлайн" : "🔴 Офлайн"}
+            </Badge>
+          )}
 
           {newComplaintsCount > 0 && (
             <Badge variant="destructive" className="animate-pulse">

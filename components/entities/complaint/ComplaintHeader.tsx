@@ -10,7 +10,7 @@ interface ComplaintHeaderProps {
   title: string
   status: 'new' | 'in_progress' | 'resolved' | 'rejected'
   priority: 'low' | 'medium' | 'high' | 'critical'
-  source: 'vk' | 'telegram' | 'email' | 'web'
+  source: 'vk' | 'email' | 'telegram_bot' | 'web'
 }
 
 const ComplaintHeaderComponent = ({

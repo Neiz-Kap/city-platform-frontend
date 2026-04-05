@@ -30,30 +30,6 @@ export class SourceService {
     await api.delete(`vk/groups/${id}`)
   }
 
-  // --- Telegram Bots ---
-  static async getTelegramBots(): Promise<PlatformGroup[]> {
-    const data = await api
-      .get("telegram/bots")
-      .json<{ token: string; title: string; is_running: boolean }[]>()
-    return data.map((b) => ({
-      id: b.token,
-      name: b.title,
-      enabled: b.is_running,
-      platform: "telegram",
-    }))
-  }
-
-  static async updateTelegramBotStatus(
-    token: string,
-    action: "start" | "stop",
-  ): Promise<void> {
-    await api.post(`telegram/bots/${token}/${action}`)
-  }
-
-  static async deleteTelegramBot(token: string): Promise<void> {
-    await api.delete(`telegram/bots/${token}`)
-  }
-
   // --- Email Monitoring ---
   static async getEmailParsers(): Promise<PlatformGroup[]> {
     const data = await api
@@ -80,9 +56,8 @@ export class SourceService {
 
   // --- Unified Methods ---
   static async getAllSources(): Promise<PlatformSource[]> {
-    const [vkGroups, tgBots, emailParsers] = await Promise.all([
+    const [vkGroups, emailParsers] = await Promise.all([
       this.getVkGroups().catch(() => [] as PlatformGroup[]),
-      this.getTelegramBots().catch(() => [] as PlatformGroup[]),
       this.getEmailParsers().catch(() => [] as PlatformGroup[]),
     ])
 
@@ -92,12 +67,6 @@ export class SourceService {
         label: "ВКонтакте",
         allEnabled: vkGroups.length > 0 && vkGroups.every((g) => g.enabled),
         groups: vkGroups,
-      },
-      {
-        platform: "telegram",
-        label: "Telegram Боты",
-        allEnabled: tgBots.length > 0 && tgBots.every((g) => g.enabled),
-        groups: tgBots,
       },
       {
         platform: "email",
@@ -118,8 +87,6 @@ export class SourceService {
     switch (platform) {
       case "vk":
         return this.updateVkGroupStatus(id, action)
-      case "telegram":
-        return this.updateTelegramBotStatus(id, action)
       case "email":
         return this.updateEmailParserStatus(id, action)
       default:
@@ -131,8 +98,6 @@ export class SourceService {
     switch (platform) {
       case "vk":
         return this.deleteVkGroup(id)
-      case "telegram":
-        return this.deleteTelegramBot(id)
       case "email":
         return this.deleteEmailParser(id)
       default:

@@ -25,10 +25,6 @@ import { toast } from "sonner"
 const VkDialog = dynamic(() => import("@/components/modals/create-vk-modal"), {
   ssr: false,
 })
-const TelegramDialog = dynamic(
-  () => import("@/components/modals/create-telegram-modal"),
-  { ssr: false },
-)
 const EmailDialog = dynamic(
   () => import("@/components/modals/create-email-modal"),
   { ssr: false },
@@ -84,7 +80,6 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
     useSourceManagement()
 
   const [vkDialogOpen, setVkDialogOpen] = useState(false)
-  const [telegramDialogOpen, setTelegramDialogOpen] = useState(false)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
   const handleDelete = (group: PlatformGroup) => {
@@ -158,17 +153,6 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
             Добавить источник
           </Button>
         )
-      case "telegram":
-        return (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled
-            // onClick={() => setTelegramDialogOpen(true)}
-          >
-            Добавить бота
-          </Button>
-        )
       case "email":
         return (
           <Button variant="outline" size="sm" disabled>
@@ -228,10 +212,6 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
 
       {/* Модальные окна */}
       <VkDialog open={vkDialogOpen} onOpenChange={setVkDialogOpen} />
-      <TelegramDialog
-        open={telegramDialogOpen}
-        onOpenChange={setTelegramDialogOpen}
-      />
       <EmailDialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen} />
     </Accordion>
   )

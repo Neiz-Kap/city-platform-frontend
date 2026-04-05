@@ -111,6 +111,7 @@ export class MonitoringAPI {
     }
   }
 
+  /** Агрегированный статус; в ответе больше нет блока `telegram_bots`. */
   static async getMonitoringStatus() {
     try {
       const response = await api.get("monitoring/status").json<unknown>();

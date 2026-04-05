@@ -17,27 +17,16 @@ export class ComplaintAPI {
 
   static async getAll(params: ComplaintQueryParams = {}) {
     try {
-      const searchParams = new URLSearchParams()
-
-      // Add pagination params
-      if (params.page) searchParams.append("page", params.page.toString())
-      if (params.per_page)
-        searchParams.append("per_page", params.per_page.toString())
-      if (params.search) searchParams.append("search", params.search)
-      if (params.sort) searchParams.append("sort", params.sort)
-
-      // Add array params
-      // if (params.category?.length) {
-      //   params.category.forEach((cat) => searchParams.append("category", cat))
-      // }
-      // if (params.status?.length) {
-      //   params.status.forEach((status) => searchParams.append("status", status))
-      // }
+      const searchParams: Record<string, string | number> = {}
+      if (params.page != null) searchParams.page = params.page
+      if (params.per_page != null) searchParams.per_page = params.per_page
+      if (params.q) searchParams.q = params.q
+      if (params.tags?.length) searchParams.tags = params.tags.join(",")
+      if (params.sort_by) searchParams.sort_by = params.sort_by
+      if (params.sort_order) searchParams.sort_order = params.sort_order
 
       const response = await api
-        .get(this.prefix, {
-          searchParams: params,
-        })
+        .get(this.prefix, { searchParams })
         .json<PaginatedData<Complaint>>()
       return response
     } catch (error) {
@@ -52,6 +41,23 @@ export class ComplaintAPI {
       return response
     } catch (error) {
       console.error("Error when retrieving complaint: ", error)
+      throw error
+    }
+  }
+
+  /** GET /complaints/source/{vk|email}. Путь `telegram_bot` на бэкенде даёт 400. */
+  static async getBySource(sourcePlatform: "vk" | "email") {
+    try {
+      const response = await api
+        .get(`${this.prefix}/source/${sourcePlatform}`)
+        .json<{
+          source: string
+          count: number
+          complaints: Complaint[]
+        }>()
+      return response
+    } catch (error) {
+      console.error("Error when retrieving complaints by source: ", error)
       throw error
     }
   }

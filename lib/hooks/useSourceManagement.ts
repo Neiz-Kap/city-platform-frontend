@@ -2,7 +2,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { EmailApi } from "../api/source/email.api"
-import { TelegramApi } from "../api/source/telegram.api"
 import { VkApi } from "../api/source/vk.api"
 import {
   PlatformGroup,
@@ -13,11 +12,6 @@ import {
 // Типы для форм создания
 export type VkFormData = {
   url: string
-  name: string
-}
-
-export type TelegramFormData = {
-  token: string
   name: string
 }
 
@@ -35,9 +29,8 @@ export function useSourceManagement() {
   } = useQuery<PlatformSource[]>({
     queryKey: ["sources"],
     queryFn: async () => {
-      const [vkGroups, tgBots, emailParsers] = await Promise.all([
+      const [vkGroups, emailParsers] = await Promise.all([
         VkApi.getGroups().catch(() => [] as PlatformGroup[]),
-        TelegramApi.getBots().catch(() => [] as PlatformGroup[]),
         EmailApi.getParsers().catch(() => [] as PlatformGroup[]),
       ])
 
@@ -47,12 +40,6 @@ export function useSourceManagement() {
           label: "ВКонтакте",
           allEnabled: vkGroups.length > 0 && vkGroups.every((g) => g.enabled),
           groups: vkGroups,
-        },
-        {
-          platform: "telegram",
-          label: "Telegram Боты",
-          allEnabled: tgBots.length > 0 && tgBots.every((g) => g.enabled),
-          groups: tgBots,
         },
         {
           platform: "email",
@@ -79,8 +66,6 @@ export function useSourceManagement() {
       switch (platform) {
         case "vk":
           return VkApi.updateGroupStatus(id, action)
-        case "telegram":
-          return TelegramApi.updateBotStatus(id, action)
         case "email":
           return EmailApi.updateParserStatus(id, action)
         default:
@@ -129,8 +114,6 @@ export function useSourceManagement() {
       switch (platform) {
         case "vk":
           return VkApi.deleteGroup(id)
-        case "telegram":
-          return TelegramApi.deleteBot(id)
         case "email":
           return EmailApi.deleteParser(id)
         default:
@@ -221,20 +204,6 @@ export function useSourceManagement() {
     },
   })
 
-  // Добавлено: мутация для создания бота Telegram
-  const createTelegramBot = useMutation({
-    mutationFn: (data: TelegramFormData) => TelegramApi.createBot(data),
-    onSuccess: () => {
-      toast.success("Бот Telegram успешно добавлен")
-    },
-    onError: (error) => {
-      toast.error(`Не удалось добавить бота: ${error.message}`)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources"] })
-    },
-  })
-
   // Добавлено: мутация для создания почтового парсера
   const createEmailParser = useMutation({
     mutationFn: (data: EmailFormData) => EmailApi.createParser(data),
@@ -257,10 +226,8 @@ export function useSourceManagement() {
     deleteGroup: deleteGroup.mutate,
     updateAllGroupsStatus: updateAllGroupsStatus.mutate,
     createVkGroup: createVkGroup.mutate,
-    createTelegramBot: createTelegramBot.mutate,
     createEmailParser: createEmailParser.mutate,
     isCreatingVk: createVkGroup.isPending,
-    isCreatingTelegram: createTelegramBot.isPending,
     isCreatingEmail: createEmailParser.isPending,
   }
 }
