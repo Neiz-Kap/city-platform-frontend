@@ -1,4 +1,3 @@
-// app/dashboard/(guest)/nlp/source/page.tsx
 "use client"
 
 import {
@@ -44,7 +43,7 @@ function GroupItem(props: GroupItemProps) {
   return (
     <li
       key={group.id}
-      className="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition"
+      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
     >
       <span className="flex-1 truncate">{group.name}</span>
       <div className="flex items-center gap-2 ml-4">
@@ -178,7 +177,7 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
           </AccordionTrigger>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 sm:mt-0 sm:gap-4">
             <div className="flex items-center">
-              <span className="text-sm text-gray-600 mr-2 whitespace-nowrap">
+              <span className="text-sm text-gray-600 dark:text-gray-400 mr-2 whitespace-nowrap">
                 Все группы
               </span>
               <Switch
@@ -193,7 +192,7 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
         <AccordionContent>
           <ul className="space-y-2 p-2">
             {platform.groups.length === 0 ? (
-              <li className="text-sm text-gray-500 py-2 text-center">
+              <li className="text-sm text-gray-500 dark:text-gray-400 py-2 text-center">
                 Нет подключённых групп
               </li>
             ) : (
