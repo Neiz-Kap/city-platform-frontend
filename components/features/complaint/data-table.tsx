@@ -27,11 +27,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -41,36 +49,39 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
+import type { DashboardLabel } from "@/lib/types/complaint-label.type"
+import type { LabelMatchMode } from "@/lib/types/complaint.type"
 import { PaginatedData } from "@/lib/types"
 import { ChevronDown, PlusCircle } from "lucide-react"
 import { useState } from "react"
+
+export type DashboardTableFilters = {
+  selectedStatuses: string[]
+  labelIds: number[]
+  labelMatch: LabelMatchMode
+  excludeLabelIds: number[]
+  startDate: string
+  endDate: string
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: PaginatedData<TData>
   onPaginationChange: (pagination: { page: number; per_page: number }) => void
   onSortChange?: (sorting: SortingState) => void
-  onSearchChange?: (search: string) => void
-  onFilterChange?: (filters: { category?: string[]; status?: string[] }) => void
+  searchQuery: string
+  onSearchQueryChange: (search: string) => void
+  statusOptions: { value: string; label: string }[]
+  filterLabels: DashboardLabel[]
+  dashboardFilters: DashboardTableFilters
+  onDashboardFiltersChange: (patch: Partial<DashboardTableFilters>) => void
   pagination: {
     page: number
     per_page: number
   }
   isLoading?: boolean
+  initialSorting?: SortingState
 }
-
-// Mock categories and statuses for filters (replace with actual data from API)
-const categories = [
-  { label: "Infrastructure", value: "infrastructure" },
-  { label: "Environment", value: "environment" },
-  { label: "Safety", value: "safety" },
-]
-
-const statuses = [
-  { label: "Pending", value: "pending" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Resolved", value: "resolved" },
-]
 
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
   const {
@@ -78,19 +89,39 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     data: paginatedData = DEFAULT_PAGINATED_DATA,
     onPaginationChange,
     onSortChange,
-    onSearchChange,
-    onFilterChange,
+    searchQuery,
+    onSearchQueryChange,
+    statusOptions,
+    filterLabels,
+    dashboardFilters,
+    onDashboardFiltersChange,
     pagination,
     isLoading = false,
+    initialSorting = [{ id: "createdAt", desc: true }],
   } = props
   const { data, pagination: serverPagination } = paginatedData
 
-  const [sorting, setSorting] = useState<SortingState>([]) // TODO: { id: 'status', desc: false }
+  const [sorting, setSorting] = useState<SortingState>(initialSorting)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [search, setSearch] = useState<string>("")
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
+
+  const {
+    selectedStatuses,
+    labelIds,
+    labelMatch,
+    excludeLabelIds,
+    startDate,
+    endDate,
+  } = dashboardFilters
+
+  const setStatuses = (next: string[]) =>
+    onDashboardFiltersChange({ selectedStatuses: next })
+
+  const setIncludeLabels = (next: number[]) =>
+    onDashboardFiltersChange({ labelIds: next })
+
+  const setExcludeLabels = (next: number[]) =>
+    onDashboardFiltersChange({ excludeLabelIds: next })
 
   const table = useReactTable({
     data,
@@ -105,7 +136,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
       columnFilters,
       columnVisibility,
       pagination: {
-        pageIndex: serverPagination.page - 1, // Convert to 0-based index
+        pageIndex: serverPagination.page - 1,
         pageSize: serverPagination.per_page,
       },
     },
@@ -119,25 +150,10 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     onColumnVisibilityChange: setColumnVisibility,
   })
 
-  // Handle search with debounce
   const handleSearchChange = (value: string) => {
-    setSearch(value)
-    onSearchChange?.(value)
+    onSearchQueryChange(value)
   }
 
-  // Handle category filter change
-  const handleCategoryChange = (categories: string[]) => {
-    setSelectedCategories(categories)
-    onFilterChange?.({ category: categories, status: selectedStatuses })
-  }
-
-  // Handle status filter change
-  const handleStatusChange = (statuses: string[]) => {
-    setSelectedStatuses(statuses)
-    onFilterChange?.({ category: selectedCategories, status: statuses })
-  }
-
-  // Handle pagination
   const handlePreviousPage = () => {
     if (serverPagination.page > 1) {
       onPaginationChange({
@@ -156,101 +172,59 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     }
   }
 
+  const toggleInList = <T,>(list: T[], item: T, eq: (a: T, b: T) => boolean) =>
+    list.some((x) => eq(x, item))
+      ? list.filter((x) => !eq(x, item))
+      : [...list, item]
+
   return (
     <div className="w-full">
-      <div className="flex items-center gap-4 py-4">
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-3 py-4">
+        <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder="Поиск по жалобам..."
-            value={search}
+            value={searchQuery}
             onChange={(event) => handleSearchChange(event.target.value)}
             className="max-w-sm"
           />
 
-          {/* Category Filter */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline">
-                <PlusCircle className="me-2 h-4 w-4" />
-                Категории
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-52 p-0">
-              <Command>
-                <CommandInput placeholder="Категория" className="h-9" />
-                <CommandList>
-                  <CommandEmpty>Категории не найдены.</CommandEmpty>
-                  <CommandGroup>
-                    {categories.map((category) => (
-                      <CommandItem
-                        key={category.value}
-                        value={category.value}
-                        onSelect={(value) => {
-                          const newCategories = selectedCategories.includes(
-                            value,
-                          )
-                            ? selectedCategories.filter((c) => c !== value)
-                            : [...selectedCategories, value]
-                          handleCategoryChange(newCategories)
-                        }}
-                      >
-                        <div className="flex items-center space-x-3 py-1">
-                          <Checkbox
-                            id={`category-${category.value}`}
-                            checked={selectedCategories.includes(
-                              category.value,
-                            )}
-                          />
-                          <label
-                            htmlFor={`category-${category.value}`}
-                            className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {category.label}
-                          </label>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          {/* Status Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <PlusCircle className="me-2 h-4 w-4" />
                 Статусы
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-52 p-0">
+            <PopoverContent className="w-56 p-0" align="start">
               <Command>
                 <CommandInput placeholder="Статус" className="h-9" />
                 <CommandList>
-                  <CommandEmpty>Статусы не найдены.</CommandEmpty>
+                  <CommandEmpty>Нет статусов</CommandEmpty>
                   <CommandGroup>
-                    {statuses.map((status) => (
+                    {statusOptions.map((s) => (
                       <CommandItem
-                        key={status.value}
-                        value={status.value}
-                        onSelect={(value) => {
-                          const newStatuses = selectedStatuses.includes(value)
-                            ? selectedStatuses.filter((s) => s !== value)
-                            : [...selectedStatuses, value]
-                          handleStatusChange(newStatuses)
+                        key={s.value}
+                        value={s.value}
+                        onSelect={() => {
+                          setStatuses(
+                            toggleInList(
+                              selectedStatuses,
+                              s.value,
+                              (a, b) => a === b,
+                            ),
+                          )
                         }}
                       >
                         <div className="flex items-center space-x-3 py-1">
                           <Checkbox
-                            id={`status-${status.value}`}
-                            checked={selectedStatuses.includes(status.value)}
+                            id={`flt-status-${s.value}`}
+                            checked={selectedStatuses.includes(s.value)}
                           />
                           <label
-                            htmlFor={`status-${status.value}`}
+                            htmlFor={`flt-status-${s.value}`}
                             className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
-                            {status.label}
+                            {s.label}
                           </label>
                         </div>
                       </CommandItem>
@@ -260,38 +234,184 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
               </Command>
             </PopoverContent>
           </Popover>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <PlusCircle className="me-2 h-4 w-4" />
+                Метки (включить)
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Метка" className="h-9" />
+                <CommandList>
+                  <CommandEmpty>Нет меток</CommandEmpty>
+                  <CommandGroup>
+                    {filterLabels.map((l) => (
+                      <CommandItem
+                        key={l.id}
+                        value={l.name}
+                        onSelect={() => {
+                          setIncludeLabels(
+                            toggleInList(
+                              labelIds,
+                              l.id,
+                              (a, b) => a === b,
+                            ),
+                          )
+                        }}
+                      >
+                        <div className="flex items-center space-x-3 py-1">
+                          <Checkbox
+                            id={`flt-lbl-${l.id}`}
+                            checked={labelIds.includes(l.id)}
+                          />
+                          <span
+                            className="size-3 rounded-sm border shrink-0"
+                            style={{ backgroundColor: l.color }}
+                          />
+                          <label
+                            htmlFor={`flt-lbl-${l.id}`}
+                            className="leading-none"
+                          >
+                            {l.name}
+                          </label>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          <div className="flex items-center gap-2">
+            <Label className="text-xs text-muted-foreground whitespace-nowrap">
+              Совпадение меток
+            </Label>
+            <Select
+              value={labelMatch}
+              onValueChange={(v) =>
+                onDashboardFiltersChange({
+                  labelMatch: v as LabelMatchMode,
+                })
+              }
+            >
+              <SelectTrigger className="w-[140px] h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">Любая из</SelectItem>
+                <SelectItem value="all">Все выбранные</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <PlusCircle className="me-2 h-4 w-4" />
+                Скрыть метки
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Метка" className="h-9" />
+                <CommandList>
+                  <CommandEmpty>Нет меток</CommandEmpty>
+                  <CommandGroup>
+                    {filterLabels.map((l) => (
+                      <CommandItem
+                        key={`ex-${l.id}`}
+                        value={`ex-${l.name}`}
+                        onSelect={() => {
+                          setExcludeLabels(
+                            toggleInList(
+                              excludeLabelIds,
+                              l.id,
+                              (a, b) => a === b,
+                            ),
+                          )
+                        }}
+                      >
+                        <div className="flex items-center space-x-3 py-1">
+                          <Checkbox
+                            id={`flt-ex-${l.id}`}
+                            checked={excludeLabelIds.includes(l.id)}
+                          />
+                          <span
+                            className="size-3 rounded-sm border shrink-0"
+                            style={{ backgroundColor: l.color }}
+                          />
+                          <label htmlFor={`flt-ex-${l.id}`} className="leading-none">
+                            {l.name}
+                          </label>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">С даты</Label>
+              <Input
+                type="date"
+                className="w-[160px]"
+                value={startDate}
+                onChange={(e) =>
+                  onDashboardFiltersChange({ startDate: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">По дату</Label>
+              <Input
+                type="date"
+                className="w-[160px]"
+                value={endDate}
+                onChange={(e) =>
+                  onDashboardFiltersChange({ endDate: e.target.value })
+                }
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Column Visibility */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Колонки <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                Колонки <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {/* Table */}
       <div className="rounded-md shadow-2xl border">
         <Table>
           <TableHeader>
@@ -352,7 +472,6 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between pt-4">
         <div className="text-sm text-muted-foreground">
           Показано {data.length} из {serverPagination.total} жалоб

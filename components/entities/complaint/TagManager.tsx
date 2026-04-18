@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/popover"
 import { ComplaintTag, PREDEFINED_TAGS } from "@/lib/types/complaint-tag.type"
 import { cn } from "@/lib/utils"
-import { Check, Plus, X } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { useState } from "react"
 
 interface TagManagerProps {
@@ -63,7 +63,23 @@ export function TagManager({
         )}
         {tags.map((tagId) => {
           const tag = getTagById(tagId)
-          if (!tag) return null
+
+          if (!tag) {
+            return (
+              <Badge key={tagId} variant="secondary" className="gap-1">
+                {tagId}
+                {editable && (
+                  <button
+                    onClick={() => handleRemoveTag(tagId)}
+                    className="ml-1 hover:bg-black/20 rounded-full p-0.5 transition-colors"
+                    aria-label={`Удалить тег ${tagId}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </Badge>
+            )
+          }
 
           return (
             <Badge

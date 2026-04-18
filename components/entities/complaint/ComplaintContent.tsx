@@ -4,48 +4,62 @@ import { Complaint } from "@/lib/types/complaint.type"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ComplaintMetadata } from "./ComplaintMetadata"
 import { StatusBadge } from "./StatusBadge"
-import { Badge } from "@/components/ui/badge"
-import { useQueryClient } from "@tanstack/react-query"
-import { complaintKeys } from "@/lib/hooks/useComplaints"
+import { DashboardLabelPicker } from "./DashboardLabelPicker"
+import {
+  useUpdateComplaint,
+  useUpdateComplaintLabels,
+} from "@/lib/hooks/useComplaints"
 import { toast } from "sonner"
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
+import { useEffect, useState } from "react"
 
 interface ComplaintContentProps {
   complaint: Complaint
 }
 
 export function ComplaintContent({ complaint }: ComplaintContentProps) {
-  const queryClient = useQueryClient()
+  const updateComplaint = useUpdateComplaint()
+  const updateLabels = useUpdateComplaintLabels()
 
-  // Моковое обновление статуса (обновляем только кэш)
   const handleStatusChange = (newStatus: ComplaintStatus) => {
-    queryClient.setQueryData(complaintKeys.detail(complaint.id.toString()), {
-      ...complaint,
-      status: newStatus,
-    })
-    toast.success("Статус обновлен")
+    updateComplaint.mutate(
+      { id: complaint.id, body: { status: newStatus } },
+      {
+        onSuccess: () => toast.success("Статус обновлён"),
+        onError: () => toast.error("Не удалось обновить статус"),
+      },
+    )
   }
 
-  // Моковое обновление меток
-  const handleTagsChange = (newTags: string[]) => {
-    queryClient.setQueryData(complaintKeys.detail(complaint.id.toString()), {
-      ...complaint,
-      tags: newTags,
-    })
-    toast.success("Метки обновлены")
+  const handleDashboardLabelsChange = (label_ids: number[]) => {
+    updateLabels.mutate(
+      { id: complaint.id, label_ids },
+      {
+        onSuccess: () => toast.success("Метки обновлены"),
+        onError: () => toast.error("Не удалось обновить метки"),
+      },
+    )
   }
+
+  const mediaUrl = complaint.url || complaint.source_url
+  const busy = updateComplaint.isPending || updateLabels.isPending
+  const [imageFailed, setImageFailed] = useState(false)
+
+  useEffect(() => {
+    setImageFailed(false)
+  }, [mediaUrl])
+
+  const showImage = Boolean(mediaUrl) && !imageFailed
 
   return (
     <div className="space-y-6">
-      {/* Заголовок */}
       <div>
         <h1 className="text-3xl font-bold">{complaint.name}</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Выполняется приходит только во время работы
+          Карточка проблемы
         </p>
       </div>
 
-      {/* Вкладки */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Обзор</TabsTrigger>
@@ -54,22 +68,24 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
 
         <TabsContent value="overview" className="mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Основная колонка */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Изображение проблемы */}
               <div className="border rounded-lg p-6 bg-muted/50 min-h-64 flex items-center justify-center">
-                {complaint.url ? (
+                {showImage ? (
                   <img
-                    src={complaint.url}
+                    src={mediaUrl}
                     alt="Изображение проблемы"
                     className="max-w-full h-auto rounded"
+                    onError={() => setImageFailed(true)}
                   />
                 ) : (
-                  <p className="text-muted-foreground">Product Image</p>
+                  <p className="text-muted-foreground text-center text-sm px-4">
+                    {mediaUrl
+                      ? "Не удалось загрузить изображение по ссылке"
+                      : "Нет изображения"}
+                  </p>
                 )}
               </div>
 
-              {/* Категория и Источник */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="border rounded-lg p-4">
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">
@@ -84,29 +100,20 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">
                     Источник
                   </h3>
-                  <Badge variant="outline">{complaint.platform}</Badge>
-                  {complaint.url && (
+                  <p className="text-sm">{complaint.platform}</p>
+                  {mediaUrl && (
                     <a
-                      href={complaint.url}
+                      href={mediaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-500 hover:underline block mt-2 truncate"
                     >
-                      {complaint.url}
+                      {mediaUrl}
                     </a>
                   )}
                 </div>
               </div>
 
-              {/* Платформа источника */}
-              <div className="border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                  Платформа источника
-                </h3>
-                <p className="text-sm">{complaint.platform}</p>
-              </div>
-
-              {/* Описание */}
               <div className="border rounded-lg p-4">
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">
                   Описание
@@ -117,26 +124,31 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
               </div>
             </div>
 
-            {/* Метаданные */}
             <div className="border rounded-lg p-6">
               <div className="space-y-6">
-                {/* Статус (редактируемый) */}
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-2">
                     Статус
                   </h3>
                   <StatusBadge
-                    status={complaint.status as ComplaintStatus}
-                    editable={true}
+                    status={complaint.status}
+                    editable={!busy}
                     onStatusChange={handleStatusChange}
                   />
                 </div>
 
-                <ComplaintMetadata
-                  complaint={complaint}
-                  editable={true}
-                  onTagsChange={handleTagsChange}
-                />
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                    Метки дашборда
+                  </h3>
+                  <DashboardLabelPicker
+                    valueIds={(complaint.labels ?? []).map((l) => l.id)}
+                    onChange={handleDashboardLabelsChange}
+                    disabled={busy}
+                  />
+                </div>
+
+                <ComplaintMetadata complaint={complaint} />
               </div>
             </div>
           </div>
