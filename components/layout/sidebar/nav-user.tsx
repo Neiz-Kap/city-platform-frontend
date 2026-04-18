@@ -17,16 +17,14 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  BellIcon,
-  CreditCardIcon,
-  LogOutIcon,
-  UserCircle2Icon,
   FoldVerticalIcon,
+  LogOutIcon,
+  UserCircle2Icon
 } from "lucide-react";
 
 const userData = {
-  name: "Toby Belhome",
-  email: "hello@tobybelhome.com",
+  name: "Иван Иванов",
+  email: "ivan.ivanov@example.com",
   avatar: "/images/avatars/01.png",
 };
 
@@ -65,7 +63,7 @@ export function NavUser() {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={userData.avatar} alt={userData.name} />
-                  <AvatarFallback className="rounded-lg">TB</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">ИИ</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{userData.name}</span>
@@ -79,21 +77,13 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <UserCircle2Icon />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
+                Профиль
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <LogOutIcon />
-              Log out
+              Выйти
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
