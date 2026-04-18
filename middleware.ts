@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  return NextResponse.redirect(new URL("/dashboard/default", request.url));
+  return NextResponse.redirect(new URL("/dashboard/complaint", request.url));
 }
 
 export const config = {
