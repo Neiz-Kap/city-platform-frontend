@@ -1,6 +1,7 @@
 // lib/hooks/useComplaintsSocket.ts
+import { attachDashboardNotificationHandlers } from "@/lib/notifications/dashboard-notifications"
 import { useQueryClient } from "@tanstack/react-query"
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 import { API_BASE_URL } from "../api"
 import { complaintKeys } from "./useComplaints"
@@ -9,91 +10,104 @@ interface UseComplaintsSocketProps {
   enabled?: boolean
   sources?: string[]
   interval?: number
+  onNewComplaint?: () => void
 }
 
 export const useComplaintsSocket = ({
   enabled = true,
   sources = ["all"],
   interval = 300,
+  onNewComplaint,
 }: UseComplaintsSocketProps = {}) => {
   const socketRef = useRef<Socket | null>(null)
   const queryClient = useQueryClient()
+  const [isConnected, setIsConnected] = useState(false)
+  const onNewComplaintRef = useRef(onNewComplaint)
+  onNewComplaintRef.current = onNewComplaint
+
+  const disconnect = useCallback(() => {
+    const s = socketRef.current as (Socket & { _odsCleanup?: () => void }) | null
+    if (s) {
+      s._odsCleanup?.()
+      s.disconnect()
+      socketRef.current = null
+    }
+    setIsConnected(false)
+  }, [])
 
   const connect = useCallback(() => {
     if (!enabled) return
 
-    // Используем правильные настройки подключения
+    disconnect()
+
+    // В dev через HTTP-туннели (CloudPub и т.п.) чистый WebSocket часто ломается
+    // («Invalid frame header»); long-polling идёт обычными GET/POST.
+    const isDev = process.env.NODE_ENV === "development"
+
     const socket = io(API_BASE_URL, {
-      transports: ["websocket", "polling"],
-      path: "/socket.io/", // Явно указываем путь
+      path: "/socket.io/",
       withCredentials: false,
+      ...(isDev
+        ? { transports: ["polling"], upgrade: false }
+        : { transports: ["websocket", "polling"] }),
     })
 
     socketRef.current = socket
 
-    socket.on("connect", () => {
-      console.log("✅ WebSocket connected")
+    const subscribe = () => {
+      socket.emit("subscribe_complaints", { sources, interval })
+    }
+
+    const detachNotifications = attachDashboardNotificationHandlers(socket, {
+      onNewComplaint: () => {
+        queryClient.invalidateQueries({ queryKey: complaintKeys.lists() })
+        onNewComplaintRef.current?.()
+      },
     })
 
-    socket.on("connection_status", (data) => {
-      console.log("📡 Connection status:", data)
+    const onConnect = () => {
+      setIsConnected(true)
+      subscribe()
+    }
 
-      // Подписываемся на обновления после подключения
-      socket.emit("subscribe_complaints", {
-        sources,
-        interval,
-      })
+    const onDisconnect = (reason: string) => {
+      setIsConnected(false)
+      console.log("Socket disconnected:", reason)
+    }
+
+    socket.on("connect", onConnect)
+    socket.on("disconnect", onDisconnect)
+    socket.on("connection_status", subscribe)
+    socket.on("subscription_status", () => {})
+    socket.on("error", (error: Error) => {
+      console.error("Socket connection error:", error)
     })
 
-    socket.on("subscription_status", (data) => {
-      console.log("📋 Subscription status:", data)
-    })
+    const cleanup = () => {
+      detachNotifications()
+      socket.off("connect", onConnect)
+      socket.off("disconnect", onDisconnect)
+      socket.off("connection_status", subscribe)
+      socket.off("subscription_status")
+      socket.off("error")
+    }
 
-    socket.on("new_complaint", (data) => {
-      console.log("🆕 New complaint received:", data)
-
-      // Инвалидируем кэш жалоб для принудительного обновления
-      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() }) // TODO: сделать оптимистик упдейт
-
-      // Показываем уведомление
-      if (Notification.permission === "granted") {
-        new Notification("Новая жалоба", {
-          body: `Поступила новая жалоба: ${data.name}`,
-          icon: "/notification-icon.png",
-        })
-      }
-    })
-
-    socket.on("disconnect", (reason) => {
-      console.log("❌ WebSocket disconnected:", reason)
-    })
-
-    socket.on("error", (error) => {
-      console.error("❌ WebSocket connection error:", error)
-    })
+    ;(socket as Socket & { _odsCleanup?: () => void })._odsCleanup = cleanup
 
     return socket
-  }, [enabled, sources, interval, queryClient])
-
-  const disconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.disconnect()
-      socketRef.current = null
-      console.log("🔌 WebSocket disconnected manually")
-    }
-  }, [])
+  }, [enabled, sources, interval, queryClient, disconnect])
 
   useEffect(() => {
-    if (enabled) {
-      const socket = connect()
-
-      return () => {
-        disconnect()
-      }
+    if (!enabled) {
+      disconnect()
+      return undefined
+    }
+    connect()
+    return () => {
+      disconnect()
     }
   }, [enabled, connect, disconnect])
 
-  // Функция для ручной отправки запроса на обновление
   const requestUpdate = useCallback(() => {
     if (socketRef.current?.connected) {
       socketRef.current.emit("request_update")
@@ -103,7 +117,7 @@ export const useComplaintsSocket = ({
   }, [])
 
   return {
-    isConnected: socketRef.current?.connected || false,
+    isConnected,
     requestUpdate,
     disconnect,
     connect: () => connect(),
