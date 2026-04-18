@@ -3,87 +3,115 @@ import { PaginatedData } from "../types"
 import {
   Complaint,
   ComplaintQueryParams,
+  ComplaintsAggregates,
+  ComplaintsByDatesParams,
+  ComplaintStatusEntry,
   CreateComplaintRequest,
+  UpdateComplaintRequest,
 } from "../types/complaint.type"
+import { normalizeComplaint, normalizeComplaintList } from "../utils/normalize-complaint"
 
 import {
   StatItem,
-  StatsQueryParams
+  StatsQueryParams,
 } from "@/lib/types/complaint-stats.type"
 
-/** @class Complaint API to interact with backend */
+function complaintsSearchParams(
+  params: ComplaintQueryParams,
+): Record<string, string | number> {
+  const searchParams: Record<string, string | number> = {}
+  if (params.page != null) searchParams.page = params.page
+  if (params.per_page != null) searchParams.per_page = params.per_page
+  if (params.q) searchParams.q = params.q
+  if (params.tags?.length) searchParams.tags = params.tags.join(",")
+  if (params.status?.length) searchParams.status = params.status.join(",")
+  if (params.label_ids?.length)
+    searchParams.label_ids = params.label_ids.join(",")
+  if (params.label_match) searchParams.label_match = params.label_match
+  if (params.exclude_label_ids?.length)
+    searchParams.exclude_label_ids = params.exclude_label_ids.join(",")
+  if (params.sort_by) searchParams.sort_by = params.sort_by
+  if (params.sort_order) searchParams.sort_order = params.sort_order
+  return searchParams
+}
+
+function normalizePaginated(raw: PaginatedData<unknown>): PaginatedData<Complaint> {
+  return {
+    ...raw,
+    data: normalizeComplaintList(raw.data),
+  }
+}
+
+/** REST client for the complaints resource. */
 export class ComplaintAPI {
   private static prefix = "complaints"
 
-  static async getAll(params: ComplaintQueryParams = {}) {
-    try {
-      const searchParams: Record<string, string | number> = {}
-      if (params.page != null) searchParams.page = params.page
-      if (params.per_page != null) searchParams.per_page = params.per_page
-      if (params.q) searchParams.q = params.q
-      if (params.tags?.length) searchParams.tags = params.tags.join(",")
-      if (params.sort_by) searchParams.sort_by = params.sort_by
-      if (params.sort_order) searchParams.sort_order = params.sort_order
-
-      const response = await api
-        .get(this.prefix, { searchParams })
-        .json<PaginatedData<Complaint>>()
-      return response
-    } catch (error) {
-      console.error("Error when retrieving complaints: ", error)
-      throw error
-    }
+  static getAll(params: ComplaintQueryParams = {}) {
+    return api
+      .get(this.prefix, { searchParams: complaintsSearchParams(params) })
+      .json<PaginatedData<unknown>>()
+      .then(normalizePaginated)
   }
 
-  static async getById(id: string) {
-    try {
-      const response = await api.get(`${this.prefix}/${id}`).json<Complaint>()
-      return response
-    } catch (error) {
-      console.error("Error when retrieving complaint: ", error)
-      throw error
-    }
+  static async getByDateRange(params: ComplaintsByDatesParams) {
+    const { start_date, end_date, ...rest } = params
+    const response = await api
+      .get(`${this.prefix}/by_dates`, {
+        searchParams: { ...complaintsSearchParams(rest), start_date, end_date },
+      })
+      .json<PaginatedData<unknown> & { date_range?: unknown }>()
+    return { ...normalizePaginated(response), date_range: response.date_range }
   }
 
-  /** GET /complaints/source/{vk|email}. Путь `telegram_bot` на бэкенде даёт 400. */
+  static getStatuses() {
+    return api.get(`${this.prefix}/statuses`).json<ComplaintStatusEntry[]>()
+  }
+
+  static getAggregates() {
+    return api.get(`${this.prefix}/aggregates`).json<ComplaintsAggregates>()
+  }
+
+  static getById(id: string) {
+    return api
+      .get(`${this.prefix}/${id}`)
+      .json<unknown>()
+      .then(normalizeComplaint)
+  }
+
+  /** GET /complaints/source/{vk|email}. */
   static async getBySource(sourcePlatform: "vk" | "email") {
-    try {
-      const response = await api
-        .get(`${this.prefix}/source/${sourcePlatform}`)
-        .json<{
-          source: string
-          count: number
-          complaints: Complaint[]
-        }>()
-      return response
-    } catch (error) {
-      console.error("Error when retrieving complaints by source: ", error)
-      throw error
-    }
+    const response = await api
+      .get(`${this.prefix}/source/${sourcePlatform}`)
+      .json<{ source: string; count: number; complaints: unknown[] }>()
+    return { ...response, complaints: normalizeComplaintList(response.complaints) }
   }
 
   static async create(complaintData: CreateComplaintRequest) {
-    try {
-      const response = await api
-        .post("complaint", {
-          json: complaintData,
-        })
-        .json<Complaint>()
-      return response
-    } catch (error) {
-      console.error("Error when creating complaint: ", error)
-      throw error
+    const raw = await api
+      .post("complaint", { json: complaintData })
+      .json<Record<string, unknown>>()
+    // Backend returns { id, message } on 201 — fetch the full object
+    if (typeof raw.id === "number" && raw.name == null) {
+      return ComplaintAPI.getById(String(raw.id))
     }
+    return normalizeComplaint(raw)
+  }
+
+  /** PUT /complaint/:id — backend may return only { message, id }, not a full complaint. */
+  static update(id: string | number, body: UpdateComplaintRequest) {
+    return api.put(`complaint/${id}`, { json: body }).json<unknown>()
+  }
+
+  static async updateLabels(id: string | number, label_ids: number[]) {
+    const response = await api
+      .put(`complaint/${id}/labels`, { json: { label_ids } })
+      .json<{ message?: string; labels: Complaint["labels"] }>()
+    return { ...response, labels: response.labels ?? [] }
   }
 
   static async delete(id: string) {
-    try {
-      await api.delete(`complaint/${id}`)
-      return { success: true }
-    } catch (error) {
-      console.error("Error when deleting complaint: ", error)
-      throw error
-    }
+    await api.delete(`complaint/${id}`)
+    return { success: true }
   }
 }
 
@@ -93,6 +121,6 @@ export const ComplaintStatsApi = {
       .post("complaints/statistics", { json: params })
       .json<PaginatedData<StatItem>>()
 
-      return response;
+    return response
   },
 }
