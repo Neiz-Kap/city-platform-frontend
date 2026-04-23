@@ -1,7 +1,9 @@
-"use client";
+"use client"
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useState } from "react"
+
+import { shouldRetryRequest } from "@/lib/api/errors"
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -9,13 +11,20 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
+            gcTime: 10 * 60 * 1000,
+            refetchOnWindowFocus: false,
+            retry: (failureCount, error) =>
+              shouldRetryRequest(failureCount, error),
+            staleTime: 60 * 1000,
+          },
+          mutations: {
+            retry: false,
           },
         },
       }),
-  );
+  )
 
   return (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
+  )
 }

@@ -1,124 +1,67 @@
-import { api } from ".";
+import { api, apiRequest } from "."
 
-/** @class Monitoring API */
 export class MonitoringAPI {
-  // VK Monitoring
-  static async startVKMonitoring() {
-    try {
-      const response = await api.post("monitoring/vk/start").json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when starting VK monitoring: ", error);
-      throw error;
-    }
+  static startVKMonitoring() {
+    return apiRequest(api.post("monitoring/vk/start").json<unknown>())
   }
 
-  static async stopVKMonitoring() {
-    try {
-      const response = await api.post("monitoring/vk/stop").json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when stopping VK monitoring: ", error);
-      throw error;
-    }
+  static stopVKMonitoring() {
+    return apiRequest(api.post("monitoring/vk/stop").json<unknown>())
   }
 
-  static async getVKMonitoringStatus() {
-    try {
-      const response = await api.get("monitoring/vk/status").json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when getting VK monitoring status: ", error);
-      throw error;
-    }
+  static getVKMonitoringStatus() {
+    return apiRequest(api.get("monitoring/vk/status").json<unknown>())
   }
 
-  // Email Monitoring
-  static async createEmailMonitoring(config: {
-    name: string;
-    imap_server: string;
-    imap_port: number;
-    email: string;
-    password: string;
-    folder: string;
-    use_ssl: boolean;
-    check_interval: number;
+  static createEmailMonitoring(config: {
+    check_interval: number
+    email: string
+    folder: string
+    imap_port: number
+    imap_server: string
+    name: string
+    password: string
+    use_ssl: boolean
   }) {
-    try {
-      const response = await api
+    return apiRequest(
+      api
         .post("monitoring/email", {
           json: config,
         })
-        .json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when creating email monitoring: ", error);
-      throw error;
-    }
+        .json<unknown>(),
+    )
   }
 
-  static async startEmailMonitoring(id: string) {
-    try {
-      const response = await api
-        .post(`monitoring/email/${id}/start`)
-        .json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when starting email monitoring: ", error);
-      throw error;
-    }
+  static startEmailMonitoring(id: string) {
+    return apiRequest(api.post(`monitoring/email/${id}/start`).json<unknown>())
   }
 
-  static async stopEmailMonitoring(id: string) {
-    try {
-      const response = await api
-        .post(`monitoring/email/${id}/stop`)
-        .json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when stopping email monitoring: ", error);
-      throw error;
-    }
+  static stopEmailMonitoring(id: string) {
+    return apiRequest(api.post(`monitoring/email/${id}/stop`).json<unknown>())
   }
 
-  static async updateEmailMonitoring(
+  static updateEmailMonitoring(
     id: string,
     update: {
-      check_interval?: number;
-      folder?: string;
+      check_interval?: number
+      folder?: string
     },
   ) {
-    try {
-      const response = await api
+    return apiRequest(
+      api
         .put(`monitoring/email/${id}`, {
           json: update,
         })
-        .json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when updating email monitoring: ", error);
-      throw error;
-    }
+        .json<unknown>(),
+    )
   }
 
   static async deleteEmailMonitoring(id: string) {
-    try {
-      await api.delete(`monitoring/email/${id}`);
-      return { success: true };
-    } catch (error) {
-      console.error("Error when deleting email monitoring: ", error);
-      throw error;
-    }
+    await apiRequest(api.delete(`monitoring/email/${id}`))
+    return { success: true }
   }
 
-  /** Агрегированный статус; в ответе больше нет блока `telegram_bots`. */
-  static async getMonitoringStatus() {
-    try {
-      const response = await api.get("monitoring/status").json<unknown>();
-      return response;
-    } catch (error) {
-      console.error("Error when getting monitoring status: ", error);
-      throw error;
-    }
+  static getMonitoringStatus() {
+    return apiRequest(api.get("monitoring/status").json<unknown>())
   }
 }

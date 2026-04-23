@@ -1,4 +1,4 @@
-import { api } from "."
+import { api, apiRequest } from "."
 import type {
   CreateLabelRequest,
   DashboardLabel,
@@ -16,27 +16,22 @@ export class LabelAPI {
     const searchParams: Record<string, string> = {}
     if (options?.with_counts) searchParams.with_counts = "1"
 
-    const response = await api
-      .get(this.prefix, { searchParams })
-      .json<DashboardLabel[]>()
-    return response
+    return apiRequest(
+      api.get(this.prefix, { searchParams }).json<DashboardLabel[]>(),
+    )
   }
 
   static async create(body: CreateLabelRequest) {
-    const response = await api
-      .post(this.prefix, { json: body })
-      .json<DashboardLabel>()
-    return response
+    return apiRequest(api.post(this.prefix, { json: body }).json<DashboardLabel>())
   }
 
   static async update(id: number, body: UpdateLabelRequest) {
-    const response = await api
-      .put(`${this.prefix}/${id}`, { json: body })
-      .json<DashboardLabel>()
-    return response
+    return apiRequest(
+      api.put(`${this.prefix}/${id}`, { json: body }).json<DashboardLabel>(),
+    )
   }
 
   static async delete(id: number) {
-    await api.delete(`${this.prefix}/${id}`)
+    await apiRequest(api.delete(`${this.prefix}/${id}`))
   }
 }

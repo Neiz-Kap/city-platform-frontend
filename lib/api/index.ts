@@ -1,17 +1,37 @@
-// import "@/app/envConfig"
 import ky from "ky"
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+import { normalizeApiError } from "./errors"
 
-// Create a configured ky instance
+const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim()
+
+if (!rawApiBaseUrl) {
+  throw new Error(
+    "NEXT_PUBLIC_API_BASE_URL is required to run the ODS City frontend.",
+  )
+}
+
+export const API_BASE_URL = rawApiBaseUrl.replace(/\/+$/, "")
+
 export const api = ky.create({
   prefixUrl: API_BASE_URL,
+  timeout: 15_000,
+  retry: 0,
   hooks: {
     beforeRequest: [
       (request) => {
-        // Add unknown default headers here if needed
-        request.headers.set("Content-Type", "application/json")
+        request.headers.set("Accept", "application/json")
+        if (!request.headers.has("Content-Type")) {
+          request.headers.set("Content-Type", "application/json")
+        }
       },
     ],
   },
 })
+
+export async function apiRequest<T>(request: Promise<T>) {
+  try {
+    return await request
+  } catch (error) {
+    throw await normalizeApiError(error)
+  }
+}

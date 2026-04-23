@@ -1,4 +1,4 @@
-import { api } from "."
+import { api, apiRequest } from "."
 import { PaginatedData } from "../types"
 import {
   Complaint,
@@ -42,85 +42,85 @@ function normalizePaginated(raw: PaginatedData<unknown>): PaginatedData<Complain
   }
 }
 
-/** REST client for the complaints resource. */
 export class ComplaintAPI {
   private static prefix = "complaints"
 
-  static getAll(params: ComplaintQueryParams = {}) {
-    return api
-      .get(this.prefix, { searchParams: complaintsSearchParams(params) })
-      .json<PaginatedData<unknown>>()
-      .then(normalizePaginated)
+  static async getAll(params: ComplaintQueryParams = {}) {
+    const response = await apiRequest(
+      api
+        .get(this.prefix, { searchParams: complaintsSearchParams(params) })
+        .json<PaginatedData<unknown>>(),
+    )
+    return normalizePaginated(response)
   }
 
   static async getByDateRange(params: ComplaintsByDatesParams) {
     const { start_date, end_date, ...rest } = params
-    const response = await api
-      .get(`${this.prefix}/by_dates`, {
-        searchParams: { ...complaintsSearchParams(rest), start_date, end_date },
-      })
-      .json<PaginatedData<unknown> & { date_range?: unknown }>()
+    const response = await apiRequest(
+      api
+        .get(`${this.prefix}/by_dates`, {
+          searchParams: { ...complaintsSearchParams(rest), start_date, end_date },
+        })
+        .json<PaginatedData<unknown> & { date_range?: unknown }>(),
+    )
     return { ...normalizePaginated(response), date_range: response.date_range }
   }
 
   static getStatuses() {
-    return api.get(`${this.prefix}/statuses`).json<ComplaintStatusEntry[]>()
+    return apiRequest(api.get(`${this.prefix}/statuses`).json<ComplaintStatusEntry[]>())
   }
 
   static getAggregates() {
-    return api.get(`${this.prefix}/aggregates`).json<ComplaintsAggregates>()
+    return apiRequest(api.get(`${this.prefix}/aggregates`).json<ComplaintsAggregates>())
   }
 
-  static getById(id: string) {
-    return api
-      .get(`${this.prefix}/${id}`)
-      .json<unknown>()
-      .then(normalizeComplaint)
+  static async getById(id: string) {
+    const response = await apiRequest(api.get(`${this.prefix}/${id}`).json<unknown>())
+    return normalizeComplaint(response)
   }
 
-  /** GET /complaints/source/{vk|email}. */
   static async getBySource(sourcePlatform: "vk" | "email") {
-    const response = await api
-      .get(`${this.prefix}/source/${sourcePlatform}`)
-      .json<{ source: string; count: number; complaints: unknown[] }>()
+    const response = await apiRequest(
+      api
+        .get(`${this.prefix}/source/${sourcePlatform}`)
+        .json<{ source: string; count: number; complaints: unknown[] }>(),
+    )
     return { ...response, complaints: normalizeComplaintList(response.complaints) }
   }
 
   static async create(complaintData: CreateComplaintRequest) {
-    const raw = await api
-      .post("complaint", { json: complaintData })
-      .json<Record<string, unknown>>()
-    // Backend returns { id, message } on 201 — fetch the full object
+    const raw = await apiRequest(
+      api.post("complaint", { json: complaintData }).json<Record<string, unknown>>(),
+    )
     if (typeof raw.id === "number" && raw.name == null) {
       return ComplaintAPI.getById(String(raw.id))
     }
     return normalizeComplaint(raw)
   }
 
-  /** PUT /complaint/:id — backend may return only { message, id }, not a full complaint. */
   static update(id: string | number, body: UpdateComplaintRequest) {
-    return api.put(`complaint/${id}`, { json: body }).json<unknown>()
+    return apiRequest(api.put(`complaint/${id}`, { json: body }).json<unknown>())
   }
 
   static async updateLabels(id: string | number, label_ids: number[]) {
-    const response = await api
-      .put(`complaint/${id}/labels`, { json: { label_ids } })
-      .json<{ message?: string; labels: Complaint["labels"] }>()
+    const response = await apiRequest(
+      api
+        .put(`complaint/${id}/labels`, { json: { label_ids } })
+        .json<{ message?: string; labels: Complaint["labels"] }>(),
+    )
     return { ...response, labels: response.labels ?? [] }
   }
 
   static async delete(id: string) {
-    await api.delete(`complaint/${id}`)
+    await apiRequest(api.delete(`complaint/${id}`))
     return { success: true }
   }
 }
 
 export const ComplaintStatsApi = {
   async getStats(params: StatsQueryParams) {
-    const response = await api
-      .post("complaints/statistics", { json: params })
-      .json<PaginatedData<StatItem>>()
-
-    return response
+    return apiRequest(
+      api.post("complaints/statistics", { json: params }).json<PaginatedData<StatItem>>(),
+    )
   },
 }
