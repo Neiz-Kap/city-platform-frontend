@@ -1,12 +1,14 @@
-import React, { ReactNode } from 'react';
-import { View, Text } from '@react-pdf/renderer';
+import React, { ReactNode } from "react"
+import type { Style } from "@react-pdf/types"
+import { View, Text } from "@react-pdf/renderer"
 import { commonStyles } from "./styles"
 
 export interface PdfTableColumn {
-  header: string;
-  flex?: number;
-  align?: 'left' | 'center' | 'right';
-  bold?: boolean;
+  header: string
+  flex?: number
+  align?: "left" | "center" | "right"
+  /** Жирный текст в ячейках тела (не заголовка) */
+  cellBold?: boolean
 }
 
 export type PdfTableCell = string | number | ReactNode;
@@ -16,9 +18,9 @@ export interface PdfTableRowStyle {
 }
 
 export interface PdfTableProps {
-  columns: PdfTableColumn[];
-  rows: PdfTableCell[][];
-  rowStyles?: PdfTableRowStyle[];
+  columns: PdfTableColumn[]
+  rows: PdfTableCell[][]
+  rowStyles?: PdfTableRowStyle[]
 }
 
 /**
@@ -30,41 +32,37 @@ export const PdfTable: React.FC<PdfTableProps> = ({
   rows,
   rowStyles = [],
 }) => {
-  const getCellStyle = (column: PdfTableColumn) => {
-    // Style array for react-pdf/renderer
-    // Note: react-pdf has complex style typing, using array composition pattern
-    const styles: any[] = [commonStyles.tableCell];
+  const getCellStyle = (column: PdfTableColumn, body?: boolean) => {
+    const styles: Style[] = [commonStyles.tableCell]
 
     if (column.flex) {
-      styles.push({ flex: column.flex });
+      styles.push({ flex: column.flex })
     }
 
-    if (column.align === 'center') {
-      styles.push(commonStyles.tableCellCenter);
-    } else if (column.align === 'right') {
-      styles.push(commonStyles.tableCellRight);
+    if (column.align === "center") {
+      styles.push(commonStyles.tableCellCenter)
+    } else if (column.align === "right") {
+      styles.push(commonStyles.tableCellRight)
     }
 
-    if (column.bold) {
-      styles.push(commonStyles.tableCellBold);
+    if (body && column.cellBold) {
+      styles.push(commonStyles.tableCellBold)
     }
 
-    return styles;
-  };
+    return styles
+  }
 
   const renderCell = (cell: PdfTableCell, column: PdfTableColumn) => {
-    // If cell is already a React element, render it directly
     if (React.isValidElement(cell)) {
-      return <View style={getCellStyle(column)}>{cell}</View>;
+      return <View style={getCellStyle(column, true)}>{cell}</View>
     }
 
-    // Otherwise render as text
     return (
-      <Text style={getCellStyle(column)}>
-        {cell === null || cell === undefined ? '' : String(cell)}
+      <Text style={getCellStyle(column, true)}>
+        {cell === null || cell === undefined ? "" : String(cell)}
       </Text>
-    );
-  };
+    )
+  }
 
   return (
     <View style={commonStyles.table}>
@@ -73,7 +71,7 @@ export const PdfTable: React.FC<PdfTableProps> = ({
         {columns.map((column, idx) => (
           <Text
             key={idx}
-            style={[...getCellStyle(column), commonStyles.tableCellBold]}
+            style={[...getCellStyle(column, false), commonStyles.tableCellBold]}
           >
             {column.header}
           </Text>

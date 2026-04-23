@@ -76,6 +76,80 @@ export const commonStyles = StyleSheet.create({
     marginBottom: 3,
     fontSize: 9,
   },
+  /** Одна горизонтальная полоса KPI-блоков */
+  kpiStrip: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  kpiChip: {
+    flex: 1,
+    marginHorizontal: 3,
+    paddingVertical: 15,
+    paddingHorizontal: 6,
+    minHeight: 52,
+    borderRadius: 8,
+    borderWidth: 2,
+    justifyContent: "center",
+  },
+  kpiChipText: {
+    fontSize: 7.5,
+    fontWeight: 700,
+    textAlign: "center",
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  brandTitle: {
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+  brandSubtitle: {
+    fontSize: 10,
+    color: "#64748b",
+    marginTop: 2,
+  },
+  subsectionTitle: {
+    fontSize: 11,
+    fontWeight: 700,
+    marginTop: 14,
+    marginBottom: 8,
+    color: "#374151",
+  },
+  statusGridRow: {
+    flexDirection: "row",
+    marginBottom: 7,
+  },
+  statusCard: {
+    width: "31%",
+    marginRight: "2.5%",
+    paddingVertical: 11,
+    paddingHorizontal: 8,
+    minHeight: 60,
+    borderRadius: 8,
+    borderWidth: 2,
+    justifyContent: "center",
+  },
+  statusCardTitle: {
+    fontSize: 8.5,
+    fontWeight: 700,
+    marginBottom: 5,
+    color: "#0f172a",
+  },
+  statusCardMetric: {
+    fontSize: 10,
+    fontWeight: 700,
+    color: "#0f172a",
+  },
+  statusCardAbs: {
+    fontSize: 7.5,
+    color: "#475569",
+    marginTop: 3,
+  },
   table: {
     marginTop: 8,
     borderWidth: 1,
@@ -89,12 +163,13 @@ export const commonStyles = StyleSheet.create({
     alignItems: "center",
   },
   tableHeader: {
-    backgroundColor: "#f3f4f6",
+    backgroundColor: "#e2e8f0",
+    fontWeight: 700,
   },
   tableCell: {
-    fontSize: 8,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
+    fontSize: 7,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
     flex: 1,
   },
   tableCellCenter: {
