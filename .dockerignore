@@ -1,0 +1,31 @@
+# Dependencies & caches
+node_modules
+.pnpm-store
+
+# Next.js
+.next
+out
+
+# Git & IDE
+.git
+.github
+.cursor
+.vscode
+
+# Env & local only
+.env
+.env.*
+!.env.example
+
+# Logs & misc
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.DS_Store
+coverage
+*.tsbuildinfo
+
+# Docs & tooling not needed for `next build`
+*.md
+.omx
+.backup
