@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
 
 import { attachDashboardNotificationHandlers } from "@/lib/notifications/dashboard-notifications"
@@ -14,6 +14,18 @@ interface UseComplaintsSocketProps {
   sources?: string[]
 }
 
+function shouldUsePollingOnly(apiBaseUrl: string) {
+  try {
+    const url = new URL(apiBaseUrl)
+    return (
+      process.env.NODE_ENV === "development" ||
+      ["localhost", "127.0.0.1"].includes(url.hostname)
+    )
+  } catch {
+    return process.env.NODE_ENV === "development"
+  }
+}
+
 export const useComplaintsSocket = ({
   enabled = true,
   sources = ["all"],
@@ -21,36 +33,33 @@ export const useComplaintsSocket = ({
   onNewComplaint,
 }: UseComplaintsSocketProps = {}) => {
   const socketRef = useRef<Socket | null>(null)
+  const connectRef = useRef<() => void>(() => {})
+  const disconnectRef = useRef<() => void>(() => {})
   const queryClient = useQueryClient()
   const [isConnected, setIsConnected] = useState(false)
   const onNewComplaintRef = useRef(onNewComplaint)
+  const sourcesKey = [...sources].sort().join("|")
+  const normalizedSources = useMemo(
+    () => (sourcesKey ? sourcesKey.split("|") : []),
+    [sourcesKey],
+  )
+  const usePollingOnly = useMemo(() => shouldUsePollingOnly(API_BASE_URL), [])
 
   useEffect(() => {
     onNewComplaintRef.current = onNewComplaint
   }, [onNewComplaint])
 
-  const disconnect = useCallback(() => {
-    const socket = socketRef.current as
-      | (Socket & { _odsCleanup?: () => void })
-      | null
-    if (socket) {
-      socket._odsCleanup?.()
-      socket.disconnect()
-      socketRef.current = null
+  useEffect(() => {
+    if (!enabled) {
+      disconnectRef.current()
+      return undefined
     }
-    setIsConnected(false)
-  }, [])
 
-  const connect = useCallback(() => {
-    if (!enabled) return
-
-    disconnect()
-
-    const isDev = process.env.NODE_ENV === "development"
     const socket = io(API_BASE_URL, {
       path: "/socket.io/",
+      reconnection: true,
       withCredentials: false,
-      ...(isDev
+      ...(usePollingOnly
         ? { transports: ["polling"], upgrade: false }
         : { transports: ["websocket", "polling"] }),
     })
@@ -58,7 +67,10 @@ export const useComplaintsSocket = ({
     socketRef.current = socket
 
     const subscribe = () => {
-      socket.emit("subscribe_complaints", { interval, sources })
+      socket.emit("subscribe_complaints", {
+        interval,
+        sources: normalizedSources,
+      })
     }
 
     const detachNotifications = attachDashboardNotificationHandlers(socket, {
@@ -84,35 +96,43 @@ export const useComplaintsSocket = ({
       console.error("Socket connection error:", error)
     }
 
-    socket.on("connect", onConnect)
-    socket.on("disconnect", onDisconnect)
-    socket.on("connection_status", subscribe)
-    socket.on("subscription_status", () => {})
-    socket.on("error", onError)
-
-    const cleanup = () => {
+    const disconnectCurrentSocket = () => {
       detachNotifications()
       socket.off("connect", onConnect)
       socket.off("disconnect", onDisconnect)
-      socket.off("connection_status", subscribe)
-      socket.off("subscription_status")
       socket.off("error", onError)
+      if (socketRef.current === socket) {
+        socketRef.current = null
+      }
+      socket.disconnect()
+      setIsConnected(false)
     }
 
-    ;(socket as Socket & { _odsCleanup?: () => void })._odsCleanup = cleanup
+    connectRef.current = () => {
+      if (!socket.connected) {
+        socket.connect()
+      }
+    }
+    disconnectRef.current = disconnectCurrentSocket
 
-    return socket
-  }, [enabled, disconnect, interval, queryClient, sources])
+    socket.on("connect", onConnect)
+    socket.on("disconnect", onDisconnect)
+    socket.on("error", onError)
 
-  useEffect(() => {
-    if (!enabled) return undefined
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    connect()
     return () => {
-      disconnect()
+      disconnectCurrentSocket()
+      connectRef.current = () => {}
+      disconnectRef.current = () => {}
     }
-  }, [enabled, connect, disconnect])
+  }, [enabled, interval, normalizedSources, queryClient, usePollingOnly])
+
+  const connect = useCallback(() => {
+    connectRef.current()
+  }, [])
+
+  const disconnect = useCallback(() => {
+    disconnectRef.current()
+  }, [])
 
   const requestUpdate = useCallback(() => {
     if (socketRef.current?.connected) {
@@ -123,7 +143,7 @@ export const useComplaintsSocket = ({
   }, [])
 
   return {
-    connect: () => connect(),
+    connect,
     disconnect,
     isConnected,
     requestUpdate,

@@ -1,20 +1,36 @@
 "use client"
 
-import { Complaint } from "@/lib/types/complaint.type"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ComplaintMetadata } from "./ComplaintMetadata"
-import { StatusBadge } from "./StatusBadge"
-import { DashboardLabelPicker } from "./DashboardLabelPicker"
+import { useState } from "react"
+import { toast } from "sonner"
+
+import { API_BASE_URL } from "@/lib/api"
 import {
   useUpdateComplaint,
   useUpdateComplaintLabels,
 } from "@/lib/hooks/useComplaints"
-import { toast } from "sonner"
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
-import { useEffect, useState } from "react"
+import { Complaint } from "@/lib/types/complaint.type"
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+import { ComplaintMetadata } from "./ComplaintMetadata"
+import { DashboardLabelPicker } from "./DashboardLabelPicker"
+import { StatusBadge } from "./StatusBadge"
 
 interface ComplaintContentProps {
   complaint: Complaint
+}
+
+function resolveMediaUrl(rawUrl?: string) {
+  if (!rawUrl) {
+    return undefined
+  }
+
+  try {
+    return new URL(rawUrl, `${API_BASE_URL}/`).toString()
+  } catch {
+    return rawUrl
+  }
 }
 
 export function ComplaintContent({ complaint }: ComplaintContentProps) {
@@ -41,15 +57,11 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
     )
   }
 
-  const mediaUrl = complaint.url || complaint.source_url
+  const mediaUrl = resolveMediaUrl(complaint.url || complaint.source_url)
   const busy = updateComplaint.isPending || updateLabels.isPending
-  const [imageFailed, setImageFailed] = useState(false)
+  const [failedMediaUrl, setFailedMediaUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    setImageFailed(false)
-  }, [mediaUrl])
-
-  const showImage = Boolean(mediaUrl) && !imageFailed
+  const showImage = Boolean(mediaUrl) && failedMediaUrl !== mediaUrl
 
   return (
     <div className="space-y-6">
@@ -71,11 +83,12 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
             <div className="lg:col-span-2 space-y-6">
               <div className="border rounded-lg p-6 bg-muted/50 min-h-64 flex items-center justify-center">
                 {showImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={mediaUrl}
                     alt="Изображение проблемы"
                     className="max-w-full h-auto rounded"
-                    onError={() => setImageFailed(true)}
+                    onError={() => setFailedMediaUrl(mediaUrl ?? null)}
                   />
                 ) : (
                   <p className="text-muted-foreground text-center text-sm px-4">

@@ -146,11 +146,12 @@ export default function ComplaintDataTable() {
   const bumpNewComplaints = useCallback(() => {
     setNewComplaintsCount((count) => count + 1)
   }, [])
+  const complaintSocketSources = useMemo(() => ["all"], [])
 
   const { isConnected, requestUpdate } = useComplaintsSocket({
     enabled: notificationsEnabled,
     onNewComplaint: bumpNewComplaints,
-    sources: ["all"],
+    sources: complaintSocketSources,
   })
 
   const updateComplaint = useUpdateComplaint()

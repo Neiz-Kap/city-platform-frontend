@@ -1,49 +1,89 @@
 "use client"
 
+import Link from "next/link"
+import { notFound, useParams, useRouter } from "next/navigation"
+
 import { ComplaintContent } from "@/components/entities/complaint/ComplaintContent"
 import { ComplaintDetailSkeleton } from "@/components/entities/complaint/ComplaintDetailSkeleton"
 import { Button } from "@/components/ui/button"
+import { ApiError, getErrorMessage } from "@/lib/api/errors"
 import { useComplaint } from "@/lib/hooks/useComplaints"
 import { ArrowLeft } from "lucide-react"
-import { notFound, useRouter } from "next/navigation"
-import { use } from "react"
 
-interface Props {
-  params: Promise<{
-    complaintId: string
-  }>
-}
-
-export default function ComplaintDetailPage({ params }: Props) {
-  const { complaintId } = use(params)
-  console.debug(`complaintId: ${complaintId}`)
+export default function ComplaintDetailPage() {
+  const { complaintId } = useParams<{ complaintId: string }>()
   const router = useRouter()
+  const {
+    data: complaint,
+    error,
+    isLoading,
+    isRefetching,
+    refetch,
+  } = useComplaint(complaintId)
 
-  // useComplaint автоматически проверяет кэш и делает запрос на сервер
-  const { data: complaint, isLoading, error } = useComplaint(complaintId)
-
-  if (error) {
-    notFound()
-  }
-
-  // Показываем skeleton только если данных нет в кэше
   if (isLoading && !complaint) {
     return <ComplaintDetailSkeleton />
   }
 
-  // Если данные есть в кэше, показываем сразу (фоновое обновление идет параллельно)
+  if (error instanceof ApiError && error.status === 404 && !complaint) {
+    notFound()
+  }
+
+  if (error && !complaint) {
+    return (
+      <div className="container mx-auto max-w-7xl px-4 py-8">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              router.back()
+              return
+            }
+
+            router.push("/dashboard/nlp")
+          }}
+          className="mb-6"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Назад
+        </Button>
+
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
+          <p className="font-medium">Не удалось открыть карточку жалобы.</p>
+          <p className="mt-2 text-destructive/80">
+            {getErrorMessage(error, "Попробуйте обновить страницу или повторить попытку позже.")}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button onClick={() => void refetch()} disabled={isRefetching}>
+              {isRefetching ? "Повторяем запрос…" : "Повторить"}
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/nlp">К списку жалоб</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!complaint) {
-    console.warn(`complaint not found: ${complaintId}`)
     notFound()
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
-      {/* Breadcrumb */}
+    <div className="container mx-auto max-w-7xl px-4 py-8">
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => router.back()}
+        onClick={() => {
+          if (typeof window !== "undefined" && window.history.length > 1) {
+            router.back()
+            return
+          }
+
+          router.push("/dashboard/nlp")
+        }}
         className="mb-6"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
