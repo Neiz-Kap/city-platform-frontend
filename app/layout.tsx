@@ -10,7 +10,7 @@ import "./globals.css"
 
 import { ActiveThemeProvider } from "@/components/active-theme"
 import { Toaster } from "@/components/ui/sonner"
-import { DEFAULT_THEME } from "@/lib/themes"
+import { DEFAULT_THEME, type ThemeType } from "@/lib/themes"
 import Providers from "./providers"
 
 export default async function RootLayout({
@@ -21,18 +21,18 @@ export default async function RootLayout({
   const cookieStore = await cookies()
   const themeSettings = {
     preset: (cookieStore.get("theme_preset")?.value ??
-      DEFAULT_THEME.preset) as any,
+      DEFAULT_THEME.preset) as ThemeType["preset"],
     scale: (cookieStore.get("theme_scale")?.value ??
-      DEFAULT_THEME.scale) as any,
+      DEFAULT_THEME.scale) as ThemeType["scale"],
     radius: (cookieStore.get("theme_radius")?.value ??
-      DEFAULT_THEME.radius) as any,
+      DEFAULT_THEME.radius) as ThemeType["radius"],
     contentLayout: (cookieStore.get("theme_content_layout")?.value ??
-      DEFAULT_THEME.contentLayout) as any,
+      DEFAULT_THEME.contentLayout) as ThemeType["contentLayout"],
   }
 
   const bodyAttributes = Object.fromEntries(
     Object.entries(themeSettings)
-      .filter(([_, value]) => value)
+      .filter(([, value]) => value)
       .map(([key, value]) => [
         `data-theme-${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`,
         value,

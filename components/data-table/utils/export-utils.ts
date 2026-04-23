@@ -4,7 +4,35 @@ import ExcelJS from "exceljs";
 
 // Generic type for exportable data - should have string keys and values that can be converted to string
 // Allow arrays for hierarchical data (subRows)
-export type ExportableData = Record<string, string | number | boolean | null | undefined | any[]>;
+export type ExportableData = Record<
+  string,
+  string | number | boolean | Date | null | undefined | unknown[]
+>;
+
+type ExportCellValue = string | number | boolean | Date | null;
+
+function normalizeExportValue(value: unknown): ExportCellValue {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    value instanceof Date
+  ) {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeExportValue(item))
+      .join(", ");
+  }
+
+  return JSON.stringify(value);
+}
 
 /**
  * Flatten hierarchical data for export
@@ -18,15 +46,17 @@ export function flattenHierarchicalData<T extends ExportableData>(
 
   const flatten = (items: T[], depth: number = 0) => {
     items.forEach((item) => {
-      const { [subRowsField]: subRows, ...itemData } = item as any;
+      const subRows = item[subRowsField as keyof T];
+      const itemData: Partial<T> = { ...item };
+      delete itemData[subRowsField as keyof T];
       flattened.push(
         includeDepth
-          ? ({ ...itemData, _depth: depth } as T)
+          ? ({ ...itemData, _depth: depth } as unknown as T)
           : (itemData as T)
       );
 
       if (subRows && Array.isArray(subRows) && subRows.length > 0) {
-        flatten(subRows, depth + 1);
+        flatten(subRows as T[], depth + 1);
       }
     });
   };
@@ -43,7 +73,8 @@ export function exportParentRowsOnly<T extends ExportableData>(
   subRowsField: string = 'subRows'
 ): T[] {
   return data.map((item) => {
-    const { [subRowsField]: _, ...parentData } = item as any;
+    const parentData: Partial<T> = { ...item };
+    delete parentData[subRowsField as keyof T];
     return parentData as T;
   });
 }
@@ -92,7 +123,7 @@ function convertToCSV<T extends ExportableData>(
       const value = transformedItem[header];
 
       // Convert all values to string and properly escape for CSV
-      const cellValue = value === null || value === undefined ? "" : String(value);
+      const cellValue = String(normalizeExportValue(value));
       // Escape quotes and wrap in quotes if contains comma
       const escapedValue = cellValue.includes(",") || cellValue.includes('"')
         ? `"${cellValue.replace(/"/g, '""')}"`
@@ -206,10 +237,10 @@ export async function exportToExcel<T extends ExportableData>(
     data.forEach(item => {
       const transformedItem = transformFunction ? transformFunction(item) : item;
 
-      const row: Record<string, any> = {};
+      const row: Record<string, ExportCellValue> = {};
       for (const key of columnsToExport) {
         if (key in transformedItem) {
-          row[key] = transformedItem[key];
+          row[key] = normalizeExportValue(transformedItem[key]);
         }
       }
       worksheet.addRow(row);

@@ -7,8 +7,9 @@ import {
   Settings,
   Undo2
 } from "lucide-react"
+import type { ReadonlyURLSearchParams } from "next/navigation"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { CalendarDatePicker } from "@/components/calendar-date-picker"
 import { Button } from "@/components/ui/button"
@@ -28,6 +29,29 @@ import type {
 import type { TableConfig } from "./utils/table-config"
 import { parseDateFromUrl } from "./utils/url-state"
 import { DataTableViewOptions } from "./view-options"
+
+function getDatesFromSearchParams(searchParams: URLSearchParams | ReadonlyURLSearchParams): {
+  from: Date | undefined
+  to: Date | undefined
+} {
+  const dateRangeParam = searchParams.get("dateRange")
+
+  if (!dateRangeParam) {
+    return { from: undefined, to: undefined }
+  }
+
+  try {
+    const parsed = JSON.parse(dateRangeParam)
+
+    return {
+      from: parsed?.from_date ? parseDateFromUrl(parsed.from_date) : undefined,
+      to: parsed?.to_date ? parseDateFromUrl(parsed.to_date) : undefined,
+    }
+  } catch (error) {
+    console.warn("Error parsing dateRange from URL:", error)
+    return { from: undefined, to: undefined }
+  }
+}
 
 // Helper functions for component sizing
 const getInputSizeClass = (size: "sm" | "default" | "lg") => {
@@ -129,105 +153,30 @@ export function DataTableToolbar<TData extends ExportableData>({
   )
 
   // Track if the search is being updated locally
-  const isLocallyUpdatingSearch = useRef(false)
-
-  // Update local search when URL param changes
-  useEffect(() => {
-    // Skip if local update is in progress
-    if (isLocallyUpdatingSearch.current) {
-      return
-    }
-
-    const searchFromUrl = searchParams.get("search") || ""
-    const decodedSearchFromUrl = searchFromUrl
-      ? decodeURIComponent(searchFromUrl)
-      : ""
-
-    if (decodedSearchFromUrl !== localSearch) {
-      setLocalSearch(decodedSearchFromUrl)
-    }
-  }, [searchParams, localSearch])
+  const [isLocallyUpdatingSearch, setIsLocallyUpdatingSearch] = useState(false)
 
   const tableSearch = (table.getState().globalFilter as string) || ""
-  // Also update local search when table globalFilter changes
-  useEffect(() => {
-    // Skip if local update is in progress
-    if (isLocallyUpdatingSearch.current) {
-      return
-    }
+  const resolvedSearch = decodedSearchParam || tableSearch
+  const searchValue = isLocallyUpdatingSearch ? localSearch : resolvedSearch
 
-    if (tableSearch !== localSearch && tableSearch !== "") {
-      setLocalSearch(tableSearch)
-    }
-  }, [tableSearch, localSearch])
-
-  // Reference to track if we're currently updating dates
-  const isUpdatingDates = useRef(false)
-
-  // Reference to track the last set date values to prevent updates with equal values
-  const lastSetDates = useRef<{
-    from: Date | undefined
-    to: Date | undefined
-  }>({ from: undefined, to: undefined })
-
-  // Memoize the getInitialDates function to prevent unnecessary recreations
-  const getInitialDates = useCallback((): {
-    from: Date | undefined
-    to: Date | undefined
-  } => {
-    // If we're in the middle of an update, don't parse from URL to avoid cycles
-    if (isUpdatingDates.current) {
-      return lastSetDates.current
-    }
-
-    const dateRangeParam = searchParams.get("dateRange")
-    if (dateRangeParam) {
-      try {
-        const parsed = JSON.parse(dateRangeParam)
-
-        // Parse dates from URL param
-        const fromDate = parsed?.from_date
-          ? parseDateFromUrl(parsed.from_date)
-          : undefined
-        const toDate = parsed?.to_date
-          ? parseDateFromUrl(parsed.to_date)
-          : undefined
-
-        // Cache these values
-        lastSetDates.current = { from: fromDate, to: toDate }
-
-        return {
-          from: fromDate,
-          to: toDate,
-        }
-      } catch (e) {
-        console.warn("Error parsing dateRange from URL:", e)
-        return { from: undefined, to: undefined }
-      }
-    }
-    return { from: undefined, to: undefined }
-  }, [searchParams])
-
-  // Initial state with date values from URL
+  const urlDates = useMemo(() => getDatesFromSearchParams(searchParams), [searchParams])
   const [dates, setDates] = useState<{
     from: Date | undefined
     to: Date | undefined
-  }>(getInitialDates())
+  }>(urlDates)
 
   // Track if user has explicitly changed dates
-  const [datesModified, setDatesModified] = useState(!!dates.from || !!dates.to)
-
-  // Load initial date range from URL params only once on component mount
-  useEffect(() => {
-    const initialDates = getInitialDates()
-    if (initialDates.from || initialDates.to) {
-      setDates(initialDates)
-      setDatesModified(true)
-    }
-  }, [getInitialDates]) // Include memoized function as dependency
+  const [datesModified, setDatesModified] = useState(
+    !!urlDates.from || !!urlDates.to,
+  )
+  const [isUpdatingDates, setIsUpdatingDates] = useState(false)
+  const activeDates = isUpdatingDates ? dates : urlDates
+  const activeDatesModified = isUpdatingDates
+    ? datesModified
+    : !!(urlDates.from || urlDates.to)
 
   // Determine if any filters are active
-  const isFiltered = tableFiltered || !!localSearch || datesModified
+  const isFiltered = tableFiltered || !!searchValue || activeDatesModified
 
   // Create a ref to store the debounce timer
   const searchDebounceTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -247,7 +196,7 @@ export function DataTableToolbar<TData extends ExportableData>({
     const value = e.target.value
 
     // Mark that search is being updated locally
-    isLocallyUpdatingSearch.current = true
+    setIsLocallyUpdatingSearch(true)
     setLocalSearch(value)
 
     // Clear any existing timer to prevent race conditions
@@ -265,51 +214,23 @@ export function DataTableToolbar<TData extends ExportableData>({
       // Reset the local update flag after a short delay
       // This ensures URL changes don't override the input immediately
       setTimeout(() => {
-        isLocallyUpdatingSearch.current = false
+        setIsLocallyUpdatingSearch(false)
       }, 100)
     }, 500)
   }
-
-  // Listen for URL parameter changes and update local state if needed
-  useEffect(() => {
-    // Skip this effect if we're currently updating the dates ourselves
-    if (isUpdatingDates.current) {
-      return
-    }
-
-    const newDates = getInitialDates()
-
-    // Check if dates have actually changed to avoid unnecessary updates
-    const hasFromChanged =
-      (newDates.from && !dates.from) ||
-      (!newDates.from && dates.from) ||
-      (newDates.from &&
-        dates.from &&
-        newDates.from.getTime() !== dates.from.getTime())
-
-    const hasToChanged =
-      (newDates.to && !dates.to) ||
-      (!newDates.to && dates.to) ||
-      (newDates.to && dates.to && newDates.to.getTime() !== dates.to.getTime())
-
-    if (hasFromChanged || hasToChanged) {
-      setDates(newDates)
-      setDatesModified(!!(newDates.from || newDates.to))
-    }
-  }, [dates, getInitialDates])
 
   // Handle date selection for filtering
   const handleDateSelect = ({ from, to }: { from: Date; to: Date }) => {
     // Compare with previous dates to avoid unnecessary updates
     const hasFromChanged =
-      (from && !dates.from) ||
-      (!from && dates.from) ||
-      (from && dates.from && from.getTime() !== dates.from.getTime())
+      (from && !activeDates.from) ||
+      (!from && activeDates.from) ||
+      (from && activeDates.from && from.getTime() !== activeDates.from.getTime())
 
     const hasToChanged =
-      (to && !dates.to) ||
-      (!to && dates.to) ||
-      (to && dates.to && to.getTime() !== dates.to.getTime())
+      (to && !activeDates.to) ||
+      (!to && activeDates.to) ||
+      (to && activeDates.to && to.getTime() !== activeDates.to.getTime())
 
     // Only update if dates have actually changed
     if (!hasFromChanged && !hasToChanged) {
@@ -317,12 +238,11 @@ export function DataTableToolbar<TData extends ExportableData>({
     }
 
     // Set flag to prevent update loops
-    isUpdatingDates.current = true
+    setIsUpdatingDates(true)
 
     // Update internal state
     setDates({ from, to })
     setDatesModified(true)
-    lastSetDates.current = { from, to }
 
     // Convert dates to strings in YYYY-MM-DD format for the API
     setDateRange({
@@ -332,7 +252,7 @@ export function DataTableToolbar<TData extends ExportableData>({
 
     // Reset the updating flag after a delay
     setTimeout(() => {
-      isUpdatingDates.current = false
+      setIsUpdatingDates(false)
     }, 100)
   }
 
@@ -343,9 +263,11 @@ export function DataTableToolbar<TData extends ExportableData>({
 
     // Reset search
     setLocalSearch("")
+    setIsLocallyUpdatingSearch(true)
     setSearch("")
 
     // Reset dates to undefined (no filter)
+    setIsUpdatingDates(true)
     setDates({
       from: undefined,
       to: undefined,
@@ -360,6 +282,11 @@ export function DataTableToolbar<TData extends ExportableData>({
     if (config.enableUrlState) {
       resetUrlState(router, pathname)
     }
+
+    setTimeout(() => {
+      setIsLocallyUpdatingSearch(false)
+      setIsUpdatingDates(false)
+    }, 100)
   }
 
   // Get selected items data for export - this is now just for the UI indication
@@ -378,7 +305,7 @@ export function DataTableToolbar<TData extends ExportableData>({
         {config.enableSearch && (
           <Input
             placeholder={config.searchPlaceholder || `Search ${entityName}...`}
-            value={localSearch}
+            value={searchValue}
             onChange={handleSearchChange}
             className={`w-[150px] lg:w-[250px] ${getInputSizeClass(
               config.size,
@@ -390,8 +317,8 @@ export function DataTableToolbar<TData extends ExportableData>({
           <div className="flex items-center">
             <CalendarDatePicker
               date={{
-                from: dates.from,
-                to: dates.to,
+                from: activeDates.from,
+                to: activeDates.to,
               }}
               onDateSelect={handleDateSelect}
               className={`w-fit cursor-pointer ${getInputSizeClass(

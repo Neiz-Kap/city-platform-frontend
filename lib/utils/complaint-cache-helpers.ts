@@ -32,7 +32,7 @@ export function patchAggregatesAfterComplaintUpdate(
 ): ComplaintsAggregates | undefined {
   if (!agg) return agg
 
-  let counts_by_status = { ...agg.counts_by_status }
+  const counts_by_status = { ...agg.counts_by_status }
   if (prev.status !== next.status) {
     counts_by_status[prev.status] = Math.max(
       0,

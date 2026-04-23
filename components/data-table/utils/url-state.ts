@@ -135,7 +135,11 @@ export function useUrlState<T>(
   }, [searchParams, key, deserialize, defaultValue]);
 
   // State to store the current value
-  const [value, setValue] = useState<T>(getValueFromUrl);
+  const [localRenderVersion, setLocalRenderVersion] = useState(0);
+  const value = useMemo(
+    () => getValueFromUrl(),
+    [getValueFromUrl, localRenderVersion]
+  );
 
   // Track the previous search params to avoid unnecessary updates
   const prevSearchParamsRef = useRef<URLSearchParams | null>(null);
@@ -149,14 +153,6 @@ export function useUrlState<T>(
       return a === b;
     };
   }, []);
-
-  // Keep a ref to track the current value to avoid dependency on the state variable
-  const currentValueRef = useRef<T>(value);
-  
-  // Update currentValueRef whenever value changes
-  useEffect(() => {
-    currentValueRef.current = value;
-  }, [value]);
 
   // Update state when URL changes, but only if we're not the ones changing it
   useEffect(() => {
@@ -179,25 +175,17 @@ export function useUrlState<T>(
     const newParams = new URLSearchParams(searchParamsString);
     prevSearchParamsRef.current = newParams;
 
-    // Get the new value and update if different
     const newValue = getValueFromUrl();
 
-    // Check if this is a value we just set ourselves
-    // Using refs to track state without creating dependencies
     if (
-      !areEqual(lastSetValue.current, newValue) && 
-      !areEqual(currentValueRef.current, newValue)
-    ) {
-      // Prevent immediate re-triggering of this effect due to state update
-      lastSetValue.current = newValue;
-      setValue(newValue);
-    } else if (
       batchUpdateState.pendingUpdates.has(key) &&
       areEqual(batchUpdateState.pendingUpdates.get(key)?.value as unknown as T, newValue)
     ) {
       // If our pending update has been applied, we can remove it from the map
       batchUpdateState.pendingUpdates.delete(key);
     }
+
+    lastSetValue.current = newValue;
   }, [searchParams, getValueFromUrl, key, areEqual]); // No dependency on value
 
   // Synchronously update URL now instead of waiting
@@ -246,8 +234,8 @@ export function useUrlState<T>(
         areEqual: areEqual as (a: unknown, b: unknown) => boolean,
       });
 
-      // Set state locally first for immediate UI response
-      setValue(resolvedValue);
+      // Force a local re-render first for immediate UI response
+      setLocalRenderVersion((version) => version + 1);
 
       // Set flag to prevent recursive updates
       isUpdatingUrl.current = true;

@@ -39,7 +39,9 @@ interface DataTableExportProps<TData extends ExportableData> {
   exportType?: "csv" | "excel";
   buttonText?: string;
   // Subrow props
-  subRowsConfig?: any;
+  subRowsConfig?: {
+    enabled: boolean;
+  };
   getSelectedParentRows?: () => Promise<TData[]>;
   getSelectedSubRows?: () => Promise<TData[]>;
   parentCount?: number;

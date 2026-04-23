@@ -15,7 +15,7 @@ import {
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
 import { ArrowLeft, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 const DEFAULT_COLOR = "#6B7280"
@@ -25,11 +25,6 @@ function LabelRow({ label }: { label: DashboardLabel }) {
   const [color, setColor] = useState(label.color)
   const updateLabel = useUpdateLabel()
   const deleteLabel = useDeleteLabel()
-
-  useEffect(() => {
-    setName(label.name)
-    setColor(label.color)
-  }, [label.name, label.color])
 
   const busy = updateLabel.isPending || deleteLabel.isPending
 
@@ -205,7 +200,7 @@ export default function LabelsPage() {
       ) : (
         <div className="space-y-4">
           {labels.map((l) => (
-            <LabelRow key={l.id} label={l} />
+            <LabelRow key={`${l.id}-${l.name}-${l.color}`} label={l} />
           ))}
         </div>
       )}
