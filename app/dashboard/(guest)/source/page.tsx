@@ -1,5 +1,10 @@
 "use client"
 
+import dynamic from "next/dynamic"
+import { MoreHorizontal, Trash2 } from "lucide-react"
+import { useState } from "react"
+import { toast } from "sonner"
+
 import {
   Accordion,
   AccordionContent,
@@ -14,13 +19,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Switch } from "@/components/ui/switch"
+import { getErrorMessage } from "@/lib/api/errors"
 import { useSourceManagement } from "@/lib/hooks/useSourceManagement"
-import { PlatformGroup, PlatformSource } from "@/lib/types/complaint.type"
-import { MoreHorizontal, Trash2 } from "lucide-react"
-import { useState } from "react"
-import { toast } from "sonner"
+import { PlatformGroup, PlatformSource, SourcePlatform } from "@/lib/types/complaint.type"
 
-// Lazy loading модальных окон
 const VkDialog = dynamic(() => import("@/components/modals/create-vk-modal"), {
   ssr: false,
 })
@@ -29,27 +31,28 @@ const EmailDialog = dynamic(
   { ssr: false },
 )
 
-import dynamic from "next/dynamic"
+interface PlatformCardActions {
+  deleteGroup: (group: PlatformGroup) => void
+  isBusy: boolean
+  toggleAllGroups: (platform: SourcePlatform, enabled: boolean, label: string) => void
+  toggleGroup: (platform: SourcePlatform, id: string, enabled: boolean, groupName: string) => void
+}
 
 interface GroupItemProps {
   group: PlatformGroup
+  isBusy: boolean
   onDelete: (group: PlatformGroup) => void
   onToggle: (id: string, enabled: boolean) => void
 }
 
-function GroupItem(props: GroupItemProps) {
-  const { group, onDelete, onToggle } = props
-
+function GroupItem({ group, isBusy, onDelete, onToggle }: GroupItemProps) {
   return (
-    <li
-      key={group.id}
-      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-    >
+    <li className="flex items-center justify-between rounded bg-gray-50 p-3 transition hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700">
       <span className="flex-1 truncate">{group.name}</span>
-      <div className="flex items-center gap-2 ml-4">
+      <div className="ml-4 flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8" disabled={isBusy}>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -57,8 +60,9 @@ function GroupItem(props: GroupItemProps) {
             <DropdownMenuItem
               className="text-red-600 focus:text-red-600"
               onClick={() => onDelete(group)}
+              disabled={isBusy}
             >
-              <Trash2 className="h-4 w-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               Удалить
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -67,95 +71,35 @@ function GroupItem(props: GroupItemProps) {
           checked={group.enabled}
           onCheckedChange={(checked) => onToggle(group.id, checked)}
           aria-label={`Включить группу ${group.name}`}
+          disabled={isBusy}
         />
       </div>
     </li>
   )
 }
 
-// Компонент для платформы
-function PlatformCard({ platform }: { platform: PlatformSource }) {
-  const { updateGroupStatus, deleteGroup, updateAllGroupsStatus } =
-    useSourceManagement()
-
+function PlatformCard({
+  platform,
+  actions,
+}: {
+  actions: PlatformCardActions
+  platform: PlatformSource
+}) {
   const [vkDialogOpen, setVkDialogOpen] = useState(false)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
-  const handleDelete = (group: PlatformGroup) => {
-    deleteGroup(
-      { id: group.id, platform: group.platform },
-      {
-        onSuccess: () => {
-          toast.success(`Группа "${group.name}" успешно удалена.`)
-        },
-        onError: () => {
-          toast.error("Не удалось удалить группу.")
-        },
-      },
-    )
-  }
-
-  const handleToggle = (id: string, enabled: boolean) => {
-    updateGroupStatus(
-      { platform: platform.platform, id, enabled },
-      {
-        onSuccess: () => {
-          toast.success(
-            `Группа "${platform.groups.find((g) => g.id === id)?.name}" ${
-              enabled ? "включена" : "выключена"
-            }`,
-          )
-        },
-        onError: () => {
-          toast.error(
-            `Не удалось ${enabled ? "включить" : "выключить"} группу "${
-              platform.groups.find((g) => g.id === id)?.name
-            }"`,
-          )
-        },
-      },
-    )
-  }
-
-  const handleToggleAll = (enabled: boolean) => {
-    updateAllGroupsStatus(
-      { platform: platform.platform, enabled },
-      {
-        onSuccess: () => {
-          toast.success(
-            `Все группы ${platform.label} ${
-              enabled ? "включены" : "выключены"
-            }`,
-          )
-        },
-        onError: () => {
-          toast.error(
-            `Не удалось ${enabled ? "включить" : "выключить"} все группы ${
-              platform.label
-            }`,
-          )
-        },
-      },
-    )
-  }
-
-  // Определяем кнопку добавления в зависимости от платформы
   const getAddButton = () => {
     switch (platform.platform) {
       case "vk":
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setVkDialogOpen(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setVkDialogOpen(true)}>
             Добавить источник
           </Button>
         )
       case "email":
         return (
-          <Button variant="outline" size="sm" disabled>
-            Создать почтовый сервер
+          <Button variant="outline" size="sm" onClick={() => setEmailDialogOpen(true)}>
+            Добавить почту
           </Button>
         )
       default:
@@ -168,22 +112,25 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
       type="single"
       collapsible
       key={platform.platform}
-      className="mb-4 border rounded-lg overflow-hidden"
+      className="mb-4 overflow-hidden rounded-lg border"
     >
       <AccordionItem value={platform.platform}>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b">
-          <AccordionTrigger className="flex-1 text-lg font-medium hover:no-underline text-left pb-0">
+        <div className="flex flex-col items-start justify-between border-b p-4 sm:flex-row sm:items-center">
+          <AccordionTrigger className="flex-1 pb-0 text-left text-lg font-medium hover:no-underline">
             {platform.label}
           </AccordionTrigger>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-2 sm:mt-0 sm:gap-4">
+          <div className="mt-2 flex flex-col items-start gap-2 sm:mt-0 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400 mr-2 whitespace-nowrap">
+              <span className="mr-2 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                 Все группы
               </span>
               <Switch
                 checked={platform.allEnabled}
-                onCheckedChange={handleToggleAll}
+                onCheckedChange={(enabled) =>
+                  actions.toggleAllGroups(platform.platform, enabled, platform.label)
+                }
                 aria-label={`Включить все группы ${platform.label}`}
+                disabled={actions.isBusy}
               />
             </div>
             {getAddButton()}
@@ -192,7 +139,7 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
         <AccordionContent>
           <ul className="space-y-2 p-2">
             {platform.groups.length === 0 ? (
-              <li className="text-sm text-gray-500 dark:text-gray-400 py-2 text-center">
+              <li className="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 Нет подключённых групп
               </li>
             ) : (
@@ -200,8 +147,11 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
                 <GroupItem
                   key={group.id}
                   group={group}
-                  onDelete={handleDelete}
-                  onToggle={handleToggle}
+                  isBusy={actions.isBusy}
+                  onDelete={actions.deleteGroup}
+                  onToggle={(id, enabled) =>
+                    actions.toggleGroup(platform.platform, id, enabled, group.name)
+                  }
                 />
               ))
             )}
@@ -209,27 +159,144 @@ function PlatformCard({ platform }: { platform: PlatformSource }) {
         </AccordionContent>
       </AccordionItem>
 
-      {/* Модальные окна */}
       <VkDialog open={vkDialogOpen} onOpenChange={setVkDialogOpen} />
       <EmailDialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen} />
     </Accordion>
   )
 }
 
-export default function PlatformSourcePage() {
-  const { sources, isLoading } = useSourceManagement()
+function SourceSkeleton() {
+  return (
+    <div className="space-y-4">
+      {[1, 2].map((item) => (
+        <div key={item} className="h-28 animate-pulse rounded-lg border bg-muted/40" />
+      ))}
+    </div>
+  )
+}
 
-  if (isLoading) {
-    return <div className="p-6">Загрузка...</div>
+export default function PlatformSourcePage() {
+  const {
+    sources,
+    isLoading,
+    error,
+    updateGroupStatus,
+    deleteGroup,
+    updateAllGroupsStatus,
+    isUpdatingGroup,
+    isDeletingGroup,
+    isBulkUpdatingGroups,
+  } = useSourceManagement()
+
+  const isBusy = isUpdatingGroup || isDeletingGroup || isBulkUpdatingGroups
+  const totalGroups = sources.reduce((sum, source) => sum + source.groups.length, 0)
+  const activeGroups = sources.reduce(
+    (sum, source) => sum + source.groups.filter((group) => group.enabled).length,
+    0,
+  )
+
+  const handleDelete = (group: PlatformGroup) => {
+    deleteGroup(
+      { id: group.id, platform: group.platform },
+      {
+        onError: (error) => {
+          toast.error(getErrorMessage(error, "Не удалось удалить группу."))
+        },
+        onSuccess: () => {
+          toast.success(`Группа «${group.name}» успешно удалена.`)
+        },
+      },
+    )
+  }
+
+  const handleToggle = (
+    platform: SourcePlatform,
+    id: string,
+    enabled: boolean,
+    groupName: string,
+  ) => {
+    updateGroupStatus(
+      { platform, id, enabled },
+      {
+        onError: (error) => {
+          toast.error(
+            getErrorMessage(
+              error,
+              `Не удалось ${enabled ? "включить" : "выключить"} группу «${groupName}».`,
+            ),
+          )
+        },
+        onSuccess: () => {
+          toast.success(`Группа «${groupName}» ${enabled ? "включена" : "выключена"}`)
+        },
+      },
+    )
+  }
+
+  const handleToggleAll = (
+    platform: SourcePlatform,
+    enabled: boolean,
+    label: string,
+  ) => {
+    updateAllGroupsStatus(
+      { platform, enabled },
+      {
+        onError: (error) => {
+          toast.error(
+            getErrorMessage(
+              error,
+              `Не удалось ${enabled ? "включить" : "выключить"} все группы ${label}.`,
+            ),
+          )
+        },
+        onSuccess: () => {
+          toast.success(`Все группы ${label} ${enabled ? "включены" : "выключены"}`)
+        },
+      },
+    )
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Источники жалоб</h1>
+    <div className="mx-auto max-w-4xl p-4 sm:p-6 md:p-8">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Источники жалоб</h1>
+          <p className="text-muted-foreground text-sm">
+            Управляйте подключёнными каналами мониторинга без перезагрузки страницы.
+          </p>
+        </div>
+        <div className="text-muted-foreground grid grid-cols-2 gap-3 text-sm sm:text-right">
+          <div>
+            <div className="font-semibold text-foreground">{activeGroups}</div>
+            <div>активных групп</div>
+          </div>
+          <div>
+            <div className="font-semibold text-foreground">{totalGroups}</div>
+            <div>всего подключено</div>
+          </div>
+        </div>
+      </div>
 
-      {sources.map((platform) => (
-        <PlatformCard key={platform.platform} platform={platform} />
-      ))}
+      {isLoading ? (
+        <SourceSkeleton />
+      ) : error ? (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          Не удалось загрузить источники: {getErrorMessage(error)}
+        </div>
+      ) : (
+        sources.map((platform) => (
+          <PlatformCard
+            key={platform.platform}
+            platform={platform}
+            actions={{
+              deleteGroup: handleDelete,
+              isBusy,
+              toggleAllGroups: handleToggleAll,
+              toggleGroup: handleToggle,
+            }}
+          />
+        ))
+      )}
     </div>
   )
 }

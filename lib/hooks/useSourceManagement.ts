@@ -1,6 +1,8 @@
-// lib/hooks/useSourceManagement.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+
+import { getErrorMessage } from "@/lib/api/errors"
+
 import { EmailApi } from "../api/source/email.api"
 import { VkApi } from "../api/source/vk.api"
 import {
@@ -9,14 +11,72 @@ import {
   SourcePlatform,
 } from "../types/complaint.type"
 
-// Типы для форм создания
 export type VkFormData = {
-  url: string
   name: string
+  url: string
 }
 
 export type EmailFormData = {
   name: string
+}
+
+const sourceKeys = {
+  all: ["sources"] as const,
+}
+
+type SourceMutationContext = {
+  previousSources?: PlatformSource[]
+}
+
+function buildSources(vkGroups: PlatformGroup[], emailGroups: PlatformGroup[]) {
+  return [
+    {
+      platform: "vk",
+      label: "ВКонтакте",
+      allEnabled: vkGroups.length > 0 && vkGroups.every((group) => group.enabled),
+      groups: vkGroups,
+    },
+    {
+      platform: "email",
+      label: "Почта",
+      allEnabled:
+        emailGroups.length > 0 && emailGroups.every((group) => group.enabled),
+      groups: emailGroups,
+    },
+  ] satisfies PlatformSource[]
+}
+
+async function fetchSources() {
+  const [vkResult, emailResult] = await Promise.allSettled([
+    VkApi.getGroups(),
+    EmailApi.getParsers(),
+  ])
+
+  const vkGroups = vkResult.status === "fulfilled" ? vkResult.value : []
+  const emailGroups = emailResult.status === "fulfilled" ? emailResult.value : []
+
+  if (vkResult.status === "rejected" && emailResult.status === "rejected") {
+    throw vkResult.reason
+  }
+
+  return buildSources(vkGroups, emailGroups)
+}
+
+function patchSourceGroup(
+  sources: PlatformSource[],
+  platform: SourcePlatform,
+  updater: (groups: PlatformGroup[]) => PlatformGroup[],
+) {
+  return sources.map((source) => {
+    if (source.platform !== platform) return source
+
+    const groups = updater(source.groups)
+    return {
+      ...source,
+      allEnabled: groups.length > 0 && groups.every((group) => group.enabled),
+      groups,
+    }
+  })
 }
 
 export function useSourceManagement() {
@@ -27,40 +87,24 @@ export function useSourceManagement() {
     isLoading,
     error,
   } = useQuery<PlatformSource[]>({
-    queryKey: ["sources"],
-    queryFn: async () => {
-      const [vkGroups, emailParsers] = await Promise.all([
-        VkApi.getGroups().catch(() => [] as PlatformGroup[]),
-        EmailApi.getParsers().catch(() => [] as PlatformGroup[]),
-      ])
-
-      return [
-        {
-          platform: "vk",
-          label: "ВКонтакте",
-          allEnabled: vkGroups.length > 0 && vkGroups.every((g) => g.enabled),
-          groups: vkGroups,
-        },
-        {
-          platform: "email",
-          label: "Почта",
-          allEnabled:
-            emailParsers.length > 0 && emailParsers.every((g) => g.enabled),
-          groups: emailParsers,
-        },
-      ]
-    },
+    queryFn: fetchSources,
+    queryKey: sourceKeys.all,
   })
 
-  const updateGroupStatus = useMutation({
+  const updateGroupStatus = useMutation<
+    void,
+    Error,
+    { enabled: boolean; id: string; platform: SourcePlatform },
+    SourceMutationContext
+  >({
     mutationFn: async ({
       platform,
       id,
       enabled,
     }: {
-      platform: SourcePlatform
-      id: string
       enabled: boolean
+      id: string
+      platform: SourcePlatform
     }) => {
       const action = enabled ? "start" : "stop"
       switch (platform) {
@@ -72,38 +116,36 @@ export function useSourceManagement() {
           throw new Error(`Unsupported platform: ${platform}`)
       }
     },
-    onMutate: async ({ platform, id, enabled }) => {
-      await queryClient.cancelQueries({ queryKey: ["sources"] })
-
-      const prevSources = queryClient.getQueryData<PlatformSource[]>([
-        "sources",
-      ])
-
-      queryClient.setQueryData(["sources"], (old: PlatformSource[] = []) =>
-        old.map((p) => {
-          if (p.platform !== platform) return p
-          return {
-            ...p,
-            groups: p.groups.map((g) => (g.id === id ? { ...g, enabled } : g)),
-            allEnabled:
-              enabled && p.groups.every((g) => g.enabled || g.id === id),
-          }
-        }),
-      )
-
-      return { prevSources }
-    },
-    onError: (err, variables, context) => {
-      if (context?.prevSources) {
-        queryClient.setQueryData(["sources"], context.prevSources)
+    onError: (_error, _variables, context) => {
+      if (context?.previousSources) {
+        queryClient.setQueryData(sourceKeys.all, context.previousSources)
       }
     },
+    onMutate: async ({ platform, id, enabled }) => {
+      await queryClient.cancelQueries({ queryKey: sourceKeys.all })
+      const previousSources = queryClient.getQueryData<PlatformSource[]>(sourceKeys.all)
+
+      queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
+        patchSourceGroup(current, platform, (groups) =>
+          groups.map((group) =>
+            group.id === id ? { ...group, enabled } : group,
+          ),
+        ),
+      )
+
+      return { previousSources }
+    },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources"] })
+      queryClient.invalidateQueries({ queryKey: sourceKeys.all })
     },
   })
 
-  const deleteGroup = useMutation({
+  const deleteGroup = useMutation<
+    void,
+    Error,
+    { id: string; platform: SourcePlatform },
+    SourceMutationContext
+  >({
     mutationFn: async ({
       id,
       platform,
@@ -117,117 +159,119 @@ export function useSourceManagement() {
         case "email":
           return EmailApi.deleteParser(id)
         default:
-          throw new Error(
-            `Unsupported platform: ${platform}`,
-          )
+          throw new Error(`Unsupported platform: ${platform}`)
       }
     },
-    onMutate: async (deletedSource) => {
-      await queryClient.cancelQueries({ queryKey: ["sources"] })
-      const previousUserSources = queryClient.getQueryData(["sources"]) ?? []
+    onError: (_error, _variables, context) => {
+      if (context?.previousSources) {
+        queryClient.setQueryData(sourceKeys.all, context.previousSources)
+      }
+    },
+    onMutate: async ({ id, platform }) => {
+      await queryClient.cancelQueries({ queryKey: sourceKeys.all })
+      const previousSources = queryClient.getQueryData<PlatformSource[]>(sourceKeys.all)
 
-      console.debug(`deletedSource.id: ${deletedSource.id}`)
-      queryClient.setQueryData<PlatformGroup[]>(
-        ["sources"],
-        (oldUserSources = []) => {
-          return oldUserSources.filter(
-            (oldUserSource) => oldUserSource.id !== deletedSource.id,
-          )
-        },
+      queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
+        patchSourceGroup(current, platform, (groups) =>
+          groups.filter((group) => group.id !== id),
+        ),
       )
 
-      return { previousUserSources }
+      return { previousSources }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: sourceKeys.all })
     },
   })
 
-  const updateAllGroupsStatus = useMutation({
+  const updateAllGroupsStatus = useMutation<
+    void,
+    Error,
+    { enabled: boolean; platform: SourcePlatform },
+    SourceMutationContext
+  >({
     mutationFn: async ({
       platform,
       enabled,
     }: {
-      platform: SourcePlatform
       enabled: boolean
+      platform: SourcePlatform
     }) => {
-      const source = sources.find((s) => s.platform === platform)
+      const source = sources.find((item) => item.platform === platform)
       if (!source) return
 
-      const actions = source.groups.map((group) =>
-        updateGroupStatus.mutateAsync({
-          platform,
-          id: group.id,
-          enabled,
+      const action = enabled ? "start" : "stop"
+      await Promise.all(
+        source.groups.map((group) => {
+          return platform === "vk"
+            ? VkApi.updateGroupStatus(group.id, action)
+            : EmailApi.updateParserStatus(group.id, action)
         }),
       )
-      await Promise.all(actions)
     },
-    onMutate: async ({ platform, enabled }) => {
-      await queryClient.cancelQueries({ queryKey: ["sources"] })
-
-      const prevSources = queryClient.getQueryData<PlatformSource[]>([
-        "sources",
-      ])
-
-      queryClient.setQueryData(["sources"], (old: PlatformSource[] = []) =>
-        old.map((p) => {
-          if (p.platform !== platform) return p
-          return {
-            ...p,
-            allEnabled: enabled,
-            groups: p.groups.map((g) => ({ ...g, enabled })),
-          }
-        }),
-      )
-
-      return { prevSources }
-    },
-    onError: (err, variables, context) => {
-      if (context?.prevSources) {
-        queryClient.setQueryData(["sources"], context.prevSources)
+    onError: (_error, _variables, context) => {
+      if (context?.previousSources) {
+        queryClient.setQueryData(sourceKeys.all, context.previousSources)
       }
     },
+    onMutate: async ({ platform, enabled }) => {
+      await queryClient.cancelQueries({ queryKey: sourceKeys.all })
+      const previousSources = queryClient.getQueryData<PlatformSource[]>(sourceKeys.all)
+
+      queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
+        patchSourceGroup(current, platform, (groups) =>
+          groups.map((group) => ({ ...group, enabled })),
+        ),
+      )
+
+      return { previousSources }
+    },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources"] })
+      queryClient.invalidateQueries({ queryKey: sourceKeys.all })
     },
   })
 
-  // Добавлено: мутация для создания группы ВКонтакте
   const createVkGroup = useMutation({
     mutationFn: (data: VkFormData) => VkApi.createGroup(data),
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Не удалось добавить группу ВКонтакте"))
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: sourceKeys.all })
+    },
     onSuccess: () => {
       toast.success("Группа ВКонтакте успешно добавлена")
     },
-    onError: (error) => {
-      toast.error(`Не удалось добавить группу: ${error.message}`)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources"] })
-    },
   })
 
-  // Добавлено: мутация для создания почтового парсера
   const createEmailParser = useMutation({
     mutationFn: (data: EmailFormData) => EmailApi.createParser(data),
-    onSuccess: () => {
-      toast.success("Почтовый парсер успешно добавлен")
-    },
     onError: (error) => {
-      toast.error(`Не удалось добавить почтовый парсер: ${error.message}`)
+      toast.error(
+        getErrorMessage(error, "Не удалось добавить почтовый источник"),
+      )
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["sources"] })
+      queryClient.invalidateQueries({ queryKey: sourceKeys.all })
+    },
+    onSuccess: () => {
+      toast.success("Почтовый источник успешно добавлен")
     },
   })
 
   return {
-    sources,
-    isLoading,
-    error,
-    updateGroupStatus: updateGroupStatus.mutate,
-    deleteGroup: deleteGroup.mutate,
-    updateAllGroupsStatus: updateAllGroupsStatus.mutate,
-    createVkGroup: createVkGroup.mutate,
     createEmailParser: createEmailParser.mutate,
-    isCreatingVk: createVkGroup.isPending,
+    createVkGroup: createVkGroup.mutate,
+    deleteGroup: deleteGroup.mutate,
+    error,
+    isBulkUpdatingGroups: updateAllGroupsStatus.isPending,
     isCreatingEmail: createEmailParser.isPending,
+    isCreatingVk: createVkGroup.isPending,
+    isDeletingGroup: deleteGroup.isPending,
+    isLoading,
+    isUpdatingGroup: updateGroupStatus.isPending,
+    sources,
+    updateAllGroupsStatus: updateAllGroupsStatus.mutate,
+    updateGroupStatus: updateGroupStatus.mutate,
   }
 }

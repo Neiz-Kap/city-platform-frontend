@@ -1,4 +1,3 @@
-// lib/components/modals/vk-dialog.tsx
 "use client"
 
 import {
@@ -9,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useSourceManagement } from "@/lib/hooks/useSourceManagement"
+
 import { VkForm } from "../features/forms/vk-form"
 
 interface VkDialogProps {
@@ -20,8 +20,11 @@ export default function VkDialog({ open, onOpenChange }: VkDialogProps) {
   const { createVkGroup } = useSourceManagement()
 
   const handleSubmit = (data: { url: string; name: string }) => {
-    createVkGroup(data)
-    onOpenChange(false)
+    createVkGroup(data, {
+      onSuccess: () => {
+        onOpenChange(false)
+      },
+    })
   }
 
   return (
