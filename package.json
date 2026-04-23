@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint app components lib middleware.ts next.config.ts --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm lint && pnpm typecheck"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
