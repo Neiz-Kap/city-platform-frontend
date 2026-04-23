@@ -1,8 +1,10 @@
 import type { Socket } from "socket.io-client"
 import { toast } from "sonner"
 
+import { pushDashboardNotification } from "./notification-center-store"
+
 export type DashboardNotificationContext = {
-  onNewComplaint?: (payload: { name?: string; id?: number }) => void
+  onNewComplaint?: (payload: { id?: number; name?: string }) => void
 }
 
 type ServerEventHandler = (
@@ -11,19 +13,39 @@ type ServerEventHandler = (
   ctx: DashboardNotificationContext,
 ) => void
 
-/** Расширяйте при появлении новых событий с бэкенда (платформа, политики и т.д.). */
 export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
   new_complaint: (_socket, payload, ctx) => {
-    const p = payload as { name?: string; id?: number }
-    const title = p?.name?.trim() || "Новая жалоба"
-    toast.info("Новая жалоба", { description: title })
-    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+    const complaint = payload as { id?: number; name?: string }
+    const title = complaint?.name?.trim() || "Новая жалоба"
+    const href =
+      typeof complaint?.id === "number"
+        ? `/dashboard/complaint/${complaint.id}`
+        : undefined
+
+    pushDashboardNotification({
+      createdAt: new Date().toISOString(),
+      description: title,
+      href,
+      id: `complaint-${complaint?.id ?? crypto.randomUUID()}`,
+      kind: "complaint",
+      title: "Новая жалоба",
+    })
+
+    toast.info("Новая жалоба", {
+      description: title,
+    })
+
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "granted"
+    ) {
       new Notification("Новая жалоба", {
         body: title,
         icon: "/notification-icon.png",
       })
     }
-    ctx.onNewComplaint?.(p)
+
+    ctx.onNewComplaint?.(complaint)
   },
 }
 
@@ -42,6 +64,6 @@ export function attachDashboardNotificationHandlers(
   }
 
   return () => {
-    unsubscribers.forEach((u) => u())
+    unsubscribers.forEach((unsubscribe) => unsubscribe())
   }
 }

@@ -1,6 +1,16 @@
-import { BellIcon, ClockIcon } from "lucide-react";
-import Link from "next/link";
-import { useIsMobile } from "@/lib/hooks/use-mobile";
+"use client"
+
+import { formatDistanceToNow } from "date-fns"
+import { ru } from "date-fns/locale"
+import { BellIcon, Clock3Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+
+import { useIsMobile } from "@/lib/hooks/use-mobile"
+import {
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  useNotificationCenter,
+} from "@/lib/notifications/notification-center-store"
 
 import {
   DropdownMenu,
@@ -8,92 +18,108 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/dropdown-menu"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
 
-import { notifications, type Notification } from "./data";
+function formatNotificationTime(createdAt: string) {
+  return formatDistanceToNow(new Date(createdAt), {
+    addSuffix: true,
+    locale: ru,
+  })
+}
 
 const Notifications = () => {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile()
+  const router = useRouter()
+  const { items, unreadCount } = useNotificationCenter()
+
+  const handleOpenNotification = (notificationId: string, href?: string) => {
+    markNotificationAsRead(notificationId)
+    if (href) {
+      router.push(href)
+    }
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="icon" variant="ghost" className="relative">
-          <>
-            <BellIcon className="animate-tada" />
-            <span className="bg-destructive absolute end-0 top-0 block size-2 shrink-0 rounded-full"></span>
-          </>
+        <Button size="icon" variant="ghost" className="relative" aria-label="Уведомления">
+          <BellIcon className={unreadCount > 0 ? "animate-tada" : undefined} />
+          {unreadCount > 0 && (
+            <span className="bg-destructive absolute end-0 top-0 flex size-4 items-center justify-center rounded-full text-[10px] font-semibold text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
         align={isMobile ? "center" : "end"}
-        className="ms-4 w-80 p-0"
+        className="ms-4 w-96 max-w-[calc(100vw-2rem)] p-0"
       >
-        <DropdownMenuLabel className="bg-background dark:bg-muted sticky top-0 z-10 p-0">
-          <div className="flex justify-between border-b px-6 py-4">
-            <div className="font-medium">Notifications</div>
-            <Button
-              variant="link"
-              className="h-auto p-0 text-xs"
-              size="sm"
-              asChild
-            >
-              <Link href="#">View all</Link>
-            </Button>
+        <DropdownMenuLabel className="bg-background sticky top-0 z-10 p-0">
+          <div className="flex items-center justify-between border-b px-4 py-3">
+            <div>
+              <div className="font-medium">Уведомления</div>
+              <div className="text-muted-foreground text-xs">
+                {unreadCount > 0
+                  ? `${unreadCount} непрочитанных`
+                  : "Новых уведомлений нет"}
+              </div>
+            </div>
+            {items.length > 0 && unreadCount > 0 && (
+              <Button
+                variant="link"
+                className="h-auto p-0 text-xs"
+                size="sm"
+                onClick={() => markAllNotificationsAsRead()}
+              >
+                Прочитать всё
+              </Button>
+            )}
           </div>
         </DropdownMenuLabel>
 
-        <ScrollArea className="h-[350px]">
-          {notifications.map((item: Notification, key) => (
-            <DropdownMenuItem
-              key={key}
-              className="group flex cursor-pointer items-start gap-9 rounded-none border-b px-4 py-3"
-            >
-              <div className="flex flex-1 items-start gap-2">
-                <div className="flex-none">
-                  <Avatar className="size-8">
-                    <AvatarImage src={`/images/avatars/${item.avatar}`} />
-                    <AvatarFallback> {item.title.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="flex flex-1 flex-col gap-1">
-                  <div className="dark:group-hover:text-default-800 truncate text-sm font-medium">
-                    {item.title}
+        <ScrollArea className="max-h-[360px]">
+          {items.length === 0 ? (
+            <div className="text-muted-foreground px-4 py-10 text-center text-sm">
+              Новые события появятся здесь автоматически.
+            </div>
+          ) : (
+            items.map((item) => (
+              <DropdownMenuItem
+                key={item.id}
+                className="group flex cursor-pointer flex-col items-start gap-2 rounded-none border-b px-4 py-3"
+                onClick={() => handleOpenNotification(item.id, item.href)}
+              >
+                <div className="flex w-full items-start gap-3">
+                  <div className="bg-primary/10 text-primary mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full">
+                    <BellIcon className="size-4" />
                   </div>
-                  <div className="dark:group-hover:text-default-700 text-muted-foreground line-clamp-1 text-xs">
-                    {item.desc}
-                  </div>
-                  {item.type === "confirm" && (
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline">
-                        Accept
-                      </Button>
-                      <Button size="sm" variant="destructive">
-                        Decline
-                      </Button>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="truncate text-sm font-medium">{item.title}</div>
+                      {!item.read && (
+                        <span className="bg-destructive/80 mt-1 block size-2 shrink-0 rounded-full" />
+                      )}
                     </div>
-                  )}
-                  <div className="dark:group-hover:text-default-500 text-muted-foreground flex items-center gap-1 text-xs">
-                    <ClockIcon className="size-3!" />
-                    {item.date}
+                    <div className="text-muted-foreground line-clamp-2 text-xs">
+                      {item.description}
+                    </div>
+                    <div className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <Clock3Icon className="size-3" />
+                      {formatNotificationTime(item.createdAt)}
+                    </div>
                   </div>
                 </div>
-              </div>
-              {item.unread_message && (
-                <div className="flex-0">
-                  <span className="bg-destructive/80 block size-2 rounded-full border" />
-                </div>
-              )}
-            </DropdownMenuItem>
-          ))}
+              </DropdownMenuItem>
+            ))
+          )}
         </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-};
+  )
+}
 
-export default Notifications;
+export default Notifications
