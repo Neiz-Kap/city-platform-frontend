@@ -1,5 +1,14 @@
 "use client"
 
+import { formatDistanceToNow } from "date-fns"
+import { ru } from "date-fns/locale"
+import { Bell, BellOff, FileDown, RefreshCw, Wifi, WifiOff } from "lucide-react"
+import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useCallback, useMemo, useState } from "react"
+import { SortingState } from "@tanstack/react-table"
+import { toast } from "sonner"
+
 import { createComplaintColumns } from "@/components/entities/complaint/columns"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,118 +21,137 @@ import {
   useUpdateComplaint,
   useUpdateComplaintLabels,
 } from "@/lib/hooks/useComplaints"
+import type { ComplaintsListFilters } from "@/lib/hooks/useComplaints"
 import { useComplaintsSocket } from "@/lib/hooks/useComplaintsSocket"
 import { useLabels } from "@/lib/hooks/useLabels"
 import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
-import type { ComplaintsListFilters } from "@/lib/hooks/useComplaints"
+import {
+  applyComplaintDashboardUrlState,
+  parseComplaintDashboardUrlState,
+} from "@/lib/utils/dashboard-url-state"
 import {
   COMPLAINT_STATUS_LABELS,
   ComplaintStatus,
 } from "@/lib/types/complaint-status.type"
-import { SortingState } from "@tanstack/react-table"
-import { Bell, BellOff, FileDown, RefreshCw } from "lucide-react"
-import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
+
 import { ComplaintAggregatesBar } from "./ComplaintAggregatesBar"
 
-function toStartOfDayIso(d: string): string {
-  return `${d}T00:00:00`
+function toStartOfDayIso(date: string): string {
+  return `${date}T00:00:00`
 }
 
-function toEndOfDayIso(d: string): string {
-  return `${d}T23:59:59`
+function toEndOfDayIso(date: string): string {
+  return `${date}T23:59:59`
 }
 
 const DEFAULT_TABLE_SORT: SortingState = [{ id: "createdAt", desc: true }]
+const DEFAULT_FILTERS: DashboardTableFilters = {
+  endDate: "",
+  excludeLabelIds: [],
+  labelIds: [],
+  labelMatch: "any",
+  selectedStatuses: [],
+  startDate: "",
+}
 
 const STATUS_FILTER_OPTIONS = [
-  { value: ComplaintStatus.BACKLOG, label: COMPLAINT_STATUS_LABELS[ComplaintStatus.BACKLOG] },
+  {
+    value: ComplaintStatus.BACKLOG,
+    label: COMPLAINT_STATUS_LABELS[ComplaintStatus.BACKLOG],
+  },
   {
     value: ComplaintStatus.IN_PROGRESS,
     label: COMPLAINT_STATUS_LABELS[ComplaintStatus.IN_PROGRESS],
   },
-  { value: ComplaintStatus.DONE, label: COMPLAINT_STATUS_LABELS[ComplaintStatus.DONE] },
+  {
+    value: ComplaintStatus.DONE,
+    label: COMPLAINT_STATUS_LABELS[ComplaintStatus.DONE],
+  },
 ]
 
-export default function ComplaintDataTable() {
-  const [pagination, setPagination] = useState({ page: 1, per_page: 10 })
-  const [search, setSearch] = useState("")
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
-  const [newComplaintsCount, setNewComplaintsCount] = useState(0)
-  const [sortParams, setSortParams] = useState<{
-    sort_by?: string
-    sort_order?: "ASC" | "DESC"
-  }>({ sort_by: "createdAt", sort_order: "DESC" })
+function getSortingState(sort_by?: string, sort_order?: "ASC" | "DESC") {
+  return [{ id: sort_by ?? "createdAt", desc: sort_order !== "ASC" }]
+}
 
-  const [dashboardFilters, setDashboardFilters] = useState<DashboardTableFilters>(
-    {
-      selectedStatuses: [],
-      labelIds: [],
-      labelMatch: "any",
-      excludeLabelIds: [],
-      startDate: "",
-      endDate: "",
-    },
+export default function ComplaintDataTable() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const urlState = useMemo(
+    () => parseComplaintDashboardUrlState(searchParams),
+    [searchParams],
   )
 
-  const patchDashboardFilters = useCallback(
-    (patch: Partial<DashboardTableFilters>) => {
-      setDashboardFilters((prev) => ({ ...prev, ...patch }))
-      setPagination((p) => ({ ...p, page: 1 }))
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+  const [newComplaintsCount, setNewComplaintsCount] = useState(0)
+
+  const replaceUrlState = useCallback(
+    (updater: (state: ReturnType<typeof parseComplaintDashboardUrlState>) => ReturnType<typeof parseComplaintDashboardUrlState>) => {
+      const nextState = updater(parseComplaintDashboardUrlState(searchParams))
+      const nextParams = applyComplaintDashboardUrlState(
+        new URLSearchParams(searchParams.toString()),
+        nextState,
+      )
+      const nextQuery = nextParams.toString()
+      router.replace(`${pathname}${nextQuery ? `?${nextQuery}` : ""}`, {
+        scroll: false,
+      })
     },
-    [],
+    [pathname, router, searchParams],
   )
 
   const { data: labels = [] } = useLabels({ with_counts: false })
 
   const queryParams = useMemo((): ComplaintsListFilters => {
     const base: ComplaintsListFilters = {
-      page: pagination.page,
-      per_page: pagination.per_page,
-      ...sortParams,
-      ...(search.trim() && { q: search.trim() }),
-      ...(dashboardFilters.selectedStatuses.length > 0 && {
-        status: dashboardFilters.selectedStatuses,
+      page: urlState.pagination.page,
+      per_page: urlState.pagination.per_page,
+      ...urlState.sortParams,
+      ...(urlState.search.trim() && { q: urlState.search.trim() }),
+      ...(urlState.dashboardFilters.selectedStatuses.length > 0 && {
+        status: urlState.dashboardFilters.selectedStatuses,
       }),
-      ...(dashboardFilters.excludeLabelIds.length > 0 && {
-        exclude_label_ids: dashboardFilters.excludeLabelIds,
+      ...(urlState.dashboardFilters.excludeLabelIds.length > 0 && {
+        exclude_label_ids: urlState.dashboardFilters.excludeLabelIds,
       }),
-    }
-    if (dashboardFilters.labelIds.length > 0) {
-      base.label_ids = dashboardFilters.labelIds
-      base.label_match = dashboardFilters.labelMatch
     }
 
-    if (dashboardFilters.startDate && dashboardFilters.endDate) {
+    if (urlState.dashboardFilters.labelIds.length > 0) {
+      base.label_ids = urlState.dashboardFilters.labelIds
+      base.label_match = urlState.dashboardFilters.labelMatch
+    }
+
+    if (urlState.dashboardFilters.startDate && urlState.dashboardFilters.endDate) {
       return {
         ...base,
-        start_date: toStartOfDayIso(dashboardFilters.startDate),
-        end_date: toEndOfDayIso(dashboardFilters.endDate),
+        end_date: toEndOfDayIso(urlState.dashboardFilters.endDate),
+        start_date: toStartOfDayIso(urlState.dashboardFilters.startDate),
       }
     }
 
     return base
-  }, [pagination, sortParams, search, dashboardFilters])
+  }, [urlState])
 
-  const { data, isLoading, error, refetch } = useComplaints(queryParams)
+  const {
+    data,
+    dataUpdatedAt,
+    error,
+    isFetching,
+    isLoading,
+    refetch,
+  } = useComplaints(queryParams)
   const { data: aggregates } = useComplaintAggregates()
 
   const bumpNewComplaints = useCallback(() => {
-    setNewComplaintsCount((c) => c + 1)
+    setNewComplaintsCount((count) => count + 1)
   }, [])
 
-  const { requestUpdate } = useComplaintsSocket({
+  const { isConnected, requestUpdate } = useComplaintsSocket({
     enabled: notificationsEnabled,
-    sources: ["all"],
     onNewComplaint: bumpNewComplaints,
+    sources: ["all"],
   })
-
-  useEffect(() => {
-    if (data && newComplaintsCount > 0) {
-      setNewComplaintsCount(0)
-    }
-  }, [data, newComplaintsCount])
 
   const updateComplaint = useUpdateComplaint()
   const updateLabels = useUpdateComplaintLabels()
@@ -140,65 +168,79 @@ export default function ComplaintDataTable() {
     () =>
       createComplaintColumns({
         allLabels: labels,
-        pendingComplaintId,
-        onStatusChange: (id, status) => {
-          updateComplaint.mutate(
-            { id, body: { status } },
-            {
-              onSuccess: () => toast.success("Статус обновлён"),
-              onError: () => toast.error("Не удалось обновить статус"),
-            },
-          )
-        },
         onLabelIdsChange: (id, label_ids) => {
           updateLabels.mutate(
             { id, label_ids },
             {
-              onSuccess: () => toast.success("Метки обновлены"),
               onError: () => toast.error("Не удалось обновить метки"),
+              onSuccess: () => toast.success("Метки обновлены"),
             },
           )
         },
+        onStatusChange: (id, status) => {
+          updateComplaint.mutate(
+            { id, body: { status } },
+            {
+              onError: () => toast.error("Не удалось обновить статус"),
+              onSuccess: () => toast.success("Статус обновлён"),
+            },
+          )
+        },
+        pendingComplaintId,
       }),
     [labels, pendingComplaintId, updateComplaint, updateLabels],
   )
 
   const handlePaginationChange = useCallback(
-    (newPagination: { page: number; per_page: number }) => {
-      setPagination(newPagination)
+    (pagination: { page: number; per_page: number }) => {
+      replaceUrlState((state) => ({
+        ...state,
+        pagination,
+      }))
     },
-    [],
+    [replaceUrlState],
   )
 
-  const handleSortChange = useCallback((sorting: SortingState) => {
-    const col = sorting[0]
-    if (!col) {
-      setSortParams({ sort_by: "createdAt", sort_order: "DESC" })
-      return
-    }
-    const idMap: Record<string, string> = {
-      createdAt: "createdAt",
-      updatedAt: "updatedAt",
-      status: "status",
-      label: "label",
-      category: "category",
-      name: "name",
-      id: "id",
-    }
-    const sort_by = idMap[col.id] ?? "createdAt"
-    setSortParams({
-      sort_by,
-      sort_order: col.desc ? "DESC" : "ASC",
-    })
-    setPagination((p) => ({ ...p, page: 1 }))
-  }, [])
+  const handleSortChange = useCallback(
+    (sorting: SortingState) => {
+      const column = sorting[0]
+      const sortMap: Record<string, string> = {
+        category: "category",
+        createdAt: "createdAt",
+        id: "id",
+        label: "label",
+        name: "name",
+        status: "status",
+        updatedAt: "updatedAt",
+      }
 
-  const handleSearchChange = useCallback((newSearch: string) => {
-    setSearch(newSearch)
-    setPagination((prev) => ({ ...prev, page: 1 }))
-  }, [])
+      replaceUrlState((state) => ({
+        ...state,
+        pagination: { ...state.pagination, page: 1 },
+        sortParams: column
+          ? {
+              sort_by: sortMap[column.id] ?? "createdAt",
+              sort_order: column.desc ? "DESC" : "ASC",
+            }
+          : { sort_by: "createdAt", sort_order: "DESC" },
+      }))
+    },
+    [replaceUrlState],
+  )
+
+  const handleSearchChange = useCallback(
+    (search: string) => {
+      replaceUrlState((state) => ({
+        ...state,
+        pagination: { ...state.pagination, page: 1 },
+        search,
+      }))
+    },
+    [replaceUrlState],
+  )
 
   const handleManualRefresh = useCallback(() => {
+    setNewComplaintsCount(0)
     refetch()
     requestUpdate()
   }, [refetch, requestUpdate])
@@ -206,37 +248,74 @@ export default function ComplaintDataTable() {
   const toggleNotifications = useCallback(() => {
     setNotificationsEnabled((prev) => !prev)
     if (!notificationsEnabled) {
-      if ("Notification" in window && Notification.permission === "default") {
+      if (typeof Notification !== "undefined" && Notification.permission === "default") {
         Notification.requestPermission()
       }
     }
   }, [notificationsEnabled])
 
-  const toggleStatusChip = useCallback((statusKey: string) => {
-    setDashboardFilters((prev) => {
-      const next = prev.selectedStatuses.includes(statusKey)
-        ? prev.selectedStatuses.filter((s) => s !== statusKey)
-        : [...prev.selectedStatuses, statusKey]
-      return { ...prev, selectedStatuses: next }
-    })
-    setPagination((p) => ({ ...p, page: 1 }))
-  }, [])
+  const toggleStatusChip = useCallback(
+    (statusKey: string) => {
+      replaceUrlState((state) => ({
+        ...state,
+        dashboardFilters: {
+          ...state.dashboardFilters,
+          selectedStatuses: state.dashboardFilters.selectedStatuses.includes(statusKey)
+            ? state.dashboardFilters.selectedStatuses.filter((status) => status !== statusKey)
+            : [...state.dashboardFilters.selectedStatuses, statusKey],
+        },
+        pagination: { ...state.pagination, page: 1 },
+      }))
+    },
+    [replaceUrlState],
+  )
 
-  const toggleLabelChip = useCallback((labelId: number) => {
-    setDashboardFilters((prev) => {
-      const next = prev.labelIds.includes(labelId)
-        ? prev.labelIds.filter((id) => id !== labelId)
-        : [...prev.labelIds, labelId]
-      return { ...prev, labelIds: next }
-    })
-    setPagination((p) => ({ ...p, page: 1 }))
-  }, [])
+  const toggleLabelChip = useCallback(
+    (labelId: number) => {
+      replaceUrlState((state) => ({
+        ...state,
+        dashboardFilters: {
+          ...state.dashboardFilters,
+          labelIds: state.dashboardFilters.labelIds.includes(labelId)
+            ? state.dashboardFilters.labelIds.filter((id) => id !== labelId)
+            : [...state.dashboardFilters.labelIds, labelId],
+        },
+        pagination: { ...state.pagination, page: 1 },
+      }))
+    },
+    [replaceUrlState],
+  )
+
+  const patchDashboardFilters = useCallback(
+    (patch: Partial<DashboardTableFilters>) => {
+      replaceUrlState((state) => ({
+        ...state,
+        dashboardFilters: {
+          ...state.dashboardFilters,
+          ...patch,
+        },
+        pagination: { ...state.pagination, page: 1 },
+      }))
+    },
+    [replaceUrlState],
+  )
+
+  const resetAllFilters = useCallback(() => {
+    replaceUrlState((state) => ({
+      ...state,
+      dashboardFilters: DEFAULT_FILTERS,
+      pagination: { page: 1, per_page: state.pagination.per_page },
+      search: "",
+      sortParams: { sort_by: "createdAt", sort_order: "DESC" },
+    }))
+  }, [replaceUrlState])
 
   if (error) {
+    const message = error instanceof Error ? error.message : "Не удалось загрузить жалобы."
     return (
       <div className="container mx-auto py-10">
-        <div className="text-red-500 text-center">
-          Ошибка загрузки жалоб: {(error as Error).message}
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-center text-sm text-destructive">
+          Ошибка загрузки жалоб: {message}
         </div>
       </div>
     )
@@ -244,15 +323,39 @@ export default function ComplaintDataTable() {
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-2xl font-bold">Таблица жалоб</h3>
-
-          {newComplaintsCount > 0 && (
-            <span className="text-sm font-medium text-destructive animate-pulse">
-              +{newComplaintsCount} новых
+      <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-2xl font-bold">Таблица жалоб</h3>
+            {newComplaintsCount > 0 && (
+              <span className="animate-pulse text-sm font-medium text-destructive">
+                +{newComplaintsCount} новых
+              </span>
+            )}
+          </div>
+          <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
+            <span className="inline-flex items-center gap-1">
+              {isConnected ? (
+                <Wifi className="h-4 w-4 text-emerald-600" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-muted-foreground" />
+              )}
+              {notificationsEnabled
+                ? isConnected
+                  ? "Realtime подключён"
+                  : "Realtime переподключается"
+                : "Realtime выключен"}
             </span>
-          )}
+            {dataUpdatedAt > 0 && (
+              <span>
+                Обновлено {formatDistanceToNow(new Date(dataUpdatedAt), {
+                  addSuffix: true,
+                  locale: ru,
+                })}
+              </span>
+            )}
+            {isFetching && <span>Обновляем данные…</span>}
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -287,12 +390,10 @@ export default function ComplaintDataTable() {
             variant="outline"
             size="sm"
             onClick={handleManualRefresh}
-            disabled={isLoading}
+            disabled={isFetching}
             className="flex items-center gap-2"
           >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
+            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
             Обновить
           </Button>
         </div>
@@ -300,8 +401,8 @@ export default function ComplaintDataTable() {
 
       <ComplaintAggregatesBar
         aggregates={aggregates}
-        selectedStatuses={dashboardFilters.selectedStatuses}
-        selectedLabelIds={dashboardFilters.labelIds}
+        selectedStatuses={urlState.dashboardFilters.selectedStatuses}
+        selectedLabelIds={urlState.dashboardFilters.labelIds}
         onToggleStatus={toggleStatusChip}
         onToggleLabel={toggleLabelChip}
       />
@@ -309,17 +410,22 @@ export default function ComplaintDataTable() {
       <DataTable
         columns={columns}
         data={data ?? DEFAULT_PAGINATED_DATA}
-        pagination={pagination}
-        onPaginationChange={handlePaginationChange}
-        onSortChange={handleSortChange}
-        searchQuery={search}
-        onSearchQueryChange={handleSearchChange}
-        statusOptions={STATUS_FILTER_OPTIONS}
+        dashboardFilters={urlState.dashboardFilters}
         filterLabels={labels}
-        dashboardFilters={dashboardFilters}
-        onDashboardFiltersChange={patchDashboardFilters}
-        isLoading={isLoading}
         initialSorting={DEFAULT_TABLE_SORT}
+        isLoading={isLoading}
+        onDashboardFiltersChange={patchDashboardFilters}
+        onPaginationChange={handlePaginationChange}
+        onResetFilters={resetAllFilters}
+        onSearchQueryChange={handleSearchChange}
+        onSortChange={handleSortChange}
+        pagination={urlState.pagination}
+        searchQuery={urlState.search}
+        sorting={getSortingState(
+          urlState.sortParams.sort_by,
+          urlState.sortParams.sort_order,
+        )}
+        statusOptions={STATUS_FILTER_OPTIONS}
       />
     </div>
   )

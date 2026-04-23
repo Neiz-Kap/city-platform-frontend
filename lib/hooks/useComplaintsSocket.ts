@@ -1,16 +1,17 @@
-// lib/hooks/useComplaintsSocket.ts
-import { attachDashboardNotificationHandlers } from "@/lib/notifications/dashboard-notifications"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
+
+import { attachDashboardNotificationHandlers } from "@/lib/notifications/dashboard-notifications"
+
 import { API_BASE_URL } from "../api"
-import { complaintKeys } from "./useComplaints"
+import { complaintAggregatesKey, complaintKeys } from "./useComplaints"
 
 interface UseComplaintsSocketProps {
   enabled?: boolean
-  sources?: string[]
   interval?: number
   onNewComplaint?: () => void
+  sources?: string[]
 }
 
 export const useComplaintsSocket = ({
@@ -23,13 +24,18 @@ export const useComplaintsSocket = ({
   const queryClient = useQueryClient()
   const [isConnected, setIsConnected] = useState(false)
   const onNewComplaintRef = useRef(onNewComplaint)
-  onNewComplaintRef.current = onNewComplaint
+
+  useEffect(() => {
+    onNewComplaintRef.current = onNewComplaint
+  }, [onNewComplaint])
 
   const disconnect = useCallback(() => {
-    const s = socketRef.current as (Socket & { _odsCleanup?: () => void }) | null
-    if (s) {
-      s._odsCleanup?.()
-      s.disconnect()
+    const socket = socketRef.current as
+      | (Socket & { _odsCleanup?: () => void })
+      | null
+    if (socket) {
+      socket._odsCleanup?.()
+      socket.disconnect()
       socketRef.current = null
     }
     setIsConnected(false)
@@ -40,10 +46,7 @@ export const useComplaintsSocket = ({
 
     disconnect()
 
-    // В dev через HTTP-туннели (CloudPub и т.п.) чистый WebSocket часто ломается
-    // («Invalid frame header»); long-polling идёт обычными GET/POST.
     const isDev = process.env.NODE_ENV === "development"
-
     const socket = io(API_BASE_URL, {
       path: "/socket.io/",
       withCredentials: false,
@@ -55,12 +58,13 @@ export const useComplaintsSocket = ({
     socketRef.current = socket
 
     const subscribe = () => {
-      socket.emit("subscribe_complaints", { sources, interval })
+      socket.emit("subscribe_complaints", { interval, sources })
     }
 
     const detachNotifications = attachDashboardNotificationHandlers(socket, {
       onNewComplaint: () => {
         queryClient.invalidateQueries({ queryKey: complaintKeys.lists() })
+        queryClient.invalidateQueries({ queryKey: complaintAggregatesKey })
         onNewComplaintRef.current?.()
       },
     })
@@ -72,16 +76,19 @@ export const useComplaintsSocket = ({
 
     const onDisconnect = (reason: string) => {
       setIsConnected(false)
-      console.log("Socket disconnected:", reason)
+      console.info("Socket disconnected:", reason)
+    }
+
+    const onError = (error: Error) => {
+      setIsConnected(false)
+      console.error("Socket connection error:", error)
     }
 
     socket.on("connect", onConnect)
     socket.on("disconnect", onDisconnect)
     socket.on("connection_status", subscribe)
     socket.on("subscription_status", () => {})
-    socket.on("error", (error: Error) => {
-      console.error("Socket connection error:", error)
-    })
+    socket.on("error", onError)
 
     const cleanup = () => {
       detachNotifications()
@@ -89,19 +96,18 @@ export const useComplaintsSocket = ({
       socket.off("disconnect", onDisconnect)
       socket.off("connection_status", subscribe)
       socket.off("subscription_status")
-      socket.off("error")
+      socket.off("error", onError)
     }
 
     ;(socket as Socket & { _odsCleanup?: () => void })._odsCleanup = cleanup
 
     return socket
-  }, [enabled, sources, interval, queryClient, disconnect])
+  }, [enabled, disconnect, interval, queryClient, sources])
 
   useEffect(() => {
-    if (!enabled) {
-      disconnect()
-      return undefined
-    }
+    if (!enabled) return undefined
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     connect()
     return () => {
       disconnect()
@@ -117,9 +123,9 @@ export const useComplaintsSocket = ({
   }, [])
 
   return {
+    connect: () => connect(),
+    disconnect,
     isConnected,
     requestUpdate,
-    disconnect,
-    connect: () => connect(),
   }
 }

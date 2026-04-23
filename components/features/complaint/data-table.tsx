@@ -9,6 +9,8 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table"
+import { RotateCcw, PlusCircle, SearchX } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -52,35 +54,35 @@ import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
 import type { LabelMatchMode } from "@/lib/types/complaint.type"
 import { PaginatedData } from "@/lib/types"
-import { ChevronDown, PlusCircle } from "lucide-react"
-import { useState } from "react"
 
 export type DashboardTableFilters = {
-  selectedStatuses: string[]
+  endDate: string
+  excludeLabelIds: number[]
   labelIds: number[]
   labelMatch: LabelMatchMode
-  excludeLabelIds: number[]
+  selectedStatuses: string[]
   startDate: string
-  endDate: string
 }
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: PaginatedData<TData>
-  onPaginationChange: (pagination: { page: number; per_page: number }) => void
-  onSortChange?: (sorting: SortingState) => void
-  searchQuery: string
-  onSearchQueryChange: (search: string) => void
-  statusOptions: { value: string; label: string }[]
-  filterLabels: DashboardLabel[]
   dashboardFilters: DashboardTableFilters
+  data: PaginatedData<TData>
+  filterLabels: DashboardLabel[]
+  initialSorting?: SortingState
+  isLoading?: boolean
   onDashboardFiltersChange: (patch: Partial<DashboardTableFilters>) => void
+  onPaginationChange: (pagination: { page: number; per_page: number }) => void
+  onResetFilters?: () => void
+  onSearchQueryChange: (search: string) => void
+  onSortChange?: (sorting: SortingState) => void
   pagination: {
     page: number
     per_page: number
   }
-  isLoading?: boolean
-  initialSorting?: SortingState
+  searchQuery: string
+  sorting?: SortingState
+  statusOptions: { label: string; value: string }[]
 }
 
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
@@ -89,6 +91,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     data: paginatedData = DEFAULT_PAGINATED_DATA,
     onPaginationChange,
     onSortChange,
+    onResetFilters,
     searchQuery,
     onSearchQueryChange,
     statusOptions,
@@ -98,10 +101,13 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     pagination,
     isLoading = false,
     initialSorting = [{ id: "createdAt", desc: true }],
+    sorting: controlledSorting,
   } = props
   const { data, pagination: serverPagination } = paginatedData
 
-  const [sorting, setSorting] = useState<SortingState>(initialSorting)
+  const [sorting, setSorting] = useState<SortingState>(
+    controlledSorting ?? initialSorting,
+  )
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
@@ -114,6 +120,25 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     endDate,
   } = dashboardFilters
 
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    selectedStatuses.length > 0 ||
+    labelIds.length > 0 ||
+    excludeLabelIds.length > 0 ||
+    startDate.length > 0 ||
+    endDate.length > 0 ||
+    labelMatch === "all"
+
+  useEffect(() => {
+    if (!controlledSorting) return
+
+    const current = JSON.stringify(sorting)
+    const next = JSON.stringify(controlledSorting)
+    if (current !== next) {
+      setSorting(controlledSorting)
+    }
+  }, [controlledSorting, sorting])
+
   const setStatuses = (next: string[]) =>
     onDashboardFiltersChange({ selectedStatuses: next })
 
@@ -123,36 +148,33 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
   const setExcludeLabels = (next: number[]) =>
     onDashboardFiltersChange({ excludeLabelIds: next })
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data,
     columns,
+    data,
     getCoreRowModel: getCoreRowModel(),
+    manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
-    manualFiltering: true,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    onSortingChange: (updater) => {
+      const nextSorting =
+        typeof updater === "function" ? updater(sorting) : updater
+      setSorting(nextSorting)
+      onSortChange?.(nextSorting)
+    },
     pageCount: Math.ceil(serverPagination.total / serverPagination.per_page),
     state: {
-      sorting,
       columnFilters,
       columnVisibility,
       pagination: {
         pageIndex: serverPagination.page - 1,
         pageSize: serverPagination.per_page,
       },
+      sorting,
     },
-    onSortingChange: (updater) => {
-      const newSorting =
-        typeof updater === "function" ? updater(sorting) : updater
-      setSorting(newSorting)
-      onSortChange?.(newSorting)
-    },
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
   })
-
-  const handleSearchChange = (value: string) => {
-    onSearchQueryChange(value)
-  }
 
   const handlePreviousPage = () => {
     if (serverPagination.page > 1) {
@@ -184,7 +206,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
           <Input
             placeholder="Поиск по жалобам..."
             value={searchQuery}
-            onChange={(event) => handleSearchChange(event.target.value)}
+            onChange={(event) => onSearchQueryChange(event.target.value)}
             className="max-w-sm"
           />
 
@@ -201,15 +223,15 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                 <CommandList>
                   <CommandEmpty>Нет статусов</CommandEmpty>
                   <CommandGroup>
-                    {statusOptions.map((s) => (
+                    {statusOptions.map((status) => (
                       <CommandItem
-                        key={s.value}
-                        value={s.value}
+                        key={status.value}
+                        value={status.value}
                         onSelect={() => {
                           setStatuses(
                             toggleInList(
                               selectedStatuses,
-                              s.value,
+                              status.value,
                               (a, b) => a === b,
                             ),
                           )
@@ -217,14 +239,14 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                       >
                         <div className="flex items-center space-x-3 py-1">
                           <Checkbox
-                            id={`flt-status-${s.value}`}
-                            checked={selectedStatuses.includes(s.value)}
+                            id={`flt-status-${status.value}`}
+                            checked={selectedStatuses.includes(status.value)}
                           />
                           <label
-                            htmlFor={`flt-status-${s.value}`}
+                            htmlFor={`flt-status-${status.value}`}
                             className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
-                            {s.label}
+                            {status.label}
                           </label>
                         </div>
                       </CommandItem>
@@ -248,34 +270,27 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                 <CommandList>
                   <CommandEmpty>Нет меток</CommandEmpty>
                   <CommandGroup>
-                    {filterLabels.map((l) => (
+                    {filterLabels.map((label) => (
                       <CommandItem
-                        key={l.id}
-                        value={l.name}
+                        key={label.id}
+                        value={label.name}
                         onSelect={() => {
                           setIncludeLabels(
-                            toggleInList(
-                              labelIds,
-                              l.id,
-                              (a, b) => a === b,
-                            ),
+                            toggleInList(labelIds, label.id, (a, b) => a === b),
                           )
                         }}
                       >
                         <div className="flex items-center space-x-3 py-1">
                           <Checkbox
-                            id={`flt-lbl-${l.id}`}
-                            checked={labelIds.includes(l.id)}
+                            id={`flt-lbl-${label.id}`}
+                            checked={labelIds.includes(label.id)}
                           />
                           <span
-                            className="size-3 rounded-sm border shrink-0"
-                            style={{ backgroundColor: l.color }}
+                            className="size-3 shrink-0 rounded-sm border"
+                            style={{ backgroundColor: label.color }}
                           />
-                          <label
-                            htmlFor={`flt-lbl-${l.id}`}
-                            className="leading-none"
-                          >
-                            {l.name}
+                          <label htmlFor={`flt-lbl-${label.id}`} className="leading-none">
+                            {label.name}
                           </label>
                         </div>
                       </CommandItem>
@@ -292,13 +307,13 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
             </Label>
             <Select
               value={labelMatch}
-              onValueChange={(v) =>
+              onValueChange={(value) =>
                 onDashboardFiltersChange({
-                  labelMatch: v as LabelMatchMode,
+                  labelMatch: value as LabelMatchMode,
                 })
               }
             >
-              <SelectTrigger className="w-[140px] h-9">
+              <SelectTrigger className="h-9 w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -321,15 +336,15 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                 <CommandList>
                   <CommandEmpty>Нет меток</CommandEmpty>
                   <CommandGroup>
-                    {filterLabels.map((l) => (
+                    {filterLabels.map((label) => (
                       <CommandItem
-                        key={`ex-${l.id}`}
-                        value={`ex-${l.name}`}
+                        key={`ex-${label.id}`}
+                        value={`ex-${label.name}`}
                         onSelect={() => {
                           setExcludeLabels(
                             toggleInList(
                               excludeLabelIds,
-                              l.id,
+                              label.id,
                               (a, b) => a === b,
                             ),
                           )
@@ -337,15 +352,15 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                       >
                         <div className="flex items-center space-x-3 py-1">
                           <Checkbox
-                            id={`flt-ex-${l.id}`}
-                            checked={excludeLabelIds.includes(l.id)}
+                            id={`flt-ex-${label.id}`}
+                            checked={excludeLabelIds.includes(label.id)}
                           />
                           <span
-                            className="size-3 rounded-sm border shrink-0"
-                            style={{ backgroundColor: l.color }}
+                            className="size-3 shrink-0 rounded-sm border"
+                            style={{ backgroundColor: label.color }}
                           />
-                          <label htmlFor={`flt-ex-${l.id}`} className="leading-none">
-                            {l.name}
+                          <label htmlFor={`flt-ex-${label.id}`} className="leading-none">
+                            {label.name}
                           </label>
                         </div>
                       </CommandItem>
@@ -363,8 +378,8 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                 type="date"
                 className="w-[160px]"
                 value={startDate}
-                onChange={(e) =>
-                  onDashboardFiltersChange({ startDate: e.target.value })
+                onChange={(event) =>
+                  onDashboardFiltersChange({ startDate: event.target.value })
                 }
               />
             </div>
@@ -374,97 +389,104 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                 type="date"
                 className="w-[160px]"
                 value={endDate}
-                onChange={(e) =>
-                  onDashboardFiltersChange({ endDate: e.target.value })
+                onChange={(event) =>
+                  onDashboardFiltersChange({ endDate: event.target.value })
                 }
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Колонки <ChevronDown className="ml-2 h-4 w-4" />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-muted-foreground text-sm">
+            {hasActiveFilters
+              ? "Фильтры применены к текущей выборке"
+              : "Показываем все жалобы без дополнительных фильтров"}
+          </div>
+          <div className="flex items-center gap-2">
+            {hasActiveFilters && onResetFilters && (
+              <Button variant="ghost" size="sm" onClick={onResetFilters}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Сбросить фильтры
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Колонки
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
                     <DropdownMenuCheckboxItem
                       key={column.id}
                       className="capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
+                      onCheckedChange={(value) => column.toggleVisibility(Boolean(value))}
                     >
                       {column.id}
                     </DropdownMenuCheckboxItem>
-                  )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-md shadow-2xl border">
+      <div className="rounded-md border shadow-2xl">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  )
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Загрузка...
+                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                  Загрузка жалоб...
                 </TableCell>
               </TableRow>
-            ) : table.getRowModel().rows?.length ? (
+            ) : table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Жалобы не найдены.
+                <TableCell colSpan={columns.length} className="h-28 text-center">
+                  <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+                    <SearchX className="h-5 w-5" />
+                    <span>
+                      {hasActiveFilters
+                        ? "По текущим фильтрам жалобы не найдены."
+                        : "Жалобы пока не появились."}
+                    </span>
+                    {hasActiveFilters && onResetFilters && (
+                      <Button variant="outline" size="sm" onClick={onResetFilters}>
+                        Сбросить фильтры
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             )}
@@ -474,7 +496,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
 
       <div className="flex items-center justify-between pt-4">
         <div className="text-sm text-muted-foreground">
-          Показано {data.length} из {serverPagination.total} жалоб
+          Показано {data.length} из {serverPagination.total} жалоб · страница {pagination.page}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -492,11 +514,9 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
             variant="outline"
             size="sm"
             onClick={handleNextPage}
-            disabled={
-              serverPagination.page >= serverPagination.pages || isLoading
-            }
+            disabled={serverPagination.page >= serverPagination.pages || isLoading}
           >
-            Вперед
+            Вперёд
           </Button>
         </div>
       </div>

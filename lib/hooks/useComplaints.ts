@@ -1,5 +1,11 @@
 import type { QueryClient } from "@tanstack/react-query"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
+
 import type { PaginatedData } from "@/lib/types"
 import {
   type Complaint,
@@ -9,38 +15,30 @@ import {
   type CreateComplaintRequest,
   type UpdateComplaintRequest,
 } from "@/lib/types/complaint.type"
+
 import { ComplaintAPI } from "../api/complaint.api"
 
-// ---------------------------------------------------------------------------
-// Query key factory
-// ---------------------------------------------------------------------------
-
 export type ComplaintsListFilters = ComplaintQueryParams & {
-  start_date?: string
   end_date?: string
+  start_date?: string
 }
 
 export const complaintKeys = {
   all: ["complaints"] as const,
-  lists: () => [...complaintKeys.all, "list"] as const,
+  detail: (id: string) => [...complaintKeys.details(), id] as const,
+  details: () => [...complaintKeys.all, "detail"] as const,
   list: (filters: ComplaintsListFilters) =>
     [...complaintKeys.lists(), { filters }] as const,
-  details: () => [...complaintKeys.all, "detail"] as const,
-  detail: (id: string) => [...complaintKeys.details(), id] as const,
+  lists: () => [...complaintKeys.all, "list"] as const,
 }
 
 export const complaintAggregatesKey = ["complaints", "aggregates"] as const
 export const complaintStatusesKey = ["complaints", "statuses"] as const
 
-// ---------------------------------------------------------------------------
-// Internal helpers (not exported)
-// ---------------------------------------------------------------------------
-
 function isDateRange(p: ComplaintsListFilters): p is ComplaintsByDatesParams {
   return Boolean(p.start_date && p.end_date)
 }
 
-/** Patch a complaint in the detail cache and all list caches. */
 function patchComplaintInAllCaches(
   queryClient: QueryClient,
   id: number,
@@ -63,7 +61,6 @@ function patchComplaintInAllCaches(
   )
 }
 
-/** Adjust counts_by_status in the aggregates cache without a re-fetch. */
 function patchStatusAggregates(
   queryClient: QueryClient,
   prevStatus: string,
@@ -82,7 +79,6 @@ function patchStatusAggregates(
   )
 }
 
-/** Look up the current complaint from any cached query. */
 function findCachedComplaint(
   queryClient: QueryClient,
   id: number,
@@ -101,28 +97,24 @@ function findCachedComplaint(
   return undefined
 }
 
-// ---------------------------------------------------------------------------
-// Queries
-// ---------------------------------------------------------------------------
-
 export const useComplaints = (params: ComplaintsListFilters = {}) =>
   useQuery({
-    queryKey: complaintKeys.list(params),
+    placeholderData: keepPreviousData,
     queryFn: () => {
       if (isDateRange(params)) return ComplaintAPI.getByDateRange(params)
-      const { start_date: _s, end_date: _e, ...rest } = params
-      return ComplaintAPI.getAll(rest)
+      const nextParams = { ...params }
+      delete nextParams.start_date
+      delete nextParams.end_date
+      return ComplaintAPI.getAll(nextParams)
     },
+    queryKey: complaintKeys.list(params),
     staleTime: 5 * 60 * 1000,
   })
 
 export const useComplaint = (id: string) => {
   const queryClient = useQueryClient()
   return useQuery<Complaint>({
-    queryKey: complaintKeys.detail(id),
-    queryFn: () => ComplaintAPI.getById(id),
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    enabled: Boolean(id),
     initialData: (): Complaint | undefined => {
       for (const query of queryClient
         .getQueryCache()
@@ -134,32 +126,31 @@ export const useComplaint = (id: string) => {
       return undefined
     },
     initialDataUpdatedAt: () => {
-      const ts = queryClient
+      const timestamps = queryClient
         .getQueryCache()
         .findAll({ queryKey: complaintKeys.lists() })
-        .map((q) => q.state.dataUpdatedAt)
-      return ts.length > 0 ? Math.max(...ts) : 0
+        .map((query) => query.state.dataUpdatedAt)
+      return timestamps.length > 0 ? Math.max(...timestamps) : 0
     },
+    queryFn: () => ComplaintAPI.getById(id),
+    queryKey: complaintKeys.detail(id),
+    staleTime: 5 * 60 * 1000,
   })
 }
 
 export const useComplaintAggregates = () =>
   useQuery({
-    queryKey: complaintAggregatesKey,
     queryFn: () => ComplaintAPI.getAggregates(),
+    queryKey: complaintAggregatesKey,
     staleTime: 60 * 1000,
   })
 
 export const useComplaintStatusesFromApi = () =>
   useQuery({
-    queryKey: complaintStatusesKey,
     queryFn: () => ComplaintAPI.getStatuses(),
+    queryKey: complaintStatusesKey,
     staleTime: 10 * 60 * 1000,
   })
-
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
 
 export const useCreateComplaint = () => {
   const queryClient = useQueryClient()
@@ -172,11 +163,6 @@ export const useCreateComplaint = () => {
   })
 }
 
-/**
- * Update status / name / description / category of a complaint.
- * Does NOT update labels – use `useUpdateComplaintLabels` for that.
- * Applies changes directly to all caches (no re-fetch).
- */
 export const useUpdateComplaint = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -184,11 +170,12 @@ export const useUpdateComplaint = () => {
       id,
       body,
     }: {
-      id: number
       body: UpdateComplaintRequest
+      id: number
     }) => ComplaintAPI.update(id, body),
     onSuccess: (_apiResponse, { id, body }) => {
-      const { label_ids: _ignored, ...patch } = body
+      const patch = { ...body }
+      delete patch.label_ids
       if (Object.keys(patch).length === 0) return
 
       const prev = findCachedComplaint(queryClient, id)
@@ -201,10 +188,6 @@ export const useUpdateComplaint = () => {
   })
 }
 
-/**
- * Replace the label set of a complaint via the dedicated `/labels` endpoint.
- * Uses the server's response (which includes the updated labels array).
- */
 export const useUpdateComplaintLabels = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -219,7 +202,6 @@ export const useUpdateComplaintLabels = () => {
       patchComplaintInAllCaches(queryClient, id, {
         labels: data.labels ?? [],
       })
-      // Aggregate label counts are complex to diff; invalidate once.
       queryClient.invalidateQueries({ queryKey: complaintAggregatesKey })
     },
   })
