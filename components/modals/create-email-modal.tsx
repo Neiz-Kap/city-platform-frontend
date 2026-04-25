@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { useSourceManagement } from "@/lib/hooks/useSourceManagement"
+import type { EmailMonitoringConfig } from "@/lib/types/complaint.type"
 
 import { EmailForm } from "../features/forms/t_email-form"
 
@@ -17,9 +18,9 @@ interface EmailDialogProps {
 }
 
 export default function EmailDialog({ open, onOpenChange }: EmailDialogProps) {
-  const { createEmailParser } = useSourceManagement()
+  const { createEmailParser, isCreatingEmail } = useSourceManagement()
 
-  const handleSubmit = (data: { name: string }) => {
+  const handleSubmit = (data: EmailMonitoringConfig) => {
     createEmailParser(data, {
       onSuccess: () => {
         onOpenChange(false)
@@ -29,14 +30,14 @@ export default function EmailDialog({ open, onOpenChange }: EmailDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
           <DialogTitle>Создать почтовый источник</DialogTitle>
           <DialogDescription>
-            Настройте новый почтовый источник для приёма жалоб по электронной почте
+            Настройте IMAP-подключение для приёма жалоб по электронной почте.
           </DialogDescription>
         </DialogHeader>
-        <EmailForm onSubmit={handleSubmit} />
+        <EmailForm onSubmit={handleSubmit} isSubmitting={isCreatingEmail} />
       </DialogContent>
     </Dialog>
   )

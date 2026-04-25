@@ -1,33 +1,45 @@
 import { api, apiRequest } from ".."
-import { PlatformGroup } from "../../types/complaint.type"
+import {
+  EmailMonitoringConfig,
+  PlatformGroup,
+} from "../../types/complaint.type"
+
+type EmailMonitoringRecord = {
+  id: number
+  is_active?: boolean | number
+  is_monitoring?: boolean | number
+  is_running?: boolean | number
+  name: string
+}
+
+function isEnabled(value: boolean | number | undefined) {
+  return value === true || value === 1
+}
+
+function mapEmailSource(record: EmailMonitoringRecord): PlatformGroup {
+  return {
+    enabled: isEnabled(
+      record.is_running ?? record.is_monitoring ?? record.is_active,
+    ),
+    id: record.id.toString(),
+    name: record.name,
+    platform: "email",
+  }
+}
 
 export const EmailApi = {
-  async createParser(data: { name: string }): Promise<PlatformGroup> {
+  async createParser(data: EmailMonitoringConfig): Promise<PlatformGroup> {
     const response = await apiRequest(
-      api
-        .post("monitoring/email", { json: data })
-        .json<{ id: number; is_active: boolean; name: string }>(),
+      api.post("monitoring/email", { json: data }).json<EmailMonitoringRecord>(),
     )
-    return {
-      enabled: response.is_active,
-      id: response.id.toString(),
-      name: response.name,
-      platform: "email",
-    }
+    return mapEmailSource(response)
   },
 
   async getParsers(): Promise<PlatformGroup[]> {
     const data = await apiRequest(
-      api
-        .get("monitoring/email")
-        .json<{ id: number; is_active: boolean; name: string }[]>(),
+      api.get("monitoring/email").json<EmailMonitoringRecord[]>(),
     )
-    return data.map((parser) => ({
-      enabled: parser.is_active,
-      id: parser.id.toString(),
-      name: parser.name,
-      platform: "email",
-    }))
+    return data.map(mapEmailSource)
   },
 
   async updateParserStatus(id: string, action: "start" | "stop"): Promise<void> {

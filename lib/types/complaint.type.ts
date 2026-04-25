@@ -1,5 +1,6 @@
 import { ExportableData } from "@/components/data-table/utils"
 
+import type { ComplaintStatus } from "./complaint-status.type"
 import type { DashboardLabel } from "./complaint-label.type"
 
 /** Подключаемые источники мониторинга (VK, email). Telegram с бэкенда снят. */
@@ -13,18 +14,23 @@ export type SourcePlatform = `${Platform}`
 /** Значение `platform` из API (в БД могут остаться старые `telegram_bot`). */
 export type ComplaintPlatform = SourcePlatform | "telegram_bot"
 
-// Types for complaints (adjust based on your actual API response)
+export type ComplaintSortBy =
+  | "createdAt"
+  | "id"
+  | "label"
+  | "name"
+  | "status"
+  | "updatedAt"
+
 export interface Complaint extends ExportableData {
   id: number
   name: string
   description: string
-  category: string
-  status: string
+  status: ComplaintStatus | string
   /** Ссылка на пост/источник; бэкенд может отдавать `source_url`. */
   url?: string
   source_url?: string
   platform: ComplaintPlatform
-  tags: string[]
   labels?: DashboardLabel[]
   createdAt: string
   updatedAt: string
@@ -47,14 +53,23 @@ export interface PlatformSource {
   groups: PlatformGroup[]
 }
 
+export interface EmailMonitoringConfig {
+  name: string
+  imap_server: string
+  imap_port: number
+  email: string
+  password: string
+  folder?: string
+  use_ssl?: boolean
+  check_interval?: number
+}
+
 export interface CreateComplaintRequest {
   name: string
   description: string
-  category: string
-  status?: string
-  source_platform: string
-  source_url?: string
-  tags?: string[]
+  status?: ComplaintStatus
+  source_platform: SourcePlatform
+  source_url: string
   label_ids?: number[]
 }
 
@@ -62,8 +77,7 @@ export interface CreateComplaintRequest {
 export interface UpdateComplaintRequest {
   name?: string
   description?: string
-  category?: string
-  status?: string
+  status?: ComplaintStatus
   departmentId?: number
   label_ids?: number[]
 }
@@ -75,7 +89,6 @@ export type ComplaintQueryParams = {
   page?: number
   per_page?: number
   q?: string
-  tags?: string[]
   /** CSV: backlog,in_progress,done */
   status?: string[]
   label_ids?: number[]

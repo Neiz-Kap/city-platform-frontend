@@ -23,13 +23,14 @@ function complaintsSearchParams(
   if (params.page != null) searchParams.page = params.page
   if (params.per_page != null) searchParams.per_page = params.per_page
   if (params.q) searchParams.q = params.q
-  if (params.tags?.length) searchParams.tags = params.tags.join(",")
   if (params.status?.length) searchParams.status = params.status.join(",")
-  if (params.label_ids?.length)
+  if (params.label_ids?.length) {
     searchParams.label_ids = params.label_ids.join(",")
+  }
   if (params.label_match) searchParams.label_match = params.label_match
-  if (params.exclude_label_ids?.length)
+  if (params.exclude_label_ids?.length) {
     searchParams.exclude_label_ids = params.exclude_label_ids.join(",")
+  }
   if (params.sort_by) searchParams.sort_by = params.sort_by
   if (params.sort_order) searchParams.sort_order = params.sort_order
   return searchParams
@@ -111,7 +112,7 @@ export class ComplaintAPI {
     return { ...response, labels: response.labels ?? [] }
   }
 
-  static async delete(id: string) {
+  static async delete(id: string | number) {
     await apiRequest(api.delete(`complaint/${id}`))
     return { success: true }
   }

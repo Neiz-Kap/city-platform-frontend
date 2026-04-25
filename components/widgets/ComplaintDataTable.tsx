@@ -206,7 +206,6 @@ export default function ComplaintDataTable() {
     (sorting: SortingState) => {
       const column = sorting[0]
       const sortMap: Record<string, string> = {
-        category: "category",
         createdAt: "createdAt",
         id: "id",
         label: "label",

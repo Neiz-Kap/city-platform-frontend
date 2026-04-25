@@ -99,32 +99,21 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    Категория
-                  </h3>
-                  <p className="text-sm">
-                    {complaint.category || "non-classified"}
-                  </p>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    Источник
-                  </h3>
-                  <p className="text-sm">{complaint.platform}</p>
-                  {mediaUrl && (
-                    <a
-                      href={mediaUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-500 hover:underline block mt-2 truncate"
-                    >
-                      {mediaUrl}
-                    </a>
-                  )}
-                </div>
+              <div className="border rounded-lg p-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Источник
+                </h3>
+                <p className="text-sm">{complaint.platform}</p>
+                {mediaUrl && (
+                  <a
+                    href={mediaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-500 hover:underline block mt-2 truncate"
+                  >
+                    {mediaUrl}
+                  </a>
+                )}
               </div>
 
               <div className="border rounded-lg p-4">

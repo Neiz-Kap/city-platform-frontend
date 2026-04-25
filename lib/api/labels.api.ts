@@ -7,6 +7,11 @@ import type {
 
 const MAX_LABELS_PER_ACCOUNT = 10
 
+type LabelMutationResponse = Partial<DashboardLabel> & {
+  id?: number
+  message?: string
+}
+
 export { MAX_LABELS_PER_ACCOUNT }
 
 export class LabelAPI {
@@ -22,12 +27,12 @@ export class LabelAPI {
   }
 
   static async create(body: CreateLabelRequest) {
-    return apiRequest(api.post(this.prefix, { json: body }).json<DashboardLabel>())
+    return apiRequest(api.post(this.prefix, { json: body }).json<LabelMutationResponse>())
   }
 
   static async update(id: number, body: UpdateLabelRequest) {
     return apiRequest(
-      api.put(`${this.prefix}/${id}`, { json: body }).json<DashboardLabel>(),
+      api.put(`${this.prefix}/${id}`, { json: body }).json<LabelMutationResponse>(),
     )
   }
 

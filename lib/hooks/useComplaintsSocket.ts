@@ -35,6 +35,7 @@ export const useComplaintsSocket = ({
   const socketRef = useRef<Socket | null>(null)
   const connectRef = useRef<() => void>(() => {})
   const disconnectRef = useRef<() => void>(() => {})
+  const resubscribeRef = useRef<() => boolean>(() => false)
   const queryClient = useQueryClient()
   const [isConnected, setIsConnected] = useState(false)
   const onNewComplaintRef = useRef(onNewComplaint)
@@ -52,6 +53,7 @@ export const useComplaintsSocket = ({
   useEffect(() => {
     if (!enabled) {
       disconnectRef.current()
+      resubscribeRef.current = () => false
       return undefined
     }
 
@@ -71,6 +73,7 @@ export const useComplaintsSocket = ({
         interval,
         sources: normalizedSources,
       })
+      return true
     }
 
     const detachNotifications = attachDashboardNotificationHandlers(socket, {
@@ -114,6 +117,7 @@ export const useComplaintsSocket = ({
       }
     }
     disconnectRef.current = disconnectCurrentSocket
+    resubscribeRef.current = () => (socket.connected ? subscribe() : false)
 
     socket.on("connect", onConnect)
     socket.on("disconnect", onDisconnect)
@@ -123,6 +127,7 @@ export const useComplaintsSocket = ({
       disconnectCurrentSocket()
       connectRef.current = () => {}
       disconnectRef.current = () => {}
+      resubscribeRef.current = () => false
     }
   }, [enabled, interval, normalizedSources, queryClient, usePollingOnly])
 
@@ -135,11 +140,7 @@ export const useComplaintsSocket = ({
   }, [])
 
   const requestUpdate = useCallback(() => {
-    if (socketRef.current?.connected) {
-      socketRef.current.emit("request_update")
-      return true
-    }
-    return false
+    return resubscribeRef.current()
   }, [])
 
   return {

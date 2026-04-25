@@ -1,5 +1,10 @@
 "use client"
 
+import { ColumnDef } from "@tanstack/react-table"
+import { MoreHorizontal, Tags } from "lucide-react"
+import Link from "next/link"
+
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -24,13 +29,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
 import { Complaint } from "@/lib/types/complaint.type"
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
-import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, Tags } from "lucide-react"
-import Link from "next/link"
+
 import { StatusBadge } from "./StatusBadge"
 
 export type ComplaintColumnHandlers = {
@@ -95,12 +97,6 @@ export function createComplaintColumns(
       ),
     },
     {
-      accessorKey: "category",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Категория" />
-      ),
-    },
-    {
       accessorKey: "platform",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Платформа" />
@@ -148,16 +144,16 @@ export function createComplaintColumns(
 
         return (
           <div className="flex flex-wrap items-center gap-1 min-w-[200px]">
-            {(complaint.labels ?? []).map((l) => (
+            {(complaint.labels ?? []).map((label) => (
               <Badge
-                key={l.id}
+                key={label.id}
                 className="text-xs border-0"
                 style={{
-                  backgroundColor: l.color,
-                  color: labelContrastColor(l.color),
+                  backgroundColor: label.color,
+                  color: labelContrastColor(label.color),
                 }}
               >
-                {l.name}
+                {label.name}
               </Badge>
             ))}
             <Popover>
@@ -178,19 +174,19 @@ export function createComplaintColumns(
                   <CommandList>
                     <CommandEmpty>Нет меток</CommandEmpty>
                     <CommandGroup>
-                      {h.allLabels.map((l) => (
+                      {h.allLabels.map((label) => (
                         <CommandItem
-                          key={l.id}
-                          value={l.name}
-                          onSelect={() => toggle(l.id)}
+                          key={label.id}
+                          value={label.name}
+                          onSelect={() => toggle(label.id)}
                         >
                           <div className="flex items-center gap-2">
-                            <Checkbox checked={selected.has(l.id)} />
+                            <Checkbox checked={selected.has(label.id)} />
                             <span
                               className="size-3 rounded-sm shrink-0 border"
-                              style={{ backgroundColor: l.color }}
+                              style={{ backgroundColor: label.color }}
                             />
-                            <span>{l.name}</span>
+                            <span>{label.name}</span>
                           </div>
                         </CommandItem>
                       ))}
@@ -199,26 +195,6 @@ export function createComplaintColumns(
                 </Command>
               </PopoverContent>
             </Popover>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "tags",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Теги парсера" />
-      ),
-      enableSorting: false,
-      cell: ({ row }) => {
-        const tags = row.original.tags ?? []
-        if (!tags.length) return <span className="text-muted-foreground">—</span>
-        return (
-          <div className="flex flex-wrap gap-1">
-            {tags.map((t) => (
-              <Badge key={t} variant="secondary" className="text-xs">
-                {t}
-              </Badge>
-            ))}
           </div>
         )
       },

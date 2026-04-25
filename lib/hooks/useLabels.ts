@@ -68,19 +68,19 @@ export function useUpdateLabel() {
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: UpdateLabelRequest }) =>
       LabelAPI.update(id, body),
-    onSuccess: (updated, { id }) => {
+    onSuccess: (updated, { id, body }) => {
+      const patch: { color?: string; name?: string } = {}
+      if (updated.color ?? body.color) patch.color = updated.color ?? body.color
+      if (updated.name ?? body.name) patch.name = updated.name ?? body.name
+
       queryClient.setQueriesData<DashboardLabel[]>(
         { queryKey: labelKeys.all },
         (old) =>
-          old?.map((l) => (l.id === id ? { ...l, ...updated } : l)) ?? old,
+          old?.map((label) => (label.id === id ? { ...label, ...patch } : label)) ?? old,
       )
       queryClient.setQueryData<ComplaintsAggregates | undefined>(
         complaintAggregatesKey,
-        (agg) =>
-          patchLabelInAggregates(agg, id, {
-            name: updated.name,
-            color: updated.color,
-          }),
+        (agg) => patchLabelInAggregates(agg, id, patch),
       )
       queryClient.setQueriesData<PaginatedData<Complaint>>(
         { queryKey: complaintKeys.lists() },
@@ -88,24 +88,13 @@ export function useUpdateLabel() {
           if (!old?.data) return old
           return {
             ...old,
-            data: old.data.map((c) =>
-              patchComplaintLabelsMeta(c, id, {
-                name: updated.name,
-                color: updated.color,
-              }),
-            ),
+            data: old.data.map((c) => patchComplaintLabelsMeta(c, id, patch)),
           }
         },
       )
       queryClient.setQueriesData<Complaint>(
         { queryKey: complaintKeys.details() },
-        (old) =>
-          old
-            ? patchComplaintLabelsMeta(old, id, {
-                name: updated.name,
-                color: updated.color,
-              })
-            : old,
+        (old) => (old ? patchComplaintLabelsMeta(old, id, patch) : old),
       )
     },
   })

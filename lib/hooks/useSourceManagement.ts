@@ -6,6 +6,7 @@ import { getErrorMessage } from "@/lib/api/errors"
 import { EmailApi } from "../api/source/email.api"
 import { VkApi } from "../api/source/vk.api"
 import {
+  EmailMonitoringConfig,
   PlatformGroup,
   PlatformSource,
   SourcePlatform,
@@ -16,9 +17,7 @@ export type VkFormData = {
   url: string
 }
 
-export type EmailFormData = {
-  name: string
-}
+export type EmailFormData = EmailMonitoringConfig
 
 const sourceKeys = {
   all: ["sources"] as const,
@@ -97,15 +96,7 @@ export function useSourceManagement() {
     { enabled: boolean; id: string; platform: SourcePlatform },
     SourceMutationContext
   >({
-    mutationFn: async ({
-      platform,
-      id,
-      enabled,
-    }: {
-      enabled: boolean
-      id: string
-      platform: SourcePlatform
-    }) => {
+    mutationFn: async ({ platform, id, enabled }) => {
       const action = enabled ? "start" : "stop"
       switch (platform) {
         case "vk":
@@ -146,13 +137,7 @@ export function useSourceManagement() {
     { id: string; platform: SourcePlatform },
     SourceMutationContext
   >({
-    mutationFn: async ({
-      id,
-      platform,
-    }: {
-      id: string
-      platform: SourcePlatform
-    }) => {
+    mutationFn: async ({ id, platform }) => {
       switch (platform) {
         case "vk":
           return VkApi.deleteGroup(id)
@@ -190,13 +175,7 @@ export function useSourceManagement() {
     { enabled: boolean; platform: SourcePlatform },
     SourceMutationContext
   >({
-    mutationFn: async ({
-      platform,
-      enabled,
-    }: {
-      enabled: boolean
-      platform: SourcePlatform
-    }) => {
+    mutationFn: async ({ platform, enabled }) => {
       const source = sources.find((item) => item.platform === platform)
       if (!source) return
 

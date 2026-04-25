@@ -1,459 +1,459 @@
 {
-  "info": {
-    "name": "Parser — API мониторинга жалоб",
-    "description": "REST API приложения Parser (Flask). Базовый URL задаётся переменной `base_url` (по умолчанию http://localhost:5000).\n\n**Статусы задач (жалоб):** только `backlog`, `in_progress`, `done` (см. GET /complaints/statuses). При авто-создании из парсеров по умолчанию `backlog`.\n\n**Метки (labels):** пользовательские метки с цветом HEX (#RGB или #RRGGBB), отдельно от служебных `tags` парсера.\n\n**Ошибки:** в теле JSON часто `{ \\\"error\\\": \\\"текст\\\" }`, коды 400/404/409/500 по ситуации.\n\n**WebSocket (Socket.IO):** тот же хост и порт, что у HTTP. События сервера: `connection_status`, `subscription_status`, `new_complaint` (полный объект жалобы). Клиент может отправить `subscribe_complaints`. В Postman: отдельный WebSocket-запрос к вашему Socket.IO URL.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:5000"
-    },
-    {
-      "key": "complaint_id",
-      "value": "1"
-    },
-    {
-      "key": "label_id",
-      "value": "1"
-    },
-    {
-      "key": "group_id",
-      "value": "1"
-    },
-    {
-      "key": "email_id",
-      "value": "1"
-    }
-  ],
-  "item": [
-    {
-      "name": "Health",
-      "item": [
-        {
-          "name": "GET Health",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/health",
-            "description": "Проверка живости сервиса.\n\n**Ответ 200:** `status`, `timestamp`, `database` (connected|disconnected), `websocket` (enabled).",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "Complaints — справочники и агрегаты",
-      "item": [
-        {
-          "name": "GET Список фиксированных статусов",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/complaints/statuses",
-            "description": "Возвращает массив `{ key, label_ru }` для ключей `backlog`, `in_progress`, `done`.",
-            "header": []
-          }
-        },
-        {
-          "name": "GET Агрегаты для дашборда",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/complaints/aggregates",
-            "description": "**Ответ:** `counts_by_status` — объект {статус: количество}; `counts_by_label` — массив `{ id, name, color, complaint_count }` по всем меткам.",
-            "header": []
-          }
-        },
-        {
-          "name": "POST Статистика по периодам",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/complaints/statistics",
-            "description": "**Тело JSON:** `period` — обязательно: `day` | `week` | `month`. `page`, `per_page` (1–100).\n\n**Ответ:** `data` (массив `{ key, value }`), `pagination`.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"period\": \"day\",\n  \"page\": 1,\n  \"per_page\": 10\n}"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Complaints — выборки",
-      "item": [
-        {
-          "name": "GET Список жалоб (фильтры, пагинация)",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/complaints?page=1&per_page=10&tags=problem,road&q=&sort_by=createdAt&sort_order=DESC&status=backlog,in_progress&label_ids=1,2&label_match=any&exclude_label_ids=3",
-            "description": "**Query-параметры:**\n- `page`, `per_page` (1–100)\n- `tags` — имена служебных тегов через запятую (OR по тегам парсера)\n- `q` — поиск по name/description/category\n- `sort_by` — id, name, category, status, createdAt, updatedAt, **label** (сортировка по первой метке по имени)\n- `sort_order` — ASC | DESC\n- `status` — через запятую: backlog, in_progress, done\n- `label_ids` — id меток через запятую\n- `label_match` — `any` (хотя бы одна метка) или `all` (все указанные)\n- `exclude_label_ids` — скрыть жалобы, у которых есть любая из этих меток\n\n**Ответ:** `data` — массив жалоб с полями `tags`, `labels` [{id,name,color}], `pagination`.",
-            "header": []
-          }
-        },
-        {
-          "name": "GET Жалобы по диапазону дат",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/complaints/by_dates?start_date=2026-01-01T00:00:00&end_date=2026-12-31T23:59:59&page=1&per_page=10&sort_by=createdAt&sort_order=DESC",
-            "description": "**Обязательно:** `start_date`, `end_date` (ISO 8601).\n\nТе же опции, что у списка жалоб: `status`, `label_ids`, `label_match`, `exclude_label_ids`, `sort_by` (включая label), `sort_order`.\n\n**Ответ:** `data`, `pagination`, `date_range`.",
-            "header": []
-          }
-        },
-        {
-          "name": "GET Жалобы по источнику",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/complaints/source/vk",
-            "description": "**Путь:** `vk` или `email`.\n\n**Ответ:** `source`, `count`, `complaints` (массив с tags и labels).",
-            "header": []
-          }
-        },
-        {
-          "name": "GET Одна жалоба по id",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/complaints/{{complaint_id}}",
-            "description": "**404** если не найдена или удалена (мягкое удаление).",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "Complaints — CRUD",
-      "item": [
-        {
-          "name": "POST Создать жалобу",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/complaint",
-            "description": "**Обязательные поля:** name, description, category, source_platform, source_url.\n\n**Опционально:** `status` (по умолчанию backlog), `tags` (массив имён тегов из таблицы tag), `label_ids` (массив id меток).\n\n**201:** `{ id, message }`. Через WebSocket уйдёт `new_complaint`.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Яма на дороге\",\n  \"description\": \"Описание\",\n  \"category\": \"roads\",\n  \"source_platform\": \"vk\",\n  \"source_url\": \"https://vk.com/wall-1_1\",\n  \"status\": \"backlog\",\n  \"tags\": [\"problem\", \"road\"],\n  \"label_ids\": [1]\n}"
-            }
-          }
-        },
-        {
-          "name": "PUT Обновить жалобу",
-          "request": {
-            "method": "PUT",
-            "url": "{{base_url}}/complaint/{{complaint_id}}",
-            "description": "Любое подмножество: name, description, category, status (только backlog|in_progress|done), departmentId, **label_ids** (полная замена набора меток; можно передать `[]` чтобы снять все).\n\n**400** при неверном статусе или если нечего обновлять.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"in_progress\",\n  \"description\": \"В работе\",\n  \"label_ids\": [1, 2]\n}"
-            }
-          }
-        },
-        {
-          "name": "PUT Только метки жалобы",
-          "request": {
-            "method": "PUT",
-            "url": "{{base_url}}/complaint/{{complaint_id}}/labels",
-            "description": "Полная замена списка меток. **Тело:** `{ \\\"label_ids\\\": [int, ...] }`.\n\n**Ответ:** `message`, `labels` — актуальный массив меток после сохранения.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"label_ids\": [1]\n}"
-            }
-          }
-        },
-        {
-          "name": "DELETE Мягкое удаление жалобы",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/complaint/{{complaint_id}}",
-            "description": "Помечает жалобу удалённой (`is_deleted`), не удаляет строку физически.",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "Labels (метки дашборда)",
-      "item": [
-        {
-          "name": "GET Список меток",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/labels?with_counts=1",
-            "description": "Без query — все метки. `with_counts=1` (или true/yes) — добавляет поле `complaint_count` на каждую метку.",
-            "header": []
-          }
-        },
-        {
-          "name": "POST Создать метку",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/labels",
-            "description": "**Обязательно:** name. **color** — опционально, по умолчанию #6B7280; формат #RGB или #RRGGBB.\n\n**409** при дублировании имени.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Дороги\",\n  \"color\": \"#EF4444\"\n}"
-            }
-          }
-        },
-        {
-          "name": "PUT Обновить метку",
-          "request": {
-            "method": "PUT",
-            "url": "{{base_url}}/labels/{{label_id}}",
-            "description": "Можно передать только `name` или только `color`. Поддерживается PATCH с тем же телом.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Инфраструктура\",\n  \"color\": \"#3B82F6\"\n}"
-            }
-          }
-        },
-        {
-          "name": "DELETE Удалить метку",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/labels/{{label_id}}",
-            "description": "Связи complaint_label удаляются каскадно (SQLite FK).",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "VK — группы",
-      "item": [
-        {
-          "name": "POST Добавить группу VK",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/vk/groups",
-            "description": "url — полный URL, короткое имя или @screen_name. **201** возвращает объект группы.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"url\": \"https://vk.com/example_group\",\n  \"name\": \"Название сообщества\"\n}"
-            }
-          }
-        },
-        {
-          "name": "GET Список групп VK",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/vk/groups",
-            "description": "Массив групп из БД; поле `is_monitoring` (0/1) — активен ли мониторинг для группы в текущем процессе.",
-            "header": []
-          }
-        },
-        {
-          "name": "POST Запуск мониторинга одной группы",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/vk/groups/{{group_id}}/start",
-            "description": "Отдельный поток парсера только для этой группы.",
-            "header": []
-          }
-        },
-        {
-          "name": "POST Остановка мониторинга одной группы",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/vk/groups/{{group_id}}/stop",
-            "description": "Если группа в глобальном мониторинге — может быть деактивирована в БД (см. note в ответе).",
-            "header": []
-          }
-        },
-        {
-          "name": "DELETE Удалить группу",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/vk/groups/{{group_id}}",
-            "description": "Останавливает мониторинг группы при необходимости, затем удаляет запись.",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "Monitoring — VK глобально",
-      "item": [
-        {
-          "name": "POST Запуск глобального VK-мониторинга",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/monitoring/vk/start",
-            "description": "Мониторинг всех **активных** групп из БД. **400** если уже запущен или нет групп.",
-            "header": []
-          }
-        },
-        {
-          "name": "POST Остановка глобального VK-мониторинга",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/monitoring/vk/stop",
-            "description": "Останавливает глобальный цикл и сбрасывает флаги мониторинга групп в БД.",
-            "header": []
-          }
-        },
-        {
-          "name": "GET Статус VK-мониторинга",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/monitoring/vk/status",
-            "description": "**Ответ:** `is_monitoring`, `active_groups`, `group_monitoring_count` и др.",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "Monitoring — Email",
-      "item": [
-        {
-          "name": "POST Создать конфигурацию IMAP",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/monitoring/email",
-            "description": "**Обязательно:** name, imap_server, imap_port, email, password. Остальное опционально.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Основной ящик\",\n  \"imap_server\": \"imap.example.com\",\n  \"imap_port\": 993,\n  \"email\": \"user@example.com\",\n  \"password\": \"secret\",\n  \"folder\": \"INBOX\",\n  \"use_ssl\": true,\n  \"check_interval\": 300\n}"
-            }
-          }
-        },
-        {
-          "name": "GET Все конфигурации email",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/monitoring/email",
-            "description": "Каждый объект дополняется `is_running` в текущем процессе сервера.",
-            "header": []
-          }
-        },
-        {
-          "name": "GET Одна конфигурация",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/monitoring/email/{{email_id}}",
-            "description": "**404** если id не найден.",
-            "header": []
-          }
-        },
-        {
-          "name": "PUT Обновить конфигурацию",
-          "request": {
-            "method": "PUT",
-            "url": "{{base_url}}/monitoring/email/{{email_id}}",
-            "description": "Если мониторинг был запущен — перезапускается с новыми настройками.",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Новое имя\",\n  \"check_interval\": 600\n}"
-            }
-          }
-        },
-        {
-          "name": "DELETE Удалить конфигурацию",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/monitoring/email/{{email_id}}",
-            "description": "Останавливает поток мониторинга при необходимости.",
-            "header": []
-          }
-        },
-        {
-          "name": "POST Запуск email-мониторинга",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/monitoring/email/{{email_id}}/start",
-            "description": "**400** если уже запущен.",
-            "header": []
-          }
-        },
-        {
-          "name": "POST Остановка email-мониторинга",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/monitoring/email/{{email_id}}/stop",
-            "description": "**400** если не запущен.",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "Monitoring — сводка",
-      "item": [
-        {
-          "name": "GET Общий статус системы",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/monitoring/status",
-            "description": "Сводка по VK-группам, email-конфигам и **stats** из `get_complaint_stats` (total_complaints, backlog_complaints, in_progress_complaints, done_complaints, total_labels, total_tags и др.).",
-            "header": []
-          }
-        }
-      ]
-    },
-    {
-      "name": "WebSocket (Socket.IO) — справка",
-      "item": [
-        {
-          "name": "README — не HTTP",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/",
-            "description": "Этот пункт не вызывает API. Подключайте **socket.io-client** к `base_url`.\n\n**События сервера → клиент:**\n- `connection_status` — после connect\n- `subscription_status` — после emit клиентом `subscribe_complaints`\n- `new_complaint` — полный объект жалобы (как в GET /complaints/:id), при создании через парсеры или POST /complaint\n\n**Клиент → сервер:** `subscribe_complaints` (тело произвольное).",
-            "header": []
-          }
-        }
-      ]
-    }
-  ]
+	"info": {
+		"name": "Parser — API мониторинга жалоб",
+		"description": "REST API приложения Parser (Flask). Базовый URL задаётся переменной `base_url` (по умолчанию http://localhost:5000).\n\n**Статусы задач (жалоб):** только `backlog`, `in_progress`, `done` (см. GET /complaints/statuses). При авто-создании из парсеров по умолчанию `backlog`.\n\n**Метки (labels):** пользовательские метки с цветом HEX (#RGB или #RRGGBB).\n\n**Ошибки:** в теле JSON часто `{ \\\"error\\\": \\\"текст\\\" }`, коды 400/404/409/500 по ситуации.\n\n**WebSocket (Socket.IO):** тот же хост и порт, что у HTTP. События сервера: `connection_status`, `subscription_status`, `new_complaint` (полный объект жалобы). Клиент может отправить `subscribe_complaints`. В Postman: отдельный WebSocket-запрос к вашему Socket.IO URL.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000"
+		},
+		{
+			"key": "complaint_id",
+			"value": "1"
+		},
+		{
+			"key": "label_id",
+			"value": "1"
+		},
+		{
+			"key": "group_id",
+			"value": "1"
+		},
+		{
+			"key": "email_id",
+			"value": "1"
+		}
+	],
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "GET Health",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/health",
+						"description": "Проверка живости сервиса.\n\n**Ответ 200:** `status`, `timestamp`, `database` (connected|disconnected), `websocket` (enabled).",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "Complaints — справочники и агрегаты",
+			"item": [
+				{
+					"name": "GET Список фиксированных статусов",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/complaints/statuses",
+						"description": "Возвращает массив `{ key, label_ru }` для ключей `backlog`, `in_progress`, `done`.",
+						"header": []
+					}
+				},
+				{
+					"name": "GET Агрегаты для дашборда",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/complaints/aggregates",
+						"description": "**Ответ:** `counts_by_status` — объект {статус: количество}; `counts_by_label` — массив `{ id, name, color, complaint_count }` по всем меткам.",
+						"header": []
+					}
+				},
+				{
+					"name": "POST Статистика по периодам",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/complaints/statistics",
+						"description": "**Тело JSON:** `period` — обязательно: `day` | `week` | `month`. `page`, `per_page` (1–100).\n\n**Ответ:** `data` (массив `{ key, value }`), `pagination`.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"period\": \"day\",\n  \"page\": 1,\n  \"per_page\": 10\n}"
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Complaints — выборки",
+			"item": [
+				{
+					"name": "GET Список жалоб (фильтры, пагинация)",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/complaints?page=1&per_page=10&q=&sort_by=createdAt&sort_order=DESC&status=backlog,in_progress&label_ids=1,2&label_match=any&exclude_label_ids=3",
+						"description": "**Query-параметры:**\n- `page`, `per_page` (1–100)\n- `q` — поиск по name/description\n- `sort_by` — id, name, status, createdAt, updatedAt, **label** (сортировка по первой метке по имени)\n- `sort_order` — ASC | DESC\n- `status` — через запятую: backlog, in_progress, done\n- `label_ids` — id меток через запятую\n- `label_match` — `any` (хотя бы одна метка) или `all` (все указанные)\n- `exclude_label_ids` — скрыть жалобы, у которых есть любая из этих меток\n\n**Ответ:** `data` — массив жалоб с полем `labels` [{id,name,color}], `pagination`.",
+						"header": []
+					}
+				},
+				{
+					"name": "GET Жалобы по диапазону дат",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/complaints/by_dates?start_date=2026-01-01T00:00:00&end_date=2026-12-31T23:59:59&page=1&per_page=10&sort_by=createdAt&sort_order=DESC",
+						"description": "**Обязательно:** `start_date`, `end_date` (ISO 8601).\n\nТе же опции, что у списка жалоб: `status`, `label_ids`, `label_match`, `exclude_label_ids`, `sort_by` (включая label), `sort_order`.\n\n**Ответ:** `data`, `pagination`, `date_range`.",
+						"header": []
+					}
+				},
+				{
+					"name": "GET Жалобы по источнику",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/complaints/source/vk",
+						"description": "**Путь:** `vk` или `email`.\n\n**Ответ:** `source`, `count`, `complaints` (массив с labels).",
+						"header": []
+					}
+				},
+				{
+					"name": "GET Одна жалоба по id",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/complaints/{{complaint_id}}",
+						"description": "**404** если не найдена или удалена (мягкое удаление).",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "Complaints — CRUD",
+			"item": [
+				{
+					"name": "POST Создать жалобу",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/complaint",
+						"description": "**Обязательные поля:** name, description, source_platform, source_url.\n\n**Опционально:** `status` (по умолчанию backlog), `label_ids` (массив id меток).\n\n**201:** `{ id, message }`. Через WebSocket уйдёт `new_complaint`.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Яма на дороге\",\n  \"description\": \"Описание\",\n  \"source_platform\": \"vk\",\n  \"source_url\": \"https://vk.com/wall-1_1\",\n  \"status\": \"backlog\",\n  \"label_ids\": [1]\n}"
+						}
+					}
+				},
+				{
+					"name": "PUT Обновить жалобу",
+					"request": {
+						"method": "PUT",
+						"url": "{{base_url}}/complaint/{{complaint_id}}",
+						"description": "Любое подмножество: name, description, status (только backlog|in_progress|done), departmentId, **label_ids** (полная замена набора меток; можно передать `[]` чтобы снять все).\n\n**400** при неверном статусе или если нечего обновлять.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"in_progress\",\n  \"description\": \"В работе\",\n  \"label_ids\": [1, 2]\n}"
+						}
+					}
+				},
+				{
+					"name": "PUT Только метки жалобы",
+					"request": {
+						"method": "PUT",
+						"url": "{{base_url}}/complaint/{{complaint_id}}/labels",
+						"description": "Полная замена списка меток. **Тело:** `{ \\\"label_ids\\\": [int, ...] }`.\n\n**Ответ:** `message`, `labels` — актуальный массив меток после сохранения.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"label_ids\": [1]\n}"
+						}
+					}
+				},
+				{
+					"name": "DELETE Мягкое удаление жалобы",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/complaint/{{complaint_id}}",
+						"description": "Помечает жалобу удалённой (`is_deleted`), не удаляет строку физически.",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "Labels (метки дашборда)",
+			"item": [
+				{
+					"name": "GET Список меток",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/labels?with_counts=1",
+						"description": "Без query — все метки. `with_counts=1` (или true/yes) — добавляет поле `complaint_count` на каждую метку.",
+						"header": []
+					}
+				},
+				{
+					"name": "POST Создать метку",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/labels",
+						"description": "**Обязательно:** name. **color** — опционально, по умолчанию #6B7280; формат #RGB или #RRGGBB.\n\n**409** при дублировании имени.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Дороги\",\n  \"color\": \"#EF4444\"\n}"
+						}
+					}
+				},
+				{
+					"name": "PUT Обновить метку",
+					"request": {
+						"method": "PUT",
+						"url": "{{base_url}}/labels/{{label_id}}",
+						"description": "Можно передать только `name` или только `color`. Поддерживается PATCH с тем же телом.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Инфраструктура\",\n  \"color\": \"#3B82F6\"\n}"
+						}
+					}
+				},
+				{
+					"name": "DELETE Удалить метку",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/labels/{{label_id}}",
+						"description": "Связи complaint_label удаляются каскадно (SQLite FK).",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "VK — группы",
+			"item": [
+				{
+					"name": "POST Добавить группу VK",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/vk/groups",
+						"description": "url — полный URL, короткое имя или @screen_name. **201** возвращает объект группы.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"url\": \"https://vk.com/example_group\",\n  \"name\": \"Название сообщества\"\n}"
+						}
+					}
+				},
+				{
+					"name": "GET Список групп VK",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/vk/groups",
+						"description": "Массив групп из БД; поле `is_monitoring` (0/1) — активен ли мониторинг для группы в текущем процессе.",
+						"header": []
+					}
+				},
+				{
+					"name": "POST Запуск мониторинга одной группы",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/vk/groups/{{group_id}}/start",
+						"description": "Отдельный поток парсера только для этой группы.",
+						"header": []
+					}
+				},
+				{
+					"name": "POST Остановка мониторинга одной группы",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/vk/groups/{{group_id}}/stop",
+						"description": "Если группа в глобальном мониторинге — может быть деактивирована в БД (см. note в ответе).",
+						"header": []
+					}
+				},
+				{
+					"name": "DELETE Удалить группу",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/vk/groups/{{group_id}}",
+						"description": "Останавливает мониторинг группы при необходимости, затем удаляет запись.",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "Monitoring — VK глобально",
+			"item": [
+				{
+					"name": "POST Запуск глобального VK-мониторинга",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/monitoring/vk/start",
+						"description": "Мониторинг всех **активных** групп из БД. **400** если уже запущен или нет групп.",
+						"header": []
+					}
+				},
+				{
+					"name": "POST Остановка глобального VK-мониторинга",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/monitoring/vk/stop",
+						"description": "Останавливает глобальный цикл и сбрасывает флаги мониторинга групп в БД.",
+						"header": []
+					}
+				},
+				{
+					"name": "GET Статус VK-мониторинга",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/monitoring/vk/status",
+						"description": "**Ответ:** `is_monitoring`, `active_groups`, `group_monitoring_count` и др.",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "Monitoring — Email",
+			"item": [
+				{
+					"name": "POST Создать конфигурацию IMAP",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/monitoring/email",
+						"description": "**Обязательно:** name, imap_server, imap_port, email, password. Остальное опционально.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Основной ящик\",\n  \"imap_server\": \"imap.example.com\",\n  \"imap_port\": 993,\n  \"email\": \"user@example.com\",\n  \"password\": \"secret\",\n  \"folder\": \"INBOX\",\n  \"use_ssl\": true,\n  \"check_interval\": 300\n}"
+						}
+					}
+				},
+				{
+					"name": "GET Все конфигурации email",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/monitoring/email",
+						"description": "Каждый объект дополняется `is_running` в текущем процессе сервера.",
+						"header": []
+					}
+				},
+				{
+					"name": "GET Одна конфигурация",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/monitoring/email/{{email_id}}",
+						"description": "**404** если id не найден.",
+						"header": []
+					}
+				},
+				{
+					"name": "PUT Обновить конфигурацию",
+					"request": {
+						"method": "PUT",
+						"url": "{{base_url}}/monitoring/email/{{email_id}}",
+						"description": "Если мониторинг был запущен — перезапускается с новыми настройками.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Новое имя\",\n  \"check_interval\": 600\n}"
+						}
+					}
+				},
+				{
+					"name": "DELETE Удалить конфигурацию",
+					"request": {
+						"method": "DELETE",
+						"url": "{{base_url}}/monitoring/email/{{email_id}}",
+						"description": "Останавливает поток мониторинга при необходимости.",
+						"header": []
+					}
+				},
+				{
+					"name": "POST Запуск email-мониторинга",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/monitoring/email/{{email_id}}/start",
+						"description": "**400** если уже запущен.",
+						"header": []
+					}
+				},
+				{
+					"name": "POST Остановка email-мониторинга",
+					"request": {
+						"method": "POST",
+						"url": "{{base_url}}/monitoring/email/{{email_id}}/stop",
+						"description": "**400** если не запущен.",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "Monitoring — сводка",
+			"item": [
+				{
+					"name": "GET Общий статус системы",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/monitoring/status",
+						"description": "Сводка по VK-группам, email-конфигам и **stats** из `get_complaint_stats` (total_complaints, backlog_complaints, in_progress_complaints, done_complaints, total_labels и др.).",
+						"header": []
+					}
+				}
+			]
+		},
+		{
+			"name": "WebSocket (Socket.IO) — справка",
+			"item": [
+				{
+					"name": "README — не HTTP",
+					"request": {
+						"method": "GET",
+						"url": "{{base_url}}/",
+						"description": "Этот пункт не вызывает API. Подключайте **socket.io-client** к `base_url`.\n\n**События сервера → клиент:**\n- `connection_status` — после connect\n- `subscription_status` — после emit клиентом `subscribe_complaints`\n- `new_complaint` — полный объект жалобы (как в GET /complaints/:id), при создании через парсеры или POST /complaint\n\n**Клиент → сервер:** `subscribe_complaints` (тело произвольное).",
+						"header": []
+					}
+				}
+			]
+		}
+	]
 }

@@ -7,7 +7,6 @@ export const DEFAULT_PAGINATED_DATA = {
 
 export const mockComplaintData: Complaint[] = [
   {
-    category: "auto_detected",
     createdAt: "2025-11-20 12:44:36",
     departmentId: 3,
     description:
@@ -16,13 +15,11 @@ export const mockComplaintData: Complaint[] = [
     is_deleted: 0,
     name: "\u041d\u0430\u0440\u0443\u0448\u0435\u043d\u0438\u0435 \u043e\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0438 \u0430\u0432\u0442\u043e\u0431\u0443\u0441\u0430 \u211617",
     platform: "vk",
-    status: "new",
-    tags: ["problem"],
+    status: "backlog",
     updatedAt: "2025-11-20 12:44:36",
     url: "https://vk.com/chp.nv86?w=wall-159998",
   },
   {
-    category: "auto_detected",
     createdAt: "2025-11-20 12:44:29",
     departmentId: 3,
     description:
@@ -31,13 +28,11 @@ export const mockComplaintData: Complaint[] = [
     is_deleted: 0,
     name: "\u041d\u0435\u0437\u0430\u043a\u043e\u043d\u043d\u0430\u044f \u0432\u044b\u0440\u0443\u0431\u043a\u0430 \u0434\u0435\u0440\u0435\u0432\u044c\u0435\u0432",
     platform: "vk",
-    status: "new",
-    tags: ["problem"],
+    status: "backlog",
     updatedAt: "2025-11-20 12:44:29",
     url: "https://vk.com/chp.nv86?w=wall-160004",
   },
   {
-    category: "auto_detected",
     createdAt: "2025-11-20 12:44:24",
     departmentId: 3,
     description:
@@ -46,13 +41,11 @@ export const mockComplaintData: Complaint[] = [
     is_deleted: 0,
     name: "\u0422\u0435\u043f\u043b\u0430\u044f \u043e\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u043d\u0430 \u041c\u0438\u0440\u0430",
     platform: "vk",
-    status: "new",
-    tags: ["problem"],
+    status: "backlog",
     updatedAt: "2025-11-20 12:44:24",
     url: "https://vk.com/chp.nv86?w=wall-160008",
   },
   {
-    category: "auto_detected",
     createdAt: "2025-11-20 12:44:21",
     departmentId: 3,
     description:
@@ -61,13 +54,11 @@ export const mockComplaintData: Complaint[] = [
     is_deleted: 0,
     name: "\u0410\u0432\u0430\u0440\u0438\u0439\u043d\u044b\u0435 \u0434\u0435\u0440\u0435\u0432\u044c\u044f \u0432 \u043f\u0430\u0440\u043a\u0435",
     platform: "vk",
-    status: "new",
-    tags: ["problem"],
+    status: "backlog",
     updatedAt: "2025-11-20 12:44:21",
     url: "https://vk.com/chp.nv86?w=wall-160048",
   },
   {
-    category: "auto_detected",
     createdAt: "2025-11-20 12:44:17",
     departmentId: 3,
     description:
@@ -76,13 +67,11 @@ export const mockComplaintData: Complaint[] = [
     is_deleted: 0,
     name: "\u0422\u0440\u043e\u0442\u0443\u0430\u0440\u044b \u0432 \u043f\u0435\u0440\u0435\u0443\u043b\u043a\u0435",
     platform: "vk",
-    status: "new",
-    tags: ["problem"],
+    status: "backlog",
     updatedAt: "2025-11-20 12:44:17",
     url: "https://vk.com/chp.nv86?w=wall-160051",
   },
   {
-    category: "auto_detected",
     createdAt: "2025-11-20 12:44:13",
     departmentId: 3,
     description:
@@ -91,8 +80,7 @@ export const mockComplaintData: Complaint[] = [
     is_deleted: 0,
     name: "\u0413\u043e\u043b\u043e\u043b\u0435\u0434\u0438\u0446\u0430 \u043d\u0430 \u0442\u0440\u043e\u0442\u0443\u0430\u0440\u0435",
     platform: "vk",
-    status: "new",
-    tags: ["problem"],
+    status: "backlog",
     updatedAt: "2025-11-20 12:44:13",
     url: "https://vk.com/chp.nv86?w=wall-160053",
   },

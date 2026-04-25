@@ -1,9 +1,9 @@
 "use client"
 
-import { Complaint } from "@/lib/types/complaint.type"
 import { format, isValid } from "date-fns"
 import { ru } from "date-fns/locale"
-import { TagManager } from "./TagManager"
+
+import { Complaint } from "@/lib/types/complaint.type"
 
 interface ComplaintMetadataProps {
   complaint: Complaint
@@ -16,8 +16,6 @@ function safeFormat(dateStr: string | null | undefined): string {
 }
 
 export function ComplaintMetadata({ complaint }: ComplaintMetadataProps) {
-  const tags = complaint.tags ?? []
-
   return (
     <div className="space-y-6">
       <div>
@@ -46,13 +44,6 @@ export function ComplaintMetadata({ complaint }: ComplaintMetadataProps) {
           ID проблемы
         </h3>
         <p className="text-sm font-mono">ID: {complaint.id}</p>
-      </div>
-
-      <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">
-          Теги парсера
-        </h3>
-        <TagManager tags={tags} editable={false} />
       </div>
     </div>
   )

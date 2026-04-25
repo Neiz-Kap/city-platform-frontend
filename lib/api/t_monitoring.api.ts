@@ -1,4 +1,5 @@
 import { api, apiRequest } from "."
+import type { EmailMonitoringConfig } from "@/lib/types/complaint.type"
 
 export class MonitoringAPI {
   static startVKMonitoring() {
@@ -13,16 +14,7 @@ export class MonitoringAPI {
     return apiRequest(api.get("monitoring/vk/status").json<unknown>())
   }
 
-  static createEmailMonitoring(config: {
-    check_interval: number
-    email: string
-    folder: string
-    imap_port: number
-    imap_server: string
-    name: string
-    password: string
-    use_ssl: boolean
-  }) {
+  static createEmailMonitoring(config: EmailMonitoringConfig) {
     return apiRequest(
       api
         .post("monitoring/email", {
@@ -42,10 +34,7 @@ export class MonitoringAPI {
 
   static updateEmailMonitoring(
     id: string,
-    update: {
-      check_interval?: number
-      folder?: string
-    },
+    update: Partial<EmailMonitoringConfig>,
   ) {
     return apiRequest(
       api
