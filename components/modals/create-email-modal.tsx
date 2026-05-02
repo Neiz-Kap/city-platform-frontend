@@ -17,11 +17,13 @@ interface EmailDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
+type EmailFormData = Omit<EmailMonitoringConfig, 'userId'>
+
 export default function EmailDialog({ open, onOpenChange }: EmailDialogProps) {
   const { createEmailParser, isCreatingEmail } = useSourceManagement()
 
-  const handleSubmit = (data: EmailMonitoringConfig) => {
-    createEmailParser(data, {
+  const handleSubmit = (data: EmailFormData) => {
+    createEmailParser(data as EmailMonitoringConfig, {
       onSuccess: () => {
         onOpenChange(false)
       },
