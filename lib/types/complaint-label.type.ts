@@ -4,6 +4,7 @@ export interface DashboardLabel {
   name: string
   color: string
   complaint_count?: number
+  userId: number
 }
 
 export interface CreateLabelRequest {

@@ -1,34 +1,27 @@
 "use client"
 
-import { SortingState } from "@tanstack/react-table"
+import type { SortingState } from "@tanstack/react-table"
 import { formatDistanceToNow } from "date-fns"
 import { ru } from "date-fns/locale"
 import { Bell, BellOff, FileDown, RefreshCw, Wifi, WifiOff } from "lucide-react"
 import Link from "next/link"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { createComplaintColumns } from "@/components/entities/complaint/columns"
+import { DataTable } from "@/components/features/complaint/data-table"
 import { Button } from "@/components/ui/button"
-import {
-  DataTable,
-  type DashboardTableFilters,
-} from "@/components/features/complaint/data-table"
+import { useComplaintQueryState } from "@/lib/hooks/useComplaintQueryState"
+import type { ComplaintsListFilters } from "@/lib/hooks/useComplaints"
 import {
   useComplaintAggregates,
   useComplaints,
   useUpdateComplaint,
   useUpdateComplaintLabels,
 } from "@/lib/hooks/useComplaints"
-import type { ComplaintsListFilters } from "@/lib/hooks/useComplaints"
 import { useComplaintsSocket } from "@/lib/hooks/useComplaintsSocket"
 import { useLabels } from "@/lib/hooks/useLabels"
 import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
-import {
-  applyComplaintDashboardUrlState,
-  parseComplaintDashboardUrlState,
-} from "@/lib/utils/dashboard-url-state"
 
 import { ComplaintAggregatesBar } from "./ComplaintAggregatesBar"
 
@@ -40,91 +33,59 @@ function toEndOfDayIso(date: string) {
   return `${date}T23:59:59`
 }
 
-const DEFAULT_TABLE_SORT: SortingState = [{ id: "createdAt", desc: true }]
-const DEFAULT_FILTERS: DashboardTableFilters = {
-  endDate: "",
-  excludeLabelIds: [],
-  labelIds: [],
-  labelMatch: "any",
-  selectedStatuses: [],
-  startDate: "",
-}
-
-function getSortingState(sort_by?: string, sort_order?: "ASC" | "DESC") {
-  return [{ id: sort_by ?? "createdAt", desc: sort_order !== "ASC" }]
-}
-
 export default function ComplaintDataTable() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
-  const urlState = useMemo(
-    () => parseComplaintDashboardUrlState(searchParams),
-    [searchParams],
-  )
-  const hasInvalidDateRange =
-    Boolean(urlState.dashboardFilters.startDate) &&
-    Boolean(urlState.dashboardFilters.endDate) &&
-    urlState.dashboardFilters.startDate > urlState.dashboardFilters.endDate
+  const {
+    pagination,
+    sortParams,
+    dashboardFilters,
+    search,
+    sorting,
+    setPagination,
+    setSorting,
+    setSearch,
+    setDashboardFilters,
+    resetFilters,
+    hasInvalidDateRange,
+  } = useComplaintQueryState()
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [newComplaintsCount, setNewComplaintsCount] = useState(0)
-
-  const replaceUrlState = useCallback(
-    (
-      updater: (
-        state: ReturnType<typeof parseComplaintDashboardUrlState>,
-      ) => ReturnType<typeof parseComplaintDashboardUrlState>,
-    ) => {
-      const nextState = updater(parseComplaintDashboardUrlState(searchParams))
-      const nextParams = applyComplaintDashboardUrlState(
-        new URLSearchParams(searchParams.toString()),
-        nextState,
-      )
-      const nextQuery = nextParams.toString()
-      router.replace(`${pathname}${nextQuery ? `?${nextQuery}` : ""}`, {
-        scroll: false,
-      })
-    },
-    [pathname, router, searchParams],
-  )
 
   const { data: labels = [] } = useLabels({ with_counts: false })
 
   const queryParams = useMemo((): ComplaintsListFilters => {
     const base: ComplaintsListFilters = {
-      page: urlState.pagination.page,
-      per_page: urlState.pagination.per_page,
-      ...urlState.sortParams,
-      ...(urlState.search.trim() && { q: urlState.search.trim() }),
-      ...(urlState.dashboardFilters.selectedStatuses.length > 0 && {
-        status: urlState.dashboardFilters.selectedStatuses,
+      page: pagination.page,
+      per_page: pagination.per_page,
+      ...sortParams,
+      ...(search.trim() && { q: search.trim() }),
+      ...(dashboardFilters.selectedStatuses.length > 0 && {
+        status: dashboardFilters.selectedStatuses,
       }),
-      ...(urlState.dashboardFilters.excludeLabelIds.length > 0 && {
-        exclude_label_ids: urlState.dashboardFilters.excludeLabelIds,
+      ...(dashboardFilters.excludeLabelIds.length > 0 && {
+        exclude_label_ids: dashboardFilters.excludeLabelIds,
       }),
     }
 
-    if (urlState.dashboardFilters.labelIds.length > 0) {
-      base.label_ids = urlState.dashboardFilters.labelIds
-      base.label_match = urlState.dashboardFilters.labelMatch
+    if (dashboardFilters.labelIds.length > 0) {
+      base.label_ids = dashboardFilters.labelIds
+      base.label_match = dashboardFilters.labelMatch
     }
 
     if (
       !hasInvalidDateRange &&
-      urlState.dashboardFilters.startDate &&
-      urlState.dashboardFilters.endDate
+      dashboardFilters.startDate &&
+      dashboardFilters.endDate
     ) {
       return {
         ...base,
-        end_date: toEndOfDayIso(urlState.dashboardFilters.endDate),
-        start_date: toStartOfDayIso(urlState.dashboardFilters.startDate),
+        end_date: toEndOfDayIso(dashboardFilters.endDate),
+        start_date: toStartOfDayIso(dashboardFilters.startDate),
       }
     }
 
     return base
-  }, [hasInvalidDateRange, urlState])
+  }, [hasInvalidDateRange, pagination, sortParams, search, dashboardFilters])
 
   const {
     data,
@@ -186,50 +147,24 @@ export default function ComplaintDataTable() {
   )
 
   const handlePaginationChange = useCallback(
-    (pagination: { page: number; per_page: number }) => {
-      replaceUrlState((state) => ({
-        ...state,
-        pagination,
-      }))
+    (newPagination: { page: number; per_page: number }) => {
+      setPagination(newPagination)
     },
-    [replaceUrlState],
+    [setPagination],
   )
 
   const handleSortChange = useCallback(
-    (sorting: SortingState) => {
-      const column = sorting[0]
-      const sortMap: Record<string, string> = {
-        createdAt: "createdAt",
-        id: "id",
-        label: "label",
-        name: "name",
-        status: "status",
-        updatedAt: "updatedAt",
-      }
-
-      replaceUrlState((state) => ({
-        ...state,
-        pagination: { ...state.pagination, page: 1 },
-        sortParams: column
-          ? {
-              sort_by: sortMap[column.id] ?? "createdAt",
-              sort_order: column.desc ? "DESC" : "ASC",
-            }
-          : { sort_by: "createdAt", sort_order: "DESC" },
-      }))
+    (newSorting: SortingState) => {
+      setSorting(newSorting)
     },
-    [replaceUrlState],
+    [setSorting],
   )
 
   const handleSearchChange = useCallback(
-    (search: string) => {
-      replaceUrlState((state) => ({
-        ...state,
-        pagination: { ...state.pagination, page: 1 },
-        search,
-      }))
+    (newSearch: string) => {
+      setSearch(newSearch)
     },
-    [replaceUrlState],
+    [setSearch],
   )
 
   const handleManualRefresh = useCallback(() => {
@@ -252,61 +187,36 @@ export default function ComplaintDataTable() {
 
   const toggleStatusChip = useCallback(
     (statusKey: string) => {
-      replaceUrlState((state) => ({
-        ...state,
-        dashboardFilters: {
-          ...state.dashboardFilters,
-          selectedStatuses: state.dashboardFilters.selectedStatuses.includes(statusKey)
-            ? state.dashboardFilters.selectedStatuses.filter(
-                (status) => status !== statusKey,
-              )
-            : [...state.dashboardFilters.selectedStatuses, statusKey],
-        },
-        pagination: { ...state.pagination, page: 1 },
-      }))
+      const newStatuses = dashboardFilters.selectedStatuses.includes(statusKey)
+        ? dashboardFilters.selectedStatuses.filter((status) => status !== statusKey)
+        : [...dashboardFilters.selectedStatuses, statusKey]
+
+      setDashboardFilters({ selectedStatuses: newStatuses })
     },
-    [replaceUrlState],
+    [dashboardFilters.selectedStatuses, setDashboardFilters],
   )
 
   const toggleLabelChip = useCallback(
     (labelId: number) => {
-      replaceUrlState((state) => ({
-        ...state,
-        dashboardFilters: {
-          ...state.dashboardFilters,
-          labelIds: state.dashboardFilters.labelIds.includes(labelId)
-            ? state.dashboardFilters.labelIds.filter((id) => id !== labelId)
-            : [...state.dashboardFilters.labelIds, labelId],
-        },
-        pagination: { ...state.pagination, page: 1 },
-      }))
+      const newLabelIds = dashboardFilters.labelIds.includes(labelId)
+        ? dashboardFilters.labelIds.filter((id) => id !== labelId)
+        : [...dashboardFilters.labelIds, labelId]
+
+      setDashboardFilters({ labelIds: newLabelIds })
     },
-    [replaceUrlState],
+    [dashboardFilters.labelIds, setDashboardFilters],
   )
 
   const patchDashboardFilters = useCallback(
-    (patch: Partial<DashboardTableFilters>) => {
-      replaceUrlState((state) => ({
-        ...state,
-        dashboardFilters: {
-          ...state.dashboardFilters,
-          ...patch,
-        },
-        pagination: { ...state.pagination, page: 1 },
-      }))
+    (patch: Parameters<typeof setDashboardFilters>[0]) => {
+      setDashboardFilters(patch)
     },
-    [replaceUrlState],
+    [setDashboardFilters],
   )
 
   const resetAllFilters = useCallback(() => {
-    replaceUrlState((state) => ({
-      ...state,
-      dashboardFilters: DEFAULT_FILTERS,
-      pagination: { page: 1, per_page: state.pagination.per_page },
-      search: "",
-      sortParams: { sort_by: "createdAt", sort_order: "DESC" },
-    }))
-  }, [replaceUrlState])
+    resetFilters()
+  }, [resetFilters])
 
   if (error && !hasInvalidDateRange) {
     const message =
@@ -400,8 +310,8 @@ export default function ComplaintDataTable() {
 
       <ComplaintAggregatesBar
         aggregates={aggregates}
-        selectedStatuses={urlState.dashboardFilters.selectedStatuses}
-        selectedLabelIds={urlState.dashboardFilters.labelIds}
+        selectedStatuses={dashboardFilters.selectedStatuses}
+        selectedLabelIds={dashboardFilters.labelIds}
         onToggleStatus={toggleStatusChip}
         onToggleLabel={toggleLabelChip}
       />
@@ -409,21 +319,17 @@ export default function ComplaintDataTable() {
       <DataTable
         columns={columns}
         data={data ?? DEFAULT_PAGINATED_DATA}
-        dashboardFilters={urlState.dashboardFilters}
+        dashboardFilters={dashboardFilters}
         filterLabels={labels}
-        initialSorting={DEFAULT_TABLE_SORT}
         isLoading={isLoading}
         onDashboardFiltersChange={patchDashboardFilters}
         onPaginationChange={handlePaginationChange}
         onResetFilters={resetAllFilters}
         onSearchQueryChange={handleSearchChange}
         onSortChange={handleSortChange}
-        pagination={urlState.pagination}
-        searchQuery={urlState.search}
-        sorting={getSortingState(
-          urlState.sortParams.sort_by,
-          urlState.sortParams.sort_order,
-        )}
+        pagination={pagination}
+        searchQuery={search}
+        sorting={sorting}
         validationMessage={
           hasInvalidDateRange
             ? "Период задан некорректно: дата начала не может быть позже даты окончания. Таблица показана без фильтра по датам."

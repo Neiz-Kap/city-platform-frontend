@@ -50,6 +50,7 @@ export function useCreateLabel() {
         name: created.name ?? variables.name,
         color: created.color ?? variables.color ?? "#6B7280",
         complaint_count: created.complaint_count ?? 0,
+        userId: created.userId ?? 0,
       }
       queryClient.setQueriesData<DashboardLabel[]>(
         { queryKey: labelKeys.all },

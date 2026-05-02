@@ -9,7 +9,7 @@ import {
   CreateComplaintRequest,
   UpdateComplaintRequest,
 } from "../types/complaint.type"
-import { normalizeComplaint, normalizeComplaintList } from "../utils/normalize-complaint"
+import { complaintMapper } from "../utils/mappers/complaint.mapper"
 
 import {
   StatItem,
@@ -39,7 +39,7 @@ function complaintsSearchParams(
 function normalizePaginated(raw: PaginatedData<unknown>): PaginatedData<Complaint> {
   return {
     ...raw,
-    data: normalizeComplaintList(raw.data),
+    data: complaintMapper.toDomainMany(raw.data),
   }
 }
 
@@ -77,7 +77,7 @@ export class ComplaintAPI {
 
   static async getById(id: string) {
     const response = await apiRequest(api.get(`${this.prefix}/${id}`).json<unknown>())
-    return normalizeComplaint(response)
+    return complaintMapper.toDomain(response)
   }
 
   static async getBySource(sourcePlatform: "vk" | "email") {
@@ -86,21 +86,21 @@ export class ComplaintAPI {
         .get(`${this.prefix}/source/${sourcePlatform}`)
         .json<{ source: string; count: number; complaints: unknown[] }>(),
     )
-    return { ...response, complaints: normalizeComplaintList(response.complaints) }
+    return { ...response, complaints: complaintMapper.listToDomain(response.complaints) }
   }
 
   static async create(complaintData: CreateComplaintRequest) {
     const raw = await apiRequest(
-      api.post("complaint", { json: complaintData }).json<Record<string, unknown>>(),
+      api.post("complaint", { json: complaintMapper.toResponse(complaintData) }).json<Record<string, unknown>>(),
     )
     if (typeof raw.id === "number" && raw.name == null) {
       return ComplaintAPI.getById(String(raw.id))
     }
-    return normalizeComplaint(raw)
+    return complaintMapper.toDomain(raw)
   }
 
   static update(id: string | number, body: UpdateComplaintRequest) {
-    return apiRequest(api.put(`complaint/${id}`, { json: body }).json<unknown>())
+    return apiRequest(api.put(`complaint/${id}`, { json: complaintMapper.updateToResponse(body) }).json<unknown>())
   }
 
   static async updateLabels(id: string | number, label_ids: number[]) {

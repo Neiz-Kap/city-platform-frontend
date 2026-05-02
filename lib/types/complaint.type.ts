@@ -34,8 +34,7 @@ export interface Complaint extends ExportableData {
   labels?: DashboardLabel[]
   createdAt: string
   updatedAt: string
-
-  is_deleted?: 0 | 1
+  userId: number
   departmentId?: number
 }
 
@@ -44,6 +43,7 @@ export interface PlatformGroup {
   name: string
   enabled: boolean
   platform: SourcePlatform
+  userId: number
 }
 
 export interface PlatformSource {
@@ -62,6 +62,7 @@ export interface EmailMonitoringConfig {
   folder?: string
   use_ssl?: boolean
   check_interval?: number
+  userId: number
 }
 
 export interface CreateComplaintRequest {

@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes"
 import { cookies } from "next/headers"
 import NextTopLoader from "nextjs-toploader"
 import { type ReactNode } from "react"
+import { NuqsAdapter } from "nuqs/adapters/next/app"
 
 import './envConfig.ts'
 import "./globals.css"
@@ -60,19 +61,21 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ActiveThemeProvider initialTheme={themeSettings}>
-              {children}
-              <Toaster position="top-center" richColors />
-              <NextTopLoader
-                color="var(--primary)"
-                showSpinner={false}
-                height={2}
-                shadow-sm="none"
-              />
-              {/*{process.env.NODE_ENV === "production" ? (
-              <GoogleAnalyticsInit />
-            ) : null}*/}
-            </ActiveThemeProvider>
+            <NuqsAdapter>
+              <ActiveThemeProvider initialTheme={themeSettings}>
+                {children}
+                <Toaster position="top-center" richColors />
+                <NextTopLoader
+                  color="var(--primary)"
+                  showSpinner={false}
+                  height={2}
+                  shadow-sm="none"
+                />
+                {/*{process.env.NODE_ENV === "production" ? (
+                <GoogleAnalyticsInit />
+              ) : null}*/}
+              </ActiveThemeProvider>
+            </NuqsAdapter>
           </ThemeProvider>
         </Providers>
       </body>

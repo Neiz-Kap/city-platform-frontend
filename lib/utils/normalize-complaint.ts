@@ -39,6 +39,7 @@ export function normalizeComplaint(raw: unknown): Complaint {
       stringOrUndefined(r.updated_at) ??
       "",
     url: sourceUrl,
+    userId: numberOrUndefined(r.userId) ?? numberOrUndefined(r.user_id) ?? 0,
   }
 }
 

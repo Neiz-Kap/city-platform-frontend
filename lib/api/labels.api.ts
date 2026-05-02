@@ -4,13 +4,9 @@ import type {
   DashboardLabel,
   UpdateLabelRequest,
 } from "@/lib/types/complaint-label.type"
+import { labelMapper } from "@/lib/utils/mappers/label.mapper"
 
 const MAX_LABELS_PER_ACCOUNT = 10
-
-type LabelMutationResponse = Partial<DashboardLabel> & {
-  id?: number
-  message?: string
-}
 
 export { MAX_LABELS_PER_ACCOUNT }
 
@@ -21,19 +17,24 @@ export class LabelAPI {
     const searchParams: Record<string, string> = {}
     if (options?.with_counts) searchParams.with_counts = "1"
 
-    return apiRequest(
-      api.get(this.prefix, { searchParams }).json<DashboardLabel[]>(),
+    const response = await apiRequest(
+      api.get(this.prefix, { searchParams }).json<unknown[]>(),
     )
+    return labelMapper.listToDomain(response)
   }
 
   static async create(body: CreateLabelRequest) {
-    return apiRequest(api.post(this.prefix, { json: body }).json<LabelMutationResponse>())
+    const response = await apiRequest(
+      api.post(this.prefix, { json: labelMapper.toResponse(body) }).json<unknown>(),
+    )
+    return labelMapper.toDomain(response)
   }
 
   static async update(id: number, body: UpdateLabelRequest) {
-    return apiRequest(
-      api.put(`${this.prefix}/${id}`, { json: body }).json<LabelMutationResponse>(),
+    const response = await apiRequest(
+      api.put(`${this.prefix}/${id}`, { json: labelMapper.updateToResponse(body) }).json<unknown>(),
     )
+    return labelMapper.toDomain(response)
   }
 
   static async delete(id: number) {

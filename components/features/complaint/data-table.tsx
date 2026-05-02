@@ -51,9 +51,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
+import { PaginatedData } from "@/lib/types"
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
 import type { LabelMatchMode } from "@/lib/types/complaint.type"
-import { PaginatedData } from "@/lib/types"
 
 export type DashboardTableFilters = {
   endDate: string
