@@ -1,12 +1,12 @@
 "use client"
 
+import { SortingState } from "@tanstack/react-table"
 import { formatDistanceToNow } from "date-fns"
 import { ru } from "date-fns/locale"
 import { Bell, BellOff, FileDown, RefreshCw, Wifi, WifiOff } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useMemo, useState } from "react"
-import { SortingState } from "@tanstack/react-table"
 import { toast } from "sonner"
 
 import { createComplaintColumns } from "@/components/entities/complaint/columns"
@@ -29,18 +29,14 @@ import {
   applyComplaintDashboardUrlState,
   parseComplaintDashboardUrlState,
 } from "@/lib/utils/dashboard-url-state"
-import {
-  COMPLAINT_STATUS_LABELS,
-  ComplaintStatus,
-} from "@/lib/types/complaint-status.type"
 
 import { ComplaintAggregatesBar } from "./ComplaintAggregatesBar"
 
-function toStartOfDayIso(date: string): string {
+function toStartOfDayIso(date: string) {
   return `${date}T00:00:00`
 }
 
-function toEndOfDayIso(date: string): string {
+function toEndOfDayIso(date: string) {
   return `${date}T23:59:59`
 }
 
@@ -53,21 +49,6 @@ const DEFAULT_FILTERS: DashboardTableFilters = {
   selectedStatuses: [],
   startDate: "",
 }
-
-const STATUS_FILTER_OPTIONS = [
-  {
-    value: ComplaintStatus.BACKLOG,
-    label: COMPLAINT_STATUS_LABELS[ComplaintStatus.BACKLOG],
-  },
-  {
-    value: ComplaintStatus.IN_PROGRESS,
-    label: COMPLAINT_STATUS_LABELS[ComplaintStatus.IN_PROGRESS],
-  },
-  {
-    value: ComplaintStatus.DONE,
-    label: COMPLAINT_STATUS_LABELS[ComplaintStatus.DONE],
-  },
-]
 
 function getSortingState(sort_by?: string, sort_order?: "ASC" | "DESC") {
   return [{ id: sort_by ?? "createdAt", desc: sort_order !== "ASC" }]
@@ -82,12 +63,20 @@ export default function ComplaintDataTable() {
     () => parseComplaintDashboardUrlState(searchParams),
     [searchParams],
   )
+  const hasInvalidDateRange =
+    Boolean(urlState.dashboardFilters.startDate) &&
+    Boolean(urlState.dashboardFilters.endDate) &&
+    urlState.dashboardFilters.startDate > urlState.dashboardFilters.endDate
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [newComplaintsCount, setNewComplaintsCount] = useState(0)
 
   const replaceUrlState = useCallback(
-    (updater: (state: ReturnType<typeof parseComplaintDashboardUrlState>) => ReturnType<typeof parseComplaintDashboardUrlState>) => {
+    (
+      updater: (
+        state: ReturnType<typeof parseComplaintDashboardUrlState>,
+      ) => ReturnType<typeof parseComplaintDashboardUrlState>,
+    ) => {
       const nextState = updater(parseComplaintDashboardUrlState(searchParams))
       const nextParams = applyComplaintDashboardUrlState(
         new URLSearchParams(searchParams.toString()),
@@ -122,7 +111,11 @@ export default function ComplaintDataTable() {
       base.label_match = urlState.dashboardFilters.labelMatch
     }
 
-    if (urlState.dashboardFilters.startDate && urlState.dashboardFilters.endDate) {
+    if (
+      !hasInvalidDateRange &&
+      urlState.dashboardFilters.startDate &&
+      urlState.dashboardFilters.endDate
+    ) {
       return {
         ...base,
         end_date: toEndOfDayIso(urlState.dashboardFilters.endDate),
@@ -131,7 +124,7 @@ export default function ComplaintDataTable() {
     }
 
     return base
-  }, [urlState])
+  }, [hasInvalidDateRange, urlState])
 
   const {
     data,
@@ -246,9 +239,12 @@ export default function ComplaintDataTable() {
   }, [refetch, requestUpdate])
 
   const toggleNotifications = useCallback(() => {
-    setNotificationsEnabled((prev) => !prev)
+    setNotificationsEnabled((previous) => !previous)
     if (!notificationsEnabled) {
-      if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "default"
+      ) {
         Notification.requestPermission()
       }
     }
@@ -261,7 +257,9 @@ export default function ComplaintDataTable() {
         dashboardFilters: {
           ...state.dashboardFilters,
           selectedStatuses: state.dashboardFilters.selectedStatuses.includes(statusKey)
-            ? state.dashboardFilters.selectedStatuses.filter((status) => status !== statusKey)
+            ? state.dashboardFilters.selectedStatuses.filter(
+                (status) => status !== statusKey,
+              )
             : [...state.dashboardFilters.selectedStatuses, statusKey],
         },
         pagination: { ...state.pagination, page: 1 },
@@ -310,8 +308,9 @@ export default function ComplaintDataTable() {
     }))
   }, [replaceUrlState])
 
-  if (error) {
-    const message = error instanceof Error ? error.message : "Не удалось загрузить жалобы."
+  if (error && !hasInvalidDateRange) {
+    const message =
+      error instanceof Error ? error.message : "Не удалось загрузить жалобы."
     return (
       <div className="container mx-auto py-10">
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-center text-sm text-destructive">
@@ -333,7 +332,7 @@ export default function ComplaintDataTable() {
               </span>
             )}
           </div>
-          <div className="text-muted-foreground flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               {isConnected ? (
                 <Wifi className="h-4 w-4 text-emerald-600" />
@@ -342,9 +341,9 @@ export default function ComplaintDataTable() {
               )}
               {notificationsEnabled
                 ? isConnected
-                  ? "Realtime подключён"
-                  : "Realtime переподключается"
-                : "Realtime выключен"}
+                  ? "Онлайн-канал подключён"
+                  : "Онлайн-канал переподключается"
+                : "Онлайн-канал выключен"}
             </span>
             {dataUpdatedAt > 0 && (
               <span>
@@ -383,7 +382,7 @@ export default function ComplaintDataTable() {
             ) : (
               <BellOff className="h-4 w-4" />
             )}
-            {notificationsEnabled ? "Уведомления вкл" : "Уведомления выкл"}
+            {notificationsEnabled ? "Уведомления включены" : "Уведомления выключены"}
           </Button>
 
           <Button
@@ -425,7 +424,11 @@ export default function ComplaintDataTable() {
           urlState.sortParams.sort_by,
           urlState.sortParams.sort_order,
         )}
-        statusOptions={STATUS_FILTER_OPTIONS}
+        validationMessage={
+          hasInvalidDateRange
+            ? "Период задан некорректно: дата начала не может быть позже даты окончания. Таблица показана без фильтра по датам."
+            : null
+        }
       />
     </div>
   )

@@ -1,21 +1,12 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, Tags } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import Link from "next/link"
 
+import { DashboardLabelPicker } from "@/components/entities/complaint/DashboardLabelPicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import { DataTableColumnHeader } from "@/components/ui/dataTableColumnHeader"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,14 +15,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { DataTableColumnHeader } from "@/components/ui/dataTableColumnHeader"
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
 import { Complaint } from "@/lib/types/complaint.type"
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
+import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
+import { formatRuDate } from "@/lib/utils/date-format"
 
 import { StatusBadge } from "./StatusBadge"
 
@@ -43,25 +32,28 @@ export type ComplaintColumnHandlers = {
 }
 
 function labelContrastColor(hex: string): string {
-  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim())
-  if (!m) return "#fff"
-  let h = m[1]
-  if (h.length === 3) {
-    h = h
+  const match = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim())
+  if (!match) return "#fff"
+
+  let normalized = match[1]
+  if (normalized.length === 3) {
+    normalized = normalized
       .split("")
-      .map((c) => c + c)
+      .map((char) => char + char)
       .join("")
   }
-  const n = parseInt(h, 16)
-  const r = (n >> 16) & 255
-  const g = (n >> 8) & 255
-  const b = n & 255
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000
+
+  const value = Number.parseInt(normalized, 16)
+  const red = (value >> 16) & 255
+  const green = (value >> 8) & 255
+  const blue = value & 255
+  const yiq = (red * 299 + green * 587 + blue * 114) / 1000
+
   return yiq >= 128 ? "#111" : "#fff"
 }
 
 export function createComplaintColumns(
-  h: ComplaintColumnHandlers,
+  handlers: ComplaintColumnHandlers,
 ): ColumnDef<Complaint>[] {
   return [
     {
@@ -77,7 +69,7 @@ export function createComplaintColumns(
       cell: ({ row }) => (
         <Link
           href={`/dashboard/complaint/${row.original.id}`}
-          className="truncate max-w-[400px] block"
+          className="block max-w-[400px] truncate"
         >
           {row.original.name}
         </Link>
@@ -88,10 +80,7 @@ export function createComplaintColumns(
       header: "Описание",
       enableSorting: false,
       cell: ({ row }) => (
-        <div
-          className="truncate max-w-[400px]"
-          title={row.original.description}
-        >
+        <div className="max-w-[400px] truncate" title={row.original.description}>
           {row.original.description}
         </div>
       ),
@@ -99,9 +88,10 @@ export function createComplaintColumns(
     {
       accessorKey: "platform",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Платформа" />
+        <DataTableColumnHeader column={column} title="Источник" />
       ),
       enableSorting: false,
+      cell: ({ row }) => complaintPlatformLabelRu(row.original.platform),
     },
     {
       id: "status",
@@ -110,14 +100,15 @@ export function createComplaintColumns(
         <DataTableColumnHeader column={column} title="Статус" />
       ),
       cell: ({ row }) => {
-        const id = row.original.id
-        const busy = h.pendingComplaintId === id
+        const complaintId = row.original.id
+        const busy = handlers.pendingComplaintId === complaintId
+
         return (
           <div className="min-w-[160px]">
             <StatusBadge
               status={row.original.status}
               editable={!busy}
-              onStatusChange={(next) => h.onStatusChange(id, next)}
+              onStatusChange={(next) => handlers.onStatusChange(complaintId, next)}
             />
           </div>
         )
@@ -132,22 +123,14 @@ export function createComplaintColumns(
       enableSorting: true,
       cell: ({ row }) => {
         const complaint = row.original
-        const selected = new Set((complaint.labels ?? []).map((l) => l.id))
-        const busy = h.pendingComplaintId === complaint.id
-
-        const toggle = (labelId: number) => {
-          const next = new Set(selected)
-          if (next.has(labelId)) next.delete(labelId)
-          else next.add(labelId)
-          h.onLabelIdsChange(complaint.id, [...next])
-        }
+        const busy = handlers.pendingComplaintId === complaint.id
 
         return (
-          <div className="flex flex-wrap items-center gap-1 min-w-[200px]">
+          <div className="flex min-w-[220px] flex-wrap items-center gap-1">
             {(complaint.labels ?? []).map((label) => (
               <Badge
                 key={label.id}
-                className="text-xs border-0"
+                className="border-0 text-xs"
                 style={{
                   backgroundColor: label.color,
                   color: labelContrastColor(label.color),
@@ -156,45 +139,16 @@ export function createComplaintColumns(
                 {label.name}
               </Badge>
             ))}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2"
-                  disabled={busy}
-                  aria-label="Изменить метки"
-                >
-                  <Tags className="h-3.5 w-3.5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Метка…" />
-                  <CommandList>
-                    <CommandEmpty>Нет меток</CommandEmpty>
-                    <CommandGroup>
-                      {h.allLabels.map((label) => (
-                        <CommandItem
-                          key={label.id}
-                          value={label.name}
-                          onSelect={() => toggle(label.id)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Checkbox checked={selected.has(label.id)} />
-                            <span
-                              className="size-3 rounded-sm shrink-0 border"
-                              style={{ backgroundColor: label.color }}
-                            />
-                            <span>{label.name}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <DashboardLabelPicker
+              align="start"
+              disabled={busy}
+              labels={handlers.allLabels}
+              mode="icon"
+              onChange={(labelIds) =>
+                handlers.onLabelIdsChange(complaint.id, labelIds)
+              }
+              valueIds={(complaint.labels ?? []).map((label) => label.id)}
+            />
           </div>
         )
       },
@@ -205,6 +159,7 @@ export function createComplaintColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Дата создания" />
       ),
+      cell: ({ row }) => formatRuDate(row.original.createdAt),
     },
     {
       id: "updatedAt",
@@ -212,32 +167,31 @@ export function createComplaintColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Дата обновления" />
       ),
+      cell: ({ row }) => formatRuDate(row.original.updatedAt),
     },
     {
       id: "actions",
       enableHiding: false,
       enableSorting: false,
-      cell: ({ row }) => {
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Меню</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Действия</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href={`/dashboard/complaint/${row.original.id}`}>
-                  Подробнее
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
-      },
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Меню</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Действия</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={`/dashboard/complaint/${row.original.id}`}>
+                Подробнее
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
     },
   ]
 }

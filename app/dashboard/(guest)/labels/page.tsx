@@ -1,11 +1,14 @@
 "use client"
 
+import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+import { ArrowLeft, Trash2 } from "lucide-react"
+import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  MAX_LABELS_PER_ACCOUNT,
-} from "@/lib/api/labels.api"
+import { MAX_LABELS_PER_ACCOUNT } from "@/lib/api/labels.api"
 import {
   useCreateLabel,
   useDeleteLabel,
@@ -13,12 +16,57 @@ import {
   useUpdateLabel,
 } from "@/lib/hooks/useLabels"
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
-import { ArrowLeft, Trash2 } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
-import { toast } from "sonner"
 
 const DEFAULT_COLOR = "#6B7280"
+
+function ColorField({
+  disabled,
+  id,
+  onChange,
+  value,
+}: {
+  disabled?: boolean
+  id: string
+  onChange: (value: string) => void
+  value: string
+}) {
+  const colorInputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    if (colorInputRef.current && colorInputRef.current.value !== value) {
+      colorInputRef.current.value = value
+    }
+  }, [value])
+
+  return (
+    <div className="flex gap-2">
+      <input
+        ref={colorInputRef}
+        id={id}
+        type="color"
+        className="sr-only"
+        defaultValue={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <button
+        type="button"
+        className="h-9 w-14 rounded-md border border-border p-1"
+        style={{ backgroundColor: value }}
+        onClick={() => colorInputRef.current?.click()}
+        disabled={disabled}
+        aria-label="Выбрать цвет"
+      />
+      <Input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="font-mono text-sm"
+        disabled={disabled}
+        placeholder="#RRGGBB"
+      />
+    </div>
+  )
+}
 
 function LabelRow({ label }: { label: DashboardLabel }) {
   const [name, setName] = useState(label.name)
@@ -51,35 +99,24 @@ function LabelRow({ label }: { label: DashboardLabel }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end border rounded-lg p-4">
+    <div className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-end">
       <div className="flex-1 space-y-2">
         <Label htmlFor={`name-${label.id}`}>Название</Label>
         <Input
           id={`name-${label.id}`}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(event) => setName(event.target.value)}
           disabled={busy}
         />
       </div>
-      <div className="space-y-2 w-full sm:w-40">
+      <div className="w-full space-y-2 sm:w-40">
         <Label htmlFor={`color-${label.id}`}>Цвет</Label>
-        <div className="flex gap-2">
-          <Input
-            id={`color-${label.id}`}
-            type="color"
-            className="h-9 w-14 p-1 cursor-pointer"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            disabled={busy}
-          />
-          <Input
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="font-mono text-sm"
-            disabled={busy}
-            placeholder="#RRGGBB"
-          />
-        </div>
+        <ColorField
+          id={`color-${label.id}`}
+          value={color}
+          onChange={setColor}
+          disabled={busy}
+        />
       </div>
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={handleSave} disabled={busy}>
@@ -126,13 +163,14 @@ export default function LabelsPage() {
           setNewName("")
           setNewColor(DEFAULT_COLOR)
         },
-        onError: () => toast.error("Не удалось создать метку (возможно, дубликат имени)"),
+        onError: () =>
+          toast.error("Не удалось создать метку (возможно, имя уже используется)"),
       },
     )
   }
 
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4">
+    <div className="container mx-auto max-w-3xl px-4 py-8">
       <Button variant="ghost" size="sm" className="mb-6" asChild>
         <Link href="/dashboard/complaint">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -140,13 +178,13 @@ export default function LabelsPage() {
         </Link>
       </Button>
 
-      <h1 className="text-2xl font-bold mb-2">Метки дашборда</h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт (лимит на клиенте). Название и цвет
-        отображаются в таблице жалоб и на карточке проблемы.
+      <h1 className="mb-2 text-2xl font-bold">Метки дашборда</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
+        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт. Название и цвет
+        отображаются в таблице жалоб и в карточке жалобы.
       </p>
 
-      <div className="border rounded-lg p-4 mb-8 space-y-3 bg-muted/20">
+      <div className="mb-8 space-y-3 rounded-lg border bg-muted/20 p-4">
         <h2 className="font-medium">Новая метка</h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
@@ -154,29 +192,19 @@ export default function LabelsPage() {
             <Input
               id="new-name"
               value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+              onChange={(event) => setNewName(event.target.value)}
               placeholder="Например, Дороги"
               disabled={atLimit || createLabel.isPending}
             />
           </div>
-          <div className="space-y-2 w-full sm:w-40">
+          <div className="w-full space-y-2 sm:w-40">
             <Label htmlFor="new-color">Цвет</Label>
-            <div className="flex gap-2">
-              <Input
-                id="new-color"
-                type="color"
-                className="h-9 w-14 p-1 cursor-pointer"
-                value={newColor}
-                onChange={(e) => setNewColor(e.target.value)}
-                disabled={atLimit || createLabel.isPending}
-              />
-              <Input
-                value={newColor}
-                onChange={(e) => setNewColor(e.target.value)}
-                className="font-mono text-sm"
-                disabled={atLimit || createLabel.isPending}
-              />
-            </div>
+            <ColorField
+              id="new-color"
+              value={newColor}
+              onChange={setNewColor}
+              disabled={atLimit || createLabel.isPending}
+            />
           </div>
           <Button
             type="button"
@@ -196,11 +224,11 @@ export default function LabelsPage() {
       {isLoading ? (
         <p className="text-muted-foreground">Загрузка…</p>
       ) : labels.length === 0 ? (
-        <p className="text-muted-foreground">Меток пока нет.</p>
+        <p className="text-muted-foreground">Метки пока не созданы.</p>
       ) : (
         <div className="space-y-4">
-          {labels.map((l) => (
-            <LabelRow key={`${l.id}-${l.name}-${l.color}`} label={l} />
+          {labels.map((label) => (
+            <LabelRow key={`${label.id}-${label.name}-${label.color}`} label={label} />
           ))}
         </div>
       )}

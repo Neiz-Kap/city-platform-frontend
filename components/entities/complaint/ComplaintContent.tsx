@@ -10,6 +10,7 @@ import {
 } from "@/lib/hooks/useComplaints"
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
 import { Complaint } from "@/lib/types/complaint.type"
+import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -103,7 +104,7 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">
                   Источник
                 </h3>
-                <p className="text-sm">{complaint.platform}</p>
+                <p className="text-sm">{complaintPlatformLabelRu(complaint.platform)}</p>
                 {mediaUrl && (
                   <a
                     href={mediaUrl}

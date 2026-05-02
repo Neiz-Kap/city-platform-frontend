@@ -9,8 +9,8 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table"
-import { RotateCcw, PlusCircle, SearchX } from "lucide-react"
-import { useEffect, useState } from "react"
+import { PlusCircle, RotateCcw, SearchX } from "lucide-react"
+import { type ReactNode, useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -82,7 +82,50 @@ interface DataTableProps<TData, TValue> {
   }
   searchQuery: string
   sorting?: SortingState
-  statusOptions: { label: string; value: string }[]
+  validationMessage?: string | null
+}
+
+const COLUMN_LABELS: Record<string, string> = {
+  actions: "Действия",
+  createdAt: "Дата создания",
+  description: "Описание",
+  id: "№",
+  label: "Метки",
+  name: "Название",
+  platform: "Источник",
+  status: "Статус",
+  updatedAt: "Дата обновления",
+}
+
+function FieldShell({
+  children,
+  label,
+  wide,
+}: {
+  children: ReactNode
+  label?: string
+  wide?: boolean
+}) {
+  return (
+    <div
+      className={
+        wide
+          ? "flex min-w-[260px] flex-1 flex-col justify-end gap-1"
+          : "flex flex-col justify-end gap-1"
+      }
+    >
+      {label ? (
+        <Label className="text-xs text-muted-foreground">{label}</Label>
+      ) : (
+        <div className="h-4" aria-hidden="true" />
+      )}
+      {children}
+    </div>
+  )
+}
+
+function columnLabel(columnId: string) {
+  return COLUMN_LABELS[columnId] ?? columnId
 }
 
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
@@ -94,7 +137,6 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     onResetFilters,
     searchQuery,
     onSearchQueryChange,
-    statusOptions,
     filterLabels,
     dashboardFilters,
     onDashboardFiltersChange,
@@ -102,6 +144,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     isLoading = false,
     initialSorting = [{ id: "createdAt", desc: true }],
     sorting: controlledSorting,
+    validationMessage,
   } = props
   const { data, pagination: serverPagination } = paginatedData
 
@@ -139,14 +182,29 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     }
   }, [controlledSorting, sorting])
 
-  const setStatuses = (next: string[]) =>
-    onDashboardFiltersChange({ selectedStatuses: next })
 
   const setIncludeLabels = (next: number[]) =>
     onDashboardFiltersChange({ labelIds: next })
 
   const setExcludeLabels = (next: number[]) =>
     onDashboardFiltersChange({ excludeLabelIds: next })
+
+  const handleStartDateChange = (value: string) => {
+    if (endDate && value && value > endDate) {
+      onDashboardFiltersChange({ endDate: value, startDate: value })
+      return
+    }
+
+    onDashboardFiltersChange({ startDate: value })
+  }
+
+  const handleEndDateChange = (value: string) => {
+    if (startDate && value && value < startDate) {
+      return
+    }
+
+    onDashboardFiltersChange({ endDate: value })
+  }
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -195,116 +253,70 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
   }
 
   const toggleInList = <T,>(list: T[], item: T, eq: (a: T, b: T) => boolean) =>
-    list.some((x) => eq(x, item))
-      ? list.filter((x) => !eq(x, item))
+    list.some((value) => eq(value, item))
+      ? list.filter((value) => !eq(value, item))
       : [...list, item]
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-3 py-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            placeholder="Поиск по жалобам..."
-            value={searchQuery}
-            onChange={(event) => onSearchQueryChange(event.target.value)}
-            className="max-w-sm"
-          />
+        <div className="flex flex-wrap items-end gap-2">
+          <FieldShell wide>
+            <Input
+              placeholder="Поиск по жалобам..."
+              value={searchQuery}
+              onChange={(event) => onSearchQueryChange(event.target.value)}
+              className="h-9 max-w-sm"
+            />
+          </FieldShell>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
-                <PlusCircle className="me-2 h-4 w-4" />
-                Статусы
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Статус" className="h-9" />
-                <CommandList>
-                  <CommandEmpty>Нет статусов</CommandEmpty>
-                  <CommandGroup>
-                    {statusOptions.map((status) => (
-                      <CommandItem
-                        key={status.value}
-                        value={status.value}
-                        onSelect={() => {
-                          setStatuses(
-                            toggleInList(
-                              selectedStatuses,
-                              status.value,
-                              (a, b) => a === b,
-                            ),
-                          )
-                        }}
-                      >
-                        <div className="flex items-center space-x-3 py-1">
-                          <Checkbox
-                            id={`flt-status-${status.value}`}
-                            checked={selectedStatuses.includes(status.value)}
-                          />
-                          <label
-                            htmlFor={`flt-status-${status.value}`}
-                            className="leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {status.label}
-                          </label>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <FieldShell>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <PlusCircle className="me-2 h-4 w-4" />
+                  Метки (включить)
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Метка" className="h-9" />
+                  <CommandList>
+                    <CommandEmpty>Нет меток</CommandEmpty>
+                    <CommandGroup>
+                      {filterLabels.map((label) => (
+                        <CommandItem
+                          key={label.id}
+                          value={label.name}
+                          onSelect={() => {
+                            setIncludeLabels(
+                              toggleInList(labelIds, label.id, (a, b) => a === b),
+                            )
+                          }}
+                        >
+                          <div className="flex items-center space-x-3 py-1">
+                            <Checkbox
+                              id={`flt-lbl-${label.id}`}
+                              checked={labelIds.includes(label.id)}
+                            />
+                            <span
+                              className="size-3 shrink-0 rounded-sm border"
+                              style={{ backgroundColor: label.color }}
+                            />
+                            <label htmlFor={`flt-lbl-${label.id}`} className="leading-none">
+                              {label.name}
+                            </label>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </FieldShell>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
-                <PlusCircle className="me-2 h-4 w-4" />
-                Метки (включить)
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Метка" className="h-9" />
-                <CommandList>
-                  <CommandEmpty>Нет меток</CommandEmpty>
-                  <CommandGroup>
-                    {filterLabels.map((label) => (
-                      <CommandItem
-                        key={label.id}
-                        value={label.name}
-                        onSelect={() => {
-                          setIncludeLabels(
-                            toggleInList(labelIds, label.id, (a, b) => a === b),
-                          )
-                        }}
-                      >
-                        <div className="flex items-center space-x-3 py-1">
-                          <Checkbox
-                            id={`flt-lbl-${label.id}`}
-                            checked={labelIds.includes(label.id)}
-                          />
-                          <span
-                            className="size-3 shrink-0 rounded-sm border"
-                            style={{ backgroundColor: label.color }}
-                          />
-                          <label htmlFor={`flt-lbl-${label.id}`} className="leading-none">
-                            {label.name}
-                          </label>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
-          <div className="flex items-center gap-2">
-            <Label className="text-xs text-muted-foreground whitespace-nowrap">
-              Совпадение меток
-            </Label>
+          <FieldShell label="Совпадение меток">
             <Select
               value={labelMatch}
               onValueChange={(value) =>
@@ -313,7 +325,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                 })
               }
             >
-              <SelectTrigger className="h-9 w-[140px]">
+              <SelectTrigger className="h-9 w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -321,84 +333,87 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                 <SelectItem value="all">Все выбранные</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </FieldShell>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
-                <PlusCircle className="me-2 h-4 w-4" />
-                Скрыть метки
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Метка" className="h-9" />
-                <CommandList>
-                  <CommandEmpty>Нет меток</CommandEmpty>
-                  <CommandGroup>
-                    {filterLabels.map((label) => (
-                      <CommandItem
-                        key={`ex-${label.id}`}
-                        value={`ex-${label.name}`}
-                        onSelect={() => {
-                          setExcludeLabels(
-                            toggleInList(
-                              excludeLabelIds,
-                              label.id,
-                              (a, b) => a === b,
-                            ),
-                          )
-                        }}
-                      >
-                        <div className="flex items-center space-x-3 py-1">
-                          <Checkbox
-                            id={`flt-ex-${label.id}`}
-                            checked={excludeLabelIds.includes(label.id)}
-                          />
-                          <span
-                            className="size-3 shrink-0 rounded-sm border"
-                            style={{ backgroundColor: label.color }}
-                          />
-                          <label htmlFor={`flt-ex-${label.id}`} className="leading-none">
-                            {label.name}
-                          </label>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <FieldShell>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9">
+                  <PlusCircle className="me-2 h-4 w-4" />
+                  Скрыть метки
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Метка" className="h-9" />
+                  <CommandList>
+                    <CommandEmpty>Нет меток</CommandEmpty>
+                    <CommandGroup>
+                      {filterLabels.map((label) => (
+                        <CommandItem
+                          key={`ex-${label.id}`}
+                          value={`ex-${label.name}`}
+                          onSelect={() => {
+                            setExcludeLabels(
+                              toggleInList(
+                                excludeLabelIds,
+                                label.id,
+                                (a, b) => a === b,
+                              ),
+                            )
+                          }}
+                        >
+                          <div className="flex items-center space-x-3 py-1">
+                            <Checkbox
+                              id={`flt-ex-${label.id}`}
+                              checked={excludeLabelIds.includes(label.id)}
+                            />
+                            <span
+                              className="size-3 shrink-0 rounded-sm border"
+                              style={{ backgroundColor: label.color }}
+                            />
+                            <label htmlFor={`flt-ex-${label.id}`} className="leading-none">
+                              {label.name}
+                            </label>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </FieldShell>
 
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">С даты</Label>
-              <Input
-                type="date"
-                className="w-[160px]"
-                value={startDate}
-                onChange={(event) =>
-                  onDashboardFiltersChange({ startDate: event.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">По дату</Label>
-              <Input
-                type="date"
-                className="w-[160px]"
-                value={endDate}
-                onChange={(event) =>
-                  onDashboardFiltersChange({ endDate: event.target.value })
-                }
-              />
-            </div>
-          </div>
+          <FieldShell label="С даты">
+            <Input
+              type="date"
+              className="h-9 w-40"
+              value={startDate}
+              max={endDate || undefined}
+              onChange={(event) => handleStartDateChange(event.target.value)}
+            />
+          </FieldShell>
+
+          <FieldShell label="По дату">
+            <Input
+              type="date"
+              className="h-9 w-40"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={(event) => handleEndDateChange(event.target.value)}
+            />
+          </FieldShell>
         </div>
 
+        {validationMessage && (
+          <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+            {validationMessage}
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-muted-foreground text-sm">
+          <div className="text-sm text-muted-foreground">
             {hasActiveFilters
               ? "Фильтры применены к текущей выборке"
               : "Показываем все жалобы без дополнительных фильтров"}
@@ -427,7 +442,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) => column.toggleVisibility(Boolean(value))}
                     >
-                      {column.id}
+                      {columnLabel(column.id)}
                     </DropdownMenuCheckboxItem>
                   ))}
               </DropdownMenuContent>

@@ -18,10 +18,30 @@ const ORDERED_STATUSES: ComplaintStatus[] = [
 
 type Props = {
   aggregates: ComplaintsAggregates | undefined
-  selectedStatuses: string[]
   selectedLabelIds: number[]
-  onToggleStatus: (statusKey: string) => void
+  selectedStatuses: string[]
   onToggleLabel: (labelId: number) => void
+  onToggleStatus: (statusKey: string) => void
+}
+
+function darkenHexColor(hex: string, amount = 24) {
+  const match = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim())
+  if (!match) return hex
+
+  let normalized = match[1]
+  if (normalized.length === 3) {
+    normalized = normalized
+      .split("")
+      .map((char) => char + char)
+      .join("")
+  }
+
+  const value = Number.parseInt(normalized, 16)
+  const channel = (shift: number) => Math.max(0, ((value >> shift) & 255) - amount)
+
+  return `#${[channel(16), channel(8), channel(0)]
+    .map((part) => part.toString(16).padStart(2, "0"))
+    .join("")}`
 }
 
 export function ComplaintAggregatesBar({
@@ -36,22 +56,23 @@ export function ComplaintAggregatesBar({
   const { counts_by_status, counts_by_label } = aggregates
 
   return (
-    <div className="flex flex-col gap-3 mb-4 p-4 rounded-lg border bg-muted/30">
+    <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-muted/30 p-4">
       <div className="text-sm font-medium text-muted-foreground">
-        Сводка (нажмите, чтобы добавить / снять фильтр)
+        Сводка (нажмите, чтобы добавить или снять фильтр)
       </div>
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs text-muted-foreground mr-1">Статусы:</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-xs text-muted-foreground">Статусы:</span>
         {ORDERED_STATUSES.map((key) => {
           const count = counts_by_status[key] ?? 0
           const active = selectedStatuses.includes(key)
+
           return (
             <Button
               key={key}
               type="button"
               variant={active ? "default" : "outline"}
               size="sm"
-              className="h-8"
+              className={cn("h-8", active && "text-white")}
               onClick={() => onToggleStatus(key)}
             >
               {COMPLAINT_STATUS_LABELS[key]} ({count})
@@ -65,13 +86,14 @@ export function ComplaintAggregatesBar({
             ? COMPLAINT_STATUS_LABELS[parsed]
             : getStatusLabelRu(key)
           const active = selectedStatuses.includes(key)
+
           return (
             <Button
               key={key}
               type="button"
               variant={active ? "default" : "outline"}
               size="sm"
-              className="h-8"
+              className={cn("h-8", active && "text-white")}
               onClick={() => onToggleStatus(key)}
             >
               {label} ({count})
@@ -80,26 +102,27 @@ export function ComplaintAggregatesBar({
         })}
       </div>
       {counts_by_label.length > 0 && (
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs text-muted-foreground mr-1">Метки:</span>
-          {counts_by_label.map((l) => {
-            const active = selectedLabelIds.includes(l.id)
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-1 text-xs text-muted-foreground">Метки:</span>
+          {counts_by_label.map((label) => {
+            const active = selectedLabelIds.includes(label.id)
+
             return (
               <button
-                key={l.id}
+                key={label.id}
                 type="button"
-                onClick={() => onToggleLabel(l.id)}
+                onClick={() => onToggleLabel(label.id)}
                 className={cn(
-                  "rounded-full px-2.5 py-0.5 text-xs font-medium border transition-opacity",
-                  active && "ring-2 ring-primary ring-offset-2",
+                  "rounded-full border-2 px-2.5 py-0.5 text-xs font-medium text-white transition-opacity",
+                  !active && "opacity-85 hover:opacity-100",
                 )}
                 style={{
-                  backgroundColor: l.color,
+                  backgroundColor: label.color,
+                  borderColor: active ? darkenHexColor(label.color) : "transparent",
                   color: "#fff",
-                  borderColor: l.color,
                 }}
               >
-                {l.name} ({l.complaint_count})
+                {label.name} ({label.complaint_count})
               </button>
             )
           })}
