@@ -1082,7 +1082,7 @@ export function DataTable<TData extends ExportableData, TValue>({
 									colSpan={columns.length}
 									className="h-24 text-left truncate"
 								>
-									No results.
+									Ничего не найдено.
 								</TableCell>
 							</TableRow>
 						)}

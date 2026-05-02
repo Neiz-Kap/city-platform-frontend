@@ -294,8 +294,8 @@ export async function exportData<T extends ExportableData>(
     if (onLoadingStart) onLoadingStart();
 
     // Show toast for long operations using consistent ID
-    toast.loading("Preparing export...", {
-      description: "Fetching data for export...",
+    toast.loading("Подготавливаем экспорт...", {
+      description: "Собираем данные для экспорта...",
       id: TOAST_ID
     });
 
@@ -303,21 +303,21 @@ export async function exportData<T extends ExportableData>(
     const exportData = await getData();
 
     // Update the same toast for processing
-    toast.loading("Processing data...", {
-      description: "Generating export file...",
+    toast.loading("Обрабатываем данные...", {
+      description: "Формируем файл экспорта...",
       id: TOAST_ID
     });
 
     if (exportData.length === 0) {
-      toast.error("Export failed", {
-        description: "No data available to export.",
+      toast.error("Экспорт не выполнен", {
+        description: "Нет данных для экспорта.",
         id: TOAST_ID
       });
       return false;
     }
 
     // Get entity name for display in notifications
-    const entityName = options?.entityName || "items";
+    const entityName = options?.entityName || "записей";
 
     // Generate timestamp for filename
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -334,8 +334,8 @@ export async function exportData<T extends ExportableData>(
         options?.transformFunction
       );
       if (success) {
-        toast.success("Export successful", {
-          description: `Exported ${exportData.length} ${entityName} to CSV.`,
+        toast.success("Экспорт завершён", {
+          description: `Экспортировано ${exportData.length} ${entityName} в CSV.`,
           id: TOAST_ID
         });
       }
@@ -349,8 +349,8 @@ export async function exportData<T extends ExportableData>(
         options?.transformFunction
       );
       if (success) {
-        toast.success("Export successful", {
-          description: `Exported ${exportData.length} ${entityName} to Excel.`,
+        toast.success("Экспорт завершён", {
+          description: `Экспортировано ${exportData.length} ${entityName} в Excel.`,
           id: TOAST_ID
         });
       }
@@ -360,8 +360,8 @@ export async function exportData<T extends ExportableData>(
   } catch (error) {
     console.error("Error exporting data:", error);
     
-    toast.error("Export failed", {
-      description: "There was a problem exporting the data. Please try again.",
+    toast.error("Экспорт не выполнен", {
+      description: "Во время экспорта произошла ошибка. Попробуйте ещё раз.",
       id: TOAST_ID
     });
     return false;

@@ -91,21 +91,21 @@ export function DataTableExport<TData extends ExportableData>({
       setIsLoading(true);
 
       // Show loading toast for fetching
-      toast.loading("Preparing export...", {
-        description: "Fetching selected parent rows...",
+      toast.loading("Подготавливаем экспорт...", {
+        description: "Собираем выбранные родительские строки...",
         id: "export-parents-toast",
       });
 
       const parentData = await getSelectedParentRows();
 
       if (parentData.length === 0) {
-        toast.error("No parent rows selected", { id: "export-parents-toast" });
+        toast.error("Не выбраны родительские строки", { id: "export-parents-toast" });
         return;
       }
 
       // Update toast for processing
-      toast.loading("Processing data...", {
-        description: "Generating export file...",
+      toast.loading("Обрабатываем данные...", {
+        description: "Формируем файл экспорта...",
         id: "export-parents-toast",
       });
 
@@ -114,11 +114,11 @@ export function DataTableExport<TData extends ExportableData>({
         : await exportToExcel(parentData, `${entityName}-parents-export-${Date.now()}`, columnMapping, columnWidths, headers, transformFunction);
 
       if (success) {
-        toast.success(`Exported ${parentData.length} parent rows`, { id: "export-parents-toast" });
+        toast.success(`Экспортировано родительских строк: ${parentData.length}`, { id: "export-parents-toast" });
       }
     } catch (error) {
       console.error("Error exporting parents:", error);
-      toast.error("Export failed", { id: "export-parents-toast" });
+      toast.error("Экспорт не выполнен", { id: "export-parents-toast" });
     } finally {
       setIsLoading(false);
     }
@@ -132,21 +132,21 @@ export function DataTableExport<TData extends ExportableData>({
       setIsLoading(true);
 
       // Show loading toast for fetching
-      toast.loading("Preparing export...", {
-        description: "Fetching selected subrows...",
+      toast.loading("Подготавливаем экспорт...", {
+        description: "Собираем выбранные вложенные строки...",
         id: "export-subrows-toast",
       });
 
       const subrowData = await getSelectedSubRows();
 
       if (subrowData.length === 0) {
-        toast.error("No subrows selected", { id: "export-subrows-toast" });
+        toast.error("Не выбраны вложенные строки", { id: "export-subrows-toast" });
         return;
       }
 
       // Update toast for processing
-      toast.loading("Processing data...", {
-        description: "Generating export file...",
+      toast.loading("Обрабатываем данные...", {
+        description: "Формируем файл экспорта...",
         id: "export-subrows-toast",
       });
 
@@ -155,11 +155,11 @@ export function DataTableExport<TData extends ExportableData>({
         : await exportToExcel(subrowData, `${subRowExportConfig.entityName}-export-${Date.now()}`, subRowExportConfig.columnMapping, subRowExportConfig.columnWidths, subRowExportConfig.headers, subRowExportConfig.transformFunction);
 
       if (success) {
-        toast.success(`Exported ${subrowData.length} subrows`, { id: "export-subrows-toast" });
+        toast.success(`Экспортировано вложенных строк: ${subrowData.length}`, { id: "export-subrows-toast" });
       }
     } catch (error) {
       console.error("Error exporting subrows:", error);
-      toast.error("Export failed", { id: "export-subrows-toast" });
+      toast.error("Экспорт не выполнен", { id: "export-subrows-toast" });
     } finally {
       setIsLoading(false);
     }
@@ -175,8 +175,8 @@ export function DataTableExport<TData extends ExportableData>({
         // Check if data is on current page or needs to be fetched
         if (selectedData.some(item => Object.keys(item).length === 0)) {
           // We have placeholder data, need to fetch complete data
-          toast.loading("Preparing export...", {
-            description: `Fetching complete data for selected ${entityName}.`,
+          toast.loading("Подготавливаем экспорт...", {
+            description: `Загружаем полные данные для выбранных сущностей: ${entityName}.`,
             id: "export-data-toast",
           });
         }
@@ -238,7 +238,7 @@ export function DataTableExport<TData extends ExportableData>({
         return sortedItems;
       } else if (getAllItems && !selectedData?.length) {
         // If we're exporting all data and have a method to get it with proper ordering
-        toast.loading("Preparing export...", {
+        toast.loading("Подготавливаем экспорт...", {
           description: `Fetching all ${entityName} with current sorting...`,
           id: "export-data-toast",
         });
@@ -254,7 +254,7 @@ export function DataTableExport<TData extends ExportableData>({
       } else {
         // Otherwise use the provided data (current page data)
         if (!data || data.length === 0) {
-          throw new Error("No data available for export");
+          throw new Error("Нет данных для экспорта");
         }
         return selectedData && selectedData.length > 0 ? selectedData : data;
       }
@@ -346,8 +346,8 @@ export function DataTableExport<TData extends ExportableData>({
       );
     } catch (error) {
       console.error("Error exporting data:", error);
-      toast.error("Export failed", {
-        description: "There was a problem exporting. Please try again.",
+      toast.error("Экспорт не выполнен", {
+        description: "Во время экспорта произошла ошибка. Попробуйте ещё раз.",
         id: "export-data-toast"
       });
       setIsLoading(false);
@@ -360,7 +360,7 @@ export function DataTableExport<TData extends ExportableData>({
     
     try {
       // Show toast for long operations
-      toast.loading("Preparing export...", {
+      toast.loading("Подготавливаем экспорт...", {
         description: `Fetching all ${entityName}...`,
         id: "export-data-toast"
       });
@@ -369,8 +369,8 @@ export function DataTableExport<TData extends ExportableData>({
       const allData = await getAllItems();
       
       if (allData.length === 0) {
-        toast.error("Export failed", {
-          description: "No data available to export.",
+        toast.error("Экспорт не выполнен", {
+          description: "Нет данных для экспорта.",
           id: "export-data-toast"
         });
         return;
@@ -441,8 +441,8 @@ export function DataTableExport<TData extends ExportableData>({
         exportHeaders.map(() => ({ wch: 15 }));
       
       // Update toast for processing
-      toast.loading("Processing data...", {
-        description: "Generating export file...",
+      toast.loading("Обрабатываем данные...", {
+        description: "Формируем файл экспорта...",
         id: "export-data-toast"
       });
       
@@ -466,15 +466,15 @@ export function DataTableExport<TData extends ExportableData>({
       }
       
       if (success) {
-        toast.success("Export successful", {
+        toast.success("Экспорт завершён", {
           description: `Exported all ${allData.length} ${entityName} to ${type.toUpperCase()}.`,
           id: "export-data-toast"
         });
       }
     } catch (error) {
       console.error("Error exporting all pages:", error);
-      toast.error("Export failed", {
-        description: "There was a problem exporting all pages. Please try again.",
+      toast.error("Экспорт не выполнен", {
+        description: "Не удалось экспортировать все страницы. Попробуйте ещё раз.",
         id: "export-data-toast"
       });
     } finally {
