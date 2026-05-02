@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { MoreHorizontal, Trash2 } from "lucide-react"
+import { MoreHorizontal, Plus, Radio, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -12,6 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -284,18 +285,34 @@ export default function PlatformSourcePage() {
           Не удалось загрузить источники: {getErrorMessage(error)}
         </div>
       ) : (
-        sources.map((platform) => (
-          <PlatformCard
-            key={platform.platform}
-            platform={platform}
-            actions={{
-              deleteGroup: handleDelete,
-              isBusy,
-              toggleAllGroups: handleToggleAll,
-              toggleGroup: handleToggle,
-            }}
-          />
-        ))
+        <>
+          {/* Empty State for First-Time Users */}
+          {totalGroups === 0 && (
+            <Card className="my-8">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+                  <Radio className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <CardTitle className="text-xl">Источники не подключены</CardTitle>
+                <CardDescription className="max-w-md mx-auto">
+                  Для начала мониторинга жалоб необходимо добавить источники. Выберите платформу ниже и нажмите «Добавить источник», чтобы подключить группы ВКонтакте или почтовые ящики для отслеживания.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          )}
+          {sources.map((platform) => (
+            <PlatformCard
+              key={platform.platform}
+              platform={platform}
+              actions={{
+                deleteGroup: handleDelete,
+                isBusy,
+                toggleAllGroups: handleToggleAll,
+                toggleGroup: handleToggle,
+              }}
+            />
+          ))}
+        </>
       )}
     </div>
   )

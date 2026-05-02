@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { ArrowLeft, Tags, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MAX_LABELS_PER_ACCOUNT } from "@/lib/api/labels.api"
@@ -224,7 +225,21 @@ export default function LabelsPage() {
       {isLoading ? (
         <p className="text-muted-foreground">Загрузка…</p>
       ) : labels.length === 0 ? (
-        <p className="text-muted-foreground">Метки пока не созданы.</p>
+        /* Empty State for First-Time Users */
+        <Card className="my-8">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <Tags className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <CardTitle className="text-xl">Метки пока не созданы</CardTitle>
+            <CardDescription className="max-w-md mx-auto">
+              Метки помогают категоризировать жалобы по темам (например: «Дороги», «Освещение», «Мусор»). Создайте первую метку, используя форму выше.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center text-sm text-muted-foreground">
+            <p>Нажмите «Создать» после ввода названия и выбора цвета.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-4">
           {labels.map((label) => (
