@@ -1,32 +1,18 @@
 import { api, apiRequest } from ".."
 import { PlatformGroup } from "../../types/complaint.type"
-
-type VkGroupRecord = {
-  id: number
-  is_monitoring?: boolean | number
-  name: string
-}
-
-function mapVkGroup(record: VkGroupRecord): PlatformGroup {
-  return {
-    enabled: record.is_monitoring === true || record.is_monitoring === 1,
-    id: record.id.toString(),
-    name: record.name,
-    platform: "vk",
-  }
-}
+import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
 
 export const VkApi = {
   async createGroup(data: { url: string; name: string }): Promise<PlatformGroup> {
     const response = await apiRequest(
-      api.post("vk/groups", { json: data }).json<VkGroupRecord>(),
+      api.post("vk/groups", { json: SourceMapper.vkGroupToResponse(data) }).json<unknown>(),
     )
-    return mapVkGroup(response)
+    return SourceMapper.vkGroupToDomain(response)
   },
 
   async getGroups(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(api.get("vk/groups").json<VkGroupRecord[]>())
-    return data.map(mapVkGroup)
+    const data = await apiRequest(api.get("vk/groups").json<unknown[]>())
+    return SourceMapper.vkGroupToDomainMany(data)
   },
 
   async updateGroupStatus(id: string, action: "start" | "stop"): Promise<void> {

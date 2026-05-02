@@ -3,43 +3,21 @@ import {
   EmailMonitoringConfig,
   PlatformGroup,
 } from "../../types/complaint.type"
-
-type EmailMonitoringRecord = {
-  id: number
-  is_active?: boolean | number
-  is_monitoring?: boolean | number
-  is_running?: boolean | number
-  name: string
-}
-
-function isEnabled(value: boolean | number | undefined) {
-  return value === true || value === 1
-}
-
-function mapEmailSource(record: EmailMonitoringRecord): PlatformGroup {
-  return {
-    enabled: isEnabled(
-      record.is_running ?? record.is_monitoring ?? record.is_active,
-    ),
-    id: record.id.toString(),
-    name: record.name,
-    platform: "email",
-  }
-}
+import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
 
 export const EmailApi = {
   async createParser(data: EmailMonitoringConfig): Promise<PlatformGroup> {
     const response = await apiRequest(
-      api.post("monitoring/email", { json: data }).json<EmailMonitoringRecord>(),
+      api.post("monitoring/email", { json: SourceMapper.emailConfigToResponse(data) }).json<unknown>(),
     )
-    return mapEmailSource(response)
+    return SourceMapper.emailMonitoringToDomain(response)
   },
 
   async getParsers(): Promise<PlatformGroup[]> {
     const data = await apiRequest(
-      api.get("monitoring/email").json<EmailMonitoringRecord[]>(),
+      api.get("monitoring/email").json<unknown[]>(),
     )
-    return data.map(mapEmailSource)
+    return SourceMapper.emailMonitoringToDomainMany(data)
   },
 
   async updateParserStatus(id: string, action: "start" | "stop"): Promise<void> {

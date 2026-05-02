@@ -1,38 +1,16 @@
 import { api, apiRequest } from "."
+import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
 import {
   PlatformGroup,
   PlatformSource,
   SourcePlatform,
 } from "../types/complaint.type"
 
-type VkGroupRecord = {
-  id: number
-  is_monitoring?: boolean | number
-  name: string
-}
-
-type EmailSourceRecord = {
-  id: number
-  is_active?: boolean | number
-  is_monitoring?: boolean | number
-  is_running?: boolean | number
-  name: string
-}
-
-function isEnabled(value: boolean | number | undefined) {
-  return value === true || value === 1
-}
-
 export class SourceService {
   // --- VK Groups ---
   static async getVkGroups(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(api.get("vk/groups").json<VkGroupRecord[]>())
-    return data.map((group) => ({
-      id: group.id.toString(),
-      name: group.name,
-      enabled: isEnabled(group.is_monitoring),
-      platform: "vk",
-    }))
+    const data = await apiRequest(api.get("vk/groups").json<unknown[]>())
+    return SourceMapper.vkGroupListToDomain(data)
   }
 
   static async updateVkGroupStatus(
@@ -49,16 +27,9 @@ export class SourceService {
   // --- Email Monitoring ---
   static async getEmailParsers(): Promise<PlatformGroup[]> {
     const data = await apiRequest(
-      api.get("monitoring/email").json<EmailSourceRecord[]>(),
+      api.get("monitoring/email").json<unknown[]>(),
     )
-    return data.map((source) => ({
-      id: source.id.toString(),
-      name: source.name,
-      enabled: isEnabled(
-        source.is_running ?? source.is_monitoring ?? source.is_active,
-      ),
-      platform: "email",
-    }))
+    return SourceMapper.emailMonitoringToDomainMany(data)
   }
 
   static async updateEmailParserStatus(
