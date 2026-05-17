@@ -53,7 +53,8 @@ export function ComplaintAggregatesBar({
 }: Props) {
   if (!aggregates) return null
 
-  const { counts_by_status, counts_by_label } = aggregates
+  const counts_by_status = aggregates.counts_by_status ?? {}
+  const counts_by_label = aggregates.counts_by_label ?? []
 
   return (
     <div className="mb-4 flex flex-col gap-3 rounded-lg border bg-muted/30 p-4">
