@@ -1,10 +1,11 @@
-import { api, apiRequest } from "."
 import type {
   CreateLabelRequest,
   DashboardLabel,
   UpdateLabelRequest,
 } from "@/lib/types/complaint-label.type"
 import { labelMapper } from "@/lib/utils/mappers/label.mapper"
+
+import { api, apiRequest } from "."
 
 const MAX_LABELS_PER_ACCOUNT = 10
 
@@ -17,9 +18,7 @@ export class LabelAPI {
     const searchParams: Record<string, string> = {}
     if (options?.with_counts) searchParams.with_counts = "1"
 
-    const response = await apiRequest(
-      api.get(this.prefix, { searchParams }).json<unknown[]>(),
-    )
+    const response = await apiRequest(api.get(this.prefix, { searchParams }).json<unknown[]>())
     return labelMapper.listToDomain(response)
   }
 

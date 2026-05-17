@@ -49,7 +49,12 @@ export default function Search() {
         </div>
       </div>
       <div className="block lg:hidden">
-        <Button size="icon" variant="ghost" onClick={() => setOpen(true)} aria-label="Открыть поиск">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => setOpen(true)}
+          aria-label="Открыть поиск"
+        >
           <SearchIcon />
         </Button>
       </div>

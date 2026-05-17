@@ -1,6 +1,9 @@
 // lib/components/filters/PeriodFilter.tsx
 "use client"
 
+import { CheckIcon, ChevronsUpDown } from "lucide-react"
+import { useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import {
   Command,
@@ -9,14 +12,8 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { TimePeriod } from "@/lib/types/complaint-stats.type"
-import { CheckIcon, ChevronsUpDown } from "lucide-react"
-import { useState } from "react"
 
 interface PeriodFilterProps {
   value: string
@@ -43,9 +40,7 @@ export function PeriodFilter(props: PeriodFilterProps) {
           aria-expanded={open}
           className="w-[200px] justify-between"
         >
-          {value
-            ? periods.find((period) => period.value === value)?.label
-            : "Выберите период..."}
+          {value ? periods.find((period) => period.value === value)?.label : "Выберите период..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -64,9 +59,7 @@ export function PeriodFilter(props: PeriodFilterProps) {
                 }}
               >
                 <CheckIcon
-                  className={`mr-2 h-4 w-4 ${
-                    value === period.value ? "opacity-100" : "opacity-0"
-                  }`}
+                  className={`mr-2 h-4 w-4 ${value === period.value ? "opacity-100" : "opacity-0"}`}
                 />
                 {period.label}
               </CommandItem>

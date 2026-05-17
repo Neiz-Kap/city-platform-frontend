@@ -105,24 +105,15 @@ export function parseComplaintDashboardUrlState(
   return {
     dashboardFilters: {
       endDate: searchParams.get(COMPLAINT_PARAM_KEYS.endDate) ?? "",
-      excludeLabelIds: parseNumberArray(
-        searchParams.get(COMPLAINT_PARAM_KEYS.excludeLabelIds),
-      ),
+      excludeLabelIds: parseNumberArray(searchParams.get(COMPLAINT_PARAM_KEYS.excludeLabelIds)),
       labelIds: parseNumberArray(searchParams.get(COMPLAINT_PARAM_KEYS.labelIds)),
-      labelMatch: normalizeLabelMatch(
-        searchParams.get(COMPLAINT_PARAM_KEYS.labelMatch),
-      ),
-      selectedStatuses: parseStringArray(
-        searchParams.get(COMPLAINT_PARAM_KEYS.status),
-      ),
+      labelMatch: normalizeLabelMatch(searchParams.get(COMPLAINT_PARAM_KEYS.labelMatch)),
+      selectedStatuses: parseStringArray(searchParams.get(COMPLAINT_PARAM_KEYS.status)),
       startDate: searchParams.get(COMPLAINT_PARAM_KEYS.startDate) ?? "",
     },
     pagination: {
       page: parsePositiveInteger(searchParams.get(COMPLAINT_PARAM_KEYS.page), 1),
-      per_page: parsePositiveInteger(
-        searchParams.get(COMPLAINT_PARAM_KEYS.perPage),
-        10,
-      ),
+      per_page: parsePositiveInteger(searchParams.get(COMPLAINT_PARAM_KEYS.perPage), 10),
     },
     search: searchParams.get(COMPLAINT_PARAM_KEYS.search) ?? "",
     sortParams: {
@@ -146,9 +137,7 @@ export function applyComplaintDashboardUrlState(
   setParam(
     nextParams,
     COMPLAINT_PARAM_KEYS.perPage,
-    state.pagination.per_page !== 10
-      ? String(state.pagination.per_page)
-      : undefined,
+    state.pagination.per_page !== 10 ? String(state.pagination.per_page) : undefined,
   )
   setParam(nextParams, COMPLAINT_PARAM_KEYS.search, state.search.trim() || undefined)
   setParam(
@@ -168,11 +157,7 @@ export function applyComplaintDashboardUrlState(
     COMPLAINT_PARAM_KEYS.status,
     state.dashboardFilters.selectedStatuses,
   )
-  setNumberListParam(
-    nextParams,
-    COMPLAINT_PARAM_KEYS.labelIds,
-    state.dashboardFilters.labelIds,
-  )
+  setNumberListParam(nextParams, COMPLAINT_PARAM_KEYS.labelIds, state.dashboardFilters.labelIds)
   setParam(
     nextParams,
     COMPLAINT_PARAM_KEYS.labelMatch,
@@ -188,18 +173,12 @@ export function applyComplaintDashboardUrlState(
     COMPLAINT_PARAM_KEYS.startDate,
     state.dashboardFilters.startDate || undefined,
   )
-  setParam(
-    nextParams,
-    COMPLAINT_PARAM_KEYS.endDate,
-    state.dashboardFilters.endDate || undefined,
-  )
+  setParam(nextParams, COMPLAINT_PARAM_KEYS.endDate, state.dashboardFilters.endDate || undefined)
 
   return nextParams
 }
 
-export function serializeComplaintDashboardUrlState(
-  state: ComplaintDashboardUrlState,
-) {
+export function serializeComplaintDashboardUrlState(state: ComplaintDashboardUrlState) {
   return applyComplaintDashboardUrlState(new URLSearchParams(), state).toString()
 }
 
@@ -219,16 +198,8 @@ export function applyComplaintStatsUrlState(
 ) {
   const nextParams = new URLSearchParams(params)
 
-  setParam(
-    nextParams,
-    STATS_PARAM_KEYS.period,
-    state.period !== "day" ? state.period : undefined,
-  )
-  setParam(
-    nextParams,
-    STATS_PARAM_KEYS.page,
-    state.page > 1 ? String(state.page) : undefined,
-  )
+  setParam(nextParams, STATS_PARAM_KEYS.period, state.period !== "day" ? state.period : undefined)
+  setParam(nextParams, STATS_PARAM_KEYS.page, state.page > 1 ? String(state.page) : undefined)
   setParam(
     nextParams,
     STATS_PARAM_KEYS.perPage,

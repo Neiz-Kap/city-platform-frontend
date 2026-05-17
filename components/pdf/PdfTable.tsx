@@ -1,6 +1,8 @@
 import React, { ReactNode } from "react"
+
+import { Text, View } from "@react-pdf/renderer"
 import type { Style } from "@react-pdf/types"
-import { View, Text } from "@react-pdf/renderer"
+
 import { commonStyles } from "./styles"
 
 export interface PdfTableColumn {
@@ -11,10 +13,10 @@ export interface PdfTableColumn {
   cellBold?: boolean
 }
 
-export type PdfTableCell = string | number | ReactNode;
+export type PdfTableCell = string | number | ReactNode
 
 export interface PdfTableRowStyle {
-  backgroundColor?: string;
+  backgroundColor?: string
 }
 
 export interface PdfTableProps {
@@ -27,11 +29,7 @@ export interface PdfTableProps {
  * Generic reusable PDF table component
  * Supports custom column widths, alignment, bold text, custom cell rendering, and row styling
  */
-export const PdfTable: React.FC<PdfTableProps> = ({
-  columns,
-  rows,
-  rowStyles = [],
-}) => {
+export const PdfTable: React.FC<PdfTableProps> = ({ columns, rows, rowStyles = [] }) => {
   const getCellStyle = (column: PdfTableColumn, body?: boolean) => {
     const styles: Style[] = [commonStyles.tableCell]
 
@@ -69,10 +67,7 @@ export const PdfTable: React.FC<PdfTableProps> = ({
       {/* Header Row */}
       <View style={[commonStyles.tableRow, commonStyles.tableHeader]}>
         {columns.map((column, idx) => (
-          <Text
-            key={idx}
-            style={[...getCellStyle(column, false), commonStyles.tableCellBold]}
-          >
+          <Text key={idx} style={[...getCellStyle(column, false), commonStyles.tableCellBold]}>
             {column.header}
           </Text>
         ))}
@@ -80,23 +75,18 @@ export const PdfTable: React.FC<PdfTableProps> = ({
 
       {/* Data Rows */}
       {rows.map((row, rowIdx) => {
-        const rowStyle = rowStyles[rowIdx] || {};
+        const rowStyle = rowStyles[rowIdx] || {}
         const rowViewStyle = rowStyle.backgroundColor
-          ? [
-              commonStyles.tableRow,
-              { backgroundColor: rowStyle.backgroundColor },
-            ]
-          : commonStyles.tableRow;
+          ? [commonStyles.tableRow, { backgroundColor: rowStyle.backgroundColor }]
+          : commonStyles.tableRow
         return (
           <View key={rowIdx} style={rowViewStyle}>
             {row.map((cell, cellIdx) => (
-              <React.Fragment key={cellIdx}>
-                {renderCell(cell, columns[cellIdx])}
-              </React.Fragment>
+              <React.Fragment key={cellIdx}>{renderCell(cell, columns[cellIdx])}</React.Fragment>
             ))}
           </View>
-        );
+        )
       })}
     </View>
-  );
-};
+  )
+}

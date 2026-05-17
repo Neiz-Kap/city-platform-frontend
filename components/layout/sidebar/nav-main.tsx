@@ -1,5 +1,9 @@
 "use client"
 
+import { FileDown, ListOrdered, Radio, Tags, type LucideIcon } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -8,9 +12,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { FileDown, ListOrdered, Radio, Tags, type LucideIcon } from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
 
 type FlatNavItem = {
   title: string

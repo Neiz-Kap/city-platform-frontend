@@ -11,33 +11,22 @@ function numberOrUndefined(value: unknown) {
 /** Приводит сырой ответ API к единому виду `Complaint`. */
 export function normalizeComplaint(raw: unknown): Complaint {
   const r = raw as Record<string, unknown> & Partial<Complaint>
-  const sourceUrl =
-    stringOrUndefined(r.source_url) ??
-    stringOrUndefined(r.url) ??
-    undefined
+  const sourceUrl = stringOrUndefined(r.source_url) ?? stringOrUndefined(r.url) ?? undefined
 
   return {
     ...r,
-    createdAt:
-      stringOrUndefined(r.createdAt) ??
-      stringOrUndefined(r.created_at) ??
-      "",
-    departmentId:
-      numberOrUndefined(r.departmentId) ?? numberOrUndefined(r.department_id),
+    createdAt: stringOrUndefined(r.createdAt) ?? stringOrUndefined(r.created_at) ?? "",
+    departmentId: numberOrUndefined(r.departmentId) ?? numberOrUndefined(r.department_id),
     description: stringOrUndefined(r.description) ?? "",
     id: typeof r.id === "number" ? r.id : Number(r.id ?? 0),
     labels: Array.isArray(r.labels) ? r.labels : [],
     name: stringOrUndefined(r.name) ?? "",
-    platform:
-      (stringOrUndefined(r.platform) ??
-        stringOrUndefined(r.source_platform) ??
-        "vk") as ComplaintPlatform,
+    platform: (stringOrUndefined(r.platform) ??
+      stringOrUndefined(r.source_platform) ??
+      "vk") as ComplaintPlatform,
     source_url: sourceUrl,
     status: stringOrUndefined(r.status) ?? "backlog",
-    updatedAt:
-      stringOrUndefined(r.updatedAt) ??
-      stringOrUndefined(r.updated_at) ??
-      "",
+    updatedAt: stringOrUndefined(r.updatedAt) ?? stringOrUndefined(r.updated_at) ?? "",
     url: sourceUrl,
     userId: numberOrUndefined(r.userId) ?? numberOrUndefined(r.user_id) ?? 0,
   }

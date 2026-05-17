@@ -3,16 +3,12 @@
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { API_BASE_URL } from "@/lib/api"
-import {
-  useUpdateComplaint,
-  useUpdateComplaintLabels,
-} from "@/lib/hooks/useComplaints"
+import { useUpdateComplaint, useUpdateComplaintLabels } from "@/lib/hooks/useComplaints"
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
 import { Complaint } from "@/lib/types/complaint.type"
 import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { ComplaintMetadata } from "./ComplaintMetadata"
 import { DashboardLabelPicker } from "./DashboardLabelPicker"
@@ -68,9 +64,7 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{complaint.name}</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Карточка проблемы
-        </p>
+        <p className="text-sm text-muted-foreground mt-2">Карточка проблемы</p>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
@@ -93,17 +87,13 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
                   />
                 ) : (
                   <p className="text-muted-foreground text-center text-sm px-4">
-                    {mediaUrl
-                      ? "Не удалось загрузить изображение по ссылке"
-                      : "Нет изображения"}
+                    {mediaUrl ? "Не удалось загрузить изображение по ссылке" : "Нет изображения"}
                   </p>
                 )}
               </div>
 
               <div className="border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                  Источник
-                </h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Источник</h3>
                 <p className="text-sm">{complaintPlatformLabelRu(complaint.platform)}</p>
                 {mediaUrl && (
                   <a
@@ -118,21 +108,15 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
               </div>
 
               <div className="border rounded-lg p-4">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                  Описание
-                </h3>
-                <p className="text-sm whitespace-pre-wrap">
-                  {complaint.description}
-                </p>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Описание</h3>
+                <p className="text-sm whitespace-pre-wrap">{complaint.description}</p>
               </div>
             </div>
 
             <div className="border rounded-lg p-6">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    Статус
-                  </h3>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Статус</h3>
                   <StatusBadge
                     status={complaint.status}
                     editable={!busy}
@@ -141,9 +125,7 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                    Метки дашборда
-                  </h3>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Метки дашборда</h3>
                   <DashboardLabelPicker
                     valueIds={(complaint.labels ?? []).map((l) => l.id)}
                     onChange={handleDashboardLabelsChange}

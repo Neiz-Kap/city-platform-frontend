@@ -1,5 +1,8 @@
 "use client"
 
+import { PlusCircle, RotateCcw, SearchX } from "lucide-react"
+import { useEffect, useState, type ReactNode } from "react"
+
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -9,8 +12,6 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table"
-import { PlusCircle, RotateCcw, SearchX } from "lucide-react"
-import { type ReactNode, useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -30,11 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -148,20 +145,12 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
   } = props
   const { data, pagination: serverPagination } = paginatedData
 
-  const [sorting, setSorting] = useState<SortingState>(
-    controlledSorting ?? initialSorting,
-  )
+  const [sorting, setSorting] = useState<SortingState>(controlledSorting ?? initialSorting)
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
-  const {
-    selectedStatuses,
-    labelIds,
-    labelMatch,
-    excludeLabelIds,
-    startDate,
-    endDate,
-  } = dashboardFilters
+  const { selectedStatuses, labelIds, labelMatch, excludeLabelIds, startDate, endDate } =
+    dashboardFilters
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
@@ -182,12 +171,9 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     }
   }, [controlledSorting, sorting])
 
+  const setIncludeLabels = (next: number[]) => onDashboardFiltersChange({ labelIds: next })
 
-  const setIncludeLabels = (next: number[]) =>
-    onDashboardFiltersChange({ labelIds: next })
-
-  const setExcludeLabels = (next: number[]) =>
-    onDashboardFiltersChange({ excludeLabelIds: next })
+  const setExcludeLabels = (next: number[]) => onDashboardFiltersChange({ excludeLabelIds: next })
 
   const handleStartDateChange = (value: string) => {
     if (endDate && value && value > endDate) {
@@ -217,8 +203,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onSortingChange: (updater) => {
-      const nextSorting =
-        typeof updater === "function" ? updater(sorting) : updater
+      const nextSorting = typeof updater === "function" ? updater(sorting) : updater
       setSorting(nextSorting)
       onSortChange?.(nextSorting)
     },
@@ -289,9 +274,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                           key={label.id}
                           value={label.name}
                           onSelect={() => {
-                            setIncludeLabels(
-                              toggleInList(labelIds, label.id, (a, b) => a === b),
-                            )
+                            setIncludeLabels(toggleInList(labelIds, label.id, (a, b) => a === b))
                           }}
                         >
                           <div className="flex items-center space-x-3 py-1">
@@ -355,11 +338,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                           value={`ex-${label.name}`}
                           onSelect={() => {
                             setExcludeLabels(
-                              toggleInList(
-                                excludeLabelIds,
-                                label.id,
-                                (a, b) => a === b,
-                              ),
+                              toggleInList(excludeLabelIds, label.id, (a, b) => a === b),
                             )
                           }}
                         >
@@ -460,10 +439,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -472,7 +448,10 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   Загрузка жалоб...
                 </TableCell>
               </TableRow>

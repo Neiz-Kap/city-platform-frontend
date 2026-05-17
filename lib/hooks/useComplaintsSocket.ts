@@ -1,6 +1,7 @@
-import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { io, Socket } from "socket.io-client"
+
+import { useQueryClient } from "@tanstack/react-query"
 
 import { attachDashboardNotificationHandlers } from "@/lib/notifications/dashboard-notifications"
 
@@ -18,8 +19,7 @@ function shouldUsePollingOnly(apiBaseUrl: string) {
   try {
     const url = new URL(apiBaseUrl)
     return (
-      process.env.NODE_ENV === "development" ||
-      ["localhost", "127.0.0.1"].includes(url.hostname)
+      process.env.NODE_ENV === "development" || ["localhost", "127.0.0.1"].includes(url.hostname)
     )
   } catch {
     return process.env.NODE_ENV === "development"
@@ -40,10 +40,7 @@ export const useComplaintsSocket = ({
   const [isConnected, setIsConnected] = useState(false)
   const onNewComplaintRef = useRef(onNewComplaint)
   const sourcesKey = [...sources].sort().join("|")
-  const normalizedSources = useMemo(
-    () => (sourcesKey ? sourcesKey.split("|") : []),
-    [sourcesKey],
-  )
+  const normalizedSources = useMemo(() => (sourcesKey ? sourcesKey.split("|") : []), [sourcesKey])
   const usePollingOnly = useMemo(() => shouldUsePollingOnly(API_BASE_URL), [])
 
   useEffect(() => {

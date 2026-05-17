@@ -129,10 +129,13 @@ export async function normalizeApiError(error: unknown): Promise<ApiError> {
   }
 
   if (error instanceof TypeError) {
-    return new ApiError("Не удалось подключиться к серверу. Проверьте соединение и повторите попытку.", {
-      cause: error,
-      isNetworkError: true,
-    })
+    return new ApiError(
+      "Не удалось подключиться к серверу. Проверьте соединение и повторите попытку.",
+      {
+        cause: error,
+        isNetworkError: true,
+      },
+    )
   }
 
   if (error instanceof Error) {
@@ -144,10 +147,7 @@ export async function normalizeApiError(error: unknown): Promise<ApiError> {
   return new ApiError("Произошла непредвиденная ошибка.", { cause: error })
 }
 
-export function getErrorMessage(
-  error: unknown,
-  fallback = "Произошла непредвиденная ошибка.",
-) {
+export function getErrorMessage(error: unknown, fallback = "Произошла непредвиденная ошибка.") {
   if (error instanceof ApiError) {
     return error.message
   }

@@ -1,3 +1,5 @@
+import { StatItem, StatsQueryParams } from "@/lib/types/complaint-stats.type"
+
 import { api, apiRequest } from "."
 import { PaginatedData } from "../types"
 import {
@@ -11,14 +13,7 @@ import {
 } from "../types/complaint.type"
 import { complaintMapper } from "../utils/mappers/complaint.mapper"
 
-import {
-  StatItem,
-  StatsQueryParams,
-} from "@/lib/types/complaint-stats.type"
-
-function complaintsSearchParams(
-  params: ComplaintQueryParams,
-): Record<string, string | number> {
+function complaintsSearchParams(params: ComplaintQueryParams): Record<string, string | number> {
   const searchParams: Record<string, string | number> = {}
   if (params.page != null) searchParams.page = params.page
   if (params.per_page != null) searchParams.per_page = params.per_page
@@ -91,7 +86,9 @@ export class ComplaintAPI {
 
   static async create(complaintData: CreateComplaintRequest) {
     const raw = await apiRequest(
-      api.post("complaint", { json: complaintMapper.toResponse(complaintData) }).json<Record<string, unknown>>(),
+      api
+        .post("complaint", { json: complaintMapper.toResponse(complaintData) })
+        .json<Record<string, unknown>>(),
     )
     if (typeof raw.id === "number" && raw.name == null) {
       return ComplaintAPI.getById(String(raw.id))
@@ -100,7 +97,9 @@ export class ComplaintAPI {
   }
 
   static update(id: string | number, body: UpdateComplaintRequest) {
-    return apiRequest(api.put(`complaint/${id}`, { json: complaintMapper.updateToResponse(body) }).json<unknown>())
+    return apiRequest(
+      api.put(`complaint/${id}`, { json: complaintMapper.updateToResponse(body) }).json<unknown>(),
+    )
   }
 
   static async updateLabels(id: string | number, label_ids: number[]) {

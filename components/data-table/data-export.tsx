@@ -1,60 +1,60 @@
-"use client";
+"use client"
 
 // ** import types
-import type { JSX } from "react";
-import type { Table } from "@tanstack/react-table";
-import type { ExportableData, DataTransformFunction } from "./utils/export-utils";
-import type { TableConfig } from "./utils/table-config";
-
+import { DownloadIcon, Loader2 } from "lucide-react"
+import type { JSX } from "react"
 // ** import core packages
-import { useState } from "react";
-import { DownloadIcon, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react"
+import { toast } from "sonner"
+
+import type { Table } from "@tanstack/react-table"
 
 // ** import components
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu"
 
+import type { DataTransformFunction, ExportableData } from "./utils/export-utils"
 // ** import utils
-import { exportData, exportToCSV, exportToExcel } from "./utils/export-utils";
+import { exportData, exportToCSV, exportToExcel } from "./utils/export-utils"
+import type { TableConfig } from "./utils/table-config"
 
 interface DataTableExportProps<TData extends ExportableData> {
-  table: Table<TData>;
-  data: TData[];
-  selectedData?: TData[];
-  getSelectedItems?: () => Promise<TData[]>;
-  getAllItems?: () => Promise<TData[]>;
-  entityName?: string;
-  columnMapping?: Record<string, string>;
-  columnWidths?: Array<{ wch: number }>;
-  headers?: string[];
-  transformFunction?: DataTransformFunction<TData>;
-  size?: 'sm' | 'default' | 'lg';
-  config?: TableConfig;
-  exportType?: "csv" | "excel";
-  buttonText?: string;
+  table: Table<TData>
+  data: TData[]
+  selectedData?: TData[]
+  getSelectedItems?: () => Promise<TData[]>
+  getAllItems?: () => Promise<TData[]>
+  entityName?: string
+  columnMapping?: Record<string, string>
+  columnWidths?: Array<{ wch: number }>
+  headers?: string[]
+  transformFunction?: DataTransformFunction<TData>
+  size?: "sm" | "default" | "lg"
+  config?: TableConfig
+  exportType?: "csv" | "excel"
+  buttonText?: string
   // Subrow props
   subRowsConfig?: {
-    enabled: boolean;
-  };
-  getSelectedParentRows?: () => Promise<TData[]>;
-  getSelectedSubRows?: () => Promise<TData[]>;
-  parentCount?: number;
-  subrowCount?: number;
-  enableCsv?: boolean;
-  enableExcel?: boolean;
+    enabled: boolean
+  }
+  getSelectedParentRows?: () => Promise<TData[]>
+  getSelectedSubRows?: () => Promise<TData[]>
+  parentCount?: number
+  subrowCount?: number
+  enableCsv?: boolean
+  enableExcel?: boolean
   subRowExportConfig?: {
-    entityName: string;
-    columnMapping: Record<string, string>;
-    columnWidths: Array<{ wch: number }>;
-    headers: string[];
-    transformFunction?: DataTransformFunction<TData>;
-  };
+    entityName: string
+    columnMapping: Record<string, string>
+    columnWidths: Array<{ wch: number }>
+    headers: string[]
+    transformFunction?: DataTransformFunction<TData>
+  }
 }
 
 export function DataTableExport<TData extends ExportableData>({
@@ -68,7 +68,7 @@ export function DataTableExport<TData extends ExportableData>({
   columnWidths,
   headers,
   transformFunction,
-  size = 'default',
+  size = "default",
   config,
   exportType,
   buttonText,
@@ -81,254 +81,290 @@ export function DataTableExport<TData extends ExportableData>({
   enableExcel = true,
   subRowExportConfig,
 }: DataTableExportProps<TData>): JSX.Element {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
 
   // Export parent rows only
   const handleExportParents = async (type: "csv" | "excel") => {
-    if (isLoading || !getSelectedParentRows) return;
+    if (isLoading || !getSelectedParentRows) return
 
     try {
-      setIsLoading(true);
+      setIsLoading(true)
 
       // Show loading toast for fetching
       toast.loading("Подготавливаем экспорт...", {
         description: "Собираем выбранные родительские строки...",
         id: "export-parents-toast",
-      });
+      })
 
-      const parentData = await getSelectedParentRows();
+      const parentData = await getSelectedParentRows()
 
       if (parentData.length === 0) {
-        toast.error("Не выбраны родительские строки", { id: "export-parents-toast" });
-        return;
+        toast.error("Не выбраны родительские строки", { id: "export-parents-toast" })
+        return
       }
 
       // Update toast for processing
       toast.loading("Обрабатываем данные...", {
         description: "Формируем файл экспорта...",
         id: "export-parents-toast",
-      });
+      })
 
-      const success = type === "csv"
-        ? exportToCSV(parentData, `${entityName}-parents-export-${Date.now()}`, headers, columnMapping, transformFunction)
-        : await exportToExcel(parentData, `${entityName}-parents-export-${Date.now()}`, columnMapping, columnWidths, headers, transformFunction);
+      const success =
+        type === "csv"
+          ? exportToCSV(
+              parentData,
+              `${entityName}-parents-export-${Date.now()}`,
+              headers,
+              columnMapping,
+              transformFunction,
+            )
+          : await exportToExcel(
+              parentData,
+              `${entityName}-parents-export-${Date.now()}`,
+              columnMapping,
+              columnWidths,
+              headers,
+              transformFunction,
+            )
 
       if (success) {
-        toast.success(`Экспортировано родительских строк: ${parentData.length}`, { id: "export-parents-toast" });
+        toast.success(`Экспортировано родительских строк: ${parentData.length}`, {
+          id: "export-parents-toast",
+        })
       }
     } catch (error) {
-      console.error("Error exporting parents:", error);
-      toast.error("Экспорт не выполнен", { id: "export-parents-toast" });
+      console.error("Error exporting parents:", error)
+      toast.error("Экспорт не выполнен", { id: "export-parents-toast" })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Export subrows only
   const handleExportSubrows = async (type: "csv" | "excel") => {
-    if (isLoading || !getSelectedSubRows || !subRowExportConfig) return;
+    if (isLoading || !getSelectedSubRows || !subRowExportConfig) return
 
     try {
-      setIsLoading(true);
+      setIsLoading(true)
 
       // Show loading toast for fetching
       toast.loading("Подготавливаем экспорт...", {
         description: "Собираем выбранные вложенные строки...",
         id: "export-subrows-toast",
-      });
+      })
 
-      const subrowData = await getSelectedSubRows();
+      const subrowData = await getSelectedSubRows()
 
       if (subrowData.length === 0) {
-        toast.error("Не выбраны вложенные строки", { id: "export-subrows-toast" });
-        return;
+        toast.error("Не выбраны вложенные строки", { id: "export-subrows-toast" })
+        return
       }
 
       // Update toast for processing
       toast.loading("Обрабатываем данные...", {
         description: "Формируем файл экспорта...",
         id: "export-subrows-toast",
-      });
+      })
 
-      const success = type === "csv"
-        ? exportToCSV(subrowData, `${subRowExportConfig.entityName}-export-${Date.now()}`, subRowExportConfig.headers, subRowExportConfig.columnMapping, subRowExportConfig.transformFunction)
-        : await exportToExcel(subrowData, `${subRowExportConfig.entityName}-export-${Date.now()}`, subRowExportConfig.columnMapping, subRowExportConfig.columnWidths, subRowExportConfig.headers, subRowExportConfig.transformFunction);
+      const success =
+        type === "csv"
+          ? exportToCSV(
+              subrowData,
+              `${subRowExportConfig.entityName}-export-${Date.now()}`,
+              subRowExportConfig.headers,
+              subRowExportConfig.columnMapping,
+              subRowExportConfig.transformFunction,
+            )
+          : await exportToExcel(
+              subrowData,
+              `${subRowExportConfig.entityName}-export-${Date.now()}`,
+              subRowExportConfig.columnMapping,
+              subRowExportConfig.columnWidths,
+              subRowExportConfig.headers,
+              subRowExportConfig.transformFunction,
+            )
 
       if (success) {
-        toast.success(`Экспортировано вложенных строк: ${subrowData.length}`, { id: "export-subrows-toast" });
+        toast.success(`Экспортировано вложенных строк: ${subrowData.length}`, {
+          id: "export-subrows-toast",
+        })
       }
     } catch (error) {
-      console.error("Error exporting subrows:", error);
-      toast.error("Экспорт не выполнен", { id: "export-subrows-toast" });
+      console.error("Error exporting subrows:", error)
+      toast.error("Экспорт не выполнен", { id: "export-subrows-toast" })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleExport = async (type: "csv" | "excel") => {
-    if (isLoading) return; // Prevent multiple export requests
-    
+    if (isLoading) return // Prevent multiple export requests
+
     // Create a data fetching function based on the current state
     const fetchExportData = async (): Promise<TData[]> => {
       // If we have selected items and a function to get their complete data
       if (getSelectedItems && selectedData && selectedData.length > 0) {
         // Check if data is on current page or needs to be fetched
-        if (selectedData.some(item => Object.keys(item).length === 0)) {
+        if (selectedData.some((item) => Object.keys(item).length === 0)) {
           // We have placeholder data, need to fetch complete data
           toast.loading("Подготавливаем экспорт...", {
             description: `Загружаем полные данные для выбранных сущностей: ${entityName}.`,
             id: "export-data-toast",
-          });
+          })
         }
-        
+
         // Fetch complete data for selected items
-        const selectedItems = await getSelectedItems();
-        
+        const selectedItems = await getSelectedItems()
+
         if (selectedItems.length === 0) {
-          throw new Error(`Failed to retrieve complete data for selected ${entityName}`);
+          throw new Error(`Failed to retrieve complete data for selected ${entityName}`)
         }
-        
+
         // Order the items according to the current sorting in the table
         // This preserves the table's page order in the exported data
-        const sortedItems = [...selectedItems];
-        const sorting = table.getState().sorting;
-        
+        const sortedItems = [...selectedItems]
+        const sorting = table.getState().sorting
+
         if (sorting.length > 0) {
-          const { id: sortField, desc: isDescending } = sorting[0];
+          const { id: sortField, desc: isDescending } = sorting[0]
 
           // Check if array is empty before accessing first item
           if (sortedItems.length === 0) {
-            return sortedItems;
+            return sortedItems
           }
 
           // Validate that sortField exists in data before sorting
-          const sampleItem = sortedItems[0];
+          const sampleItem = sortedItems[0]
           if (!(sortField in sampleItem)) {
-            console.warn(`Sort field "${sortField}" not found in data. Skipping sort.`);
-            return sortedItems;
+            console.warn(`Sort field "${sortField}" not found in data. Skipping sort.`)
+            return sortedItems
           }
-          
+
           sortedItems.sort((a, b) => {
             try {
-              const valueA = a[sortField as keyof TData];
-              const valueB = b[sortField as keyof TData];
-              
-              if (valueA === valueB) return 0;
-              
-              if (valueA === null || valueA === undefined) return isDescending ? 1 : -1;
-              if (valueB === null || valueB === undefined) return isDescending ? -1 : 1;
-              
-              if (typeof valueA === 'string' && typeof valueB === 'string') {
-              return isDescending 
-                ? valueB.localeCompare(valueA) 
-                : valueA.localeCompare(valueB);
-            }
-            
+              const valueA = a[sortField as keyof TData]
+              const valueB = b[sortField as keyof TData]
+
+              if (valueA === valueB) return 0
+
+              if (valueA === null || valueA === undefined) return isDescending ? 1 : -1
+              if (valueB === null || valueB === undefined) return isDescending ? -1 : 1
+
+              if (typeof valueA === "string" && typeof valueB === "string") {
+                return isDescending ? valueB.localeCompare(valueA) : valueA.localeCompare(valueB)
+              }
+
               // For numeric and other comparable types
-              return isDescending 
-                ? (valueB > valueA ? 1 : -1) 
-                : (valueA > valueB ? 1 : -1);
+              return isDescending ? (valueB > valueA ? 1 : -1) : valueA > valueB ? 1 : -1
             } catch (sortError) {
-              console.error('Error during sorting:', sortError);
-              return 0; // Maintain original order on error
+              console.error("Error during sorting:", sortError)
+              return 0 // Maintain original order on error
             }
-          });
+          })
         }
-        
-        return sortedItems;
+
+        return sortedItems
       } else if (getAllItems && !selectedData?.length) {
         // If we're exporting all data and have a method to get it with proper ordering
         toast.loading("Подготавливаем экспорт...", {
           description: `Fetching all ${entityName} with current sorting...`,
           id: "export-data-toast",
-        });
-        
+        })
+
         // Fetch all data with server-side sorting applied
-        const allItems = await getAllItems();
-        
+        const allItems = await getAllItems()
+
         if (allItems.length === 0) {
-          throw new Error(`No ${entityName} available to export`);
+          throw new Error(`No ${entityName} available to export`)
         }
-        
-        return allItems;
+
+        return allItems
       } else {
         // Otherwise use the provided data (current page data)
         if (!data || data.length === 0) {
-          throw new Error("Нет данных для экспорта");
+          throw new Error("Нет данных для экспорта")
         }
-        return selectedData && selectedData.length > 0 ? selectedData : data;
+        return selectedData && selectedData.length > 0 ? selectedData : data
       }
-    };
+    }
 
     try {
       // Get visible columns from the table
-      const visibleColumns = table.getAllColumns()
-        .filter(column => column.getIsVisible())
-        .filter(column => column.id !== 'actions' && column.id !== 'select');
+      const visibleColumns = table
+        .getAllColumns()
+        .filter((column) => column.getIsVisible())
+        .filter((column) => column.id !== "actions" && column.id !== "select")
 
       // Generate export options based on visible columns and respect column order
-      const columnOrder = table.getState().columnOrder;
-      const orderedVisibleColumns = columnOrder.length > 0
-        ? [...visibleColumns].sort((a, b) => {
-            const aIndex = columnOrder.indexOf(a.id);
-            const bIndex = columnOrder.indexOf(b.id);
-            // If column isn't in the order array, put it at the end
-            if (aIndex === -1) return 1;
-            if (bIndex === -1) return -1;
-            return aIndex - bIndex;
-          })
-        : visibleColumns;
+      const columnOrder = table.getState().columnOrder
+      const orderedVisibleColumns =
+        columnOrder.length > 0
+          ? [...visibleColumns].sort((a, b) => {
+              const aIndex = columnOrder.indexOf(a.id)
+              const bIndex = columnOrder.indexOf(b.id)
+              // If column isn't in the order array, put it at the end
+              if (aIndex === -1) return 1
+              if (bIndex === -1) return -1
+              return aIndex - bIndex
+            })
+          : visibleColumns
 
       // Generate export headers - always start with visible columns only
-      const visibleColumnIds = orderedVisibleColumns.map(column => column.id);
+      const visibleColumnIds = orderedVisibleColumns.map((column) => column.id)
       // Get all table column IDs (visible + hidden) to identify what's a table column vs transform column
-      const allTableColumnIds = table.getAllColumns()
-        .filter(column => column.id !== 'actions' && column.id !== 'select')
-        .map(column => column.id);
-      
-      let exportHeaders: string[];
-      
+      const allTableColumnIds = table
+        .getAllColumns()
+        .filter((column) => column.id !== "actions" && column.id !== "select")
+        .map((column) => column.id)
+
+      let exportHeaders: string[]
+
       if (config?.allowExportNewColumns === false) {
         // Only export visible columns - no new columns from transform
-        exportHeaders = headers && headers.length > 0 
-          ? headers.filter(header => visibleColumnIds.includes(header))
-          : visibleColumnIds;
+        exportHeaders =
+          headers && headers.length > 0
+            ? headers.filter((header) => visibleColumnIds.includes(header))
+            : visibleColumnIds
       } else {
         // Allow new columns from transform function, but still filter existing columns by visibility
         if (headers && headers.length > 0) {
           // Split headers into existing table columns (must be visible) and new transform columns (allowed)
-          const existingHeaders = headers.filter(header => allTableColumnIds.includes(header) && visibleColumnIds.includes(header));
-          const newHeaders = headers.filter(header => !allTableColumnIds.includes(header));
-          exportHeaders = [...existingHeaders, ...newHeaders];
+          const existingHeaders = headers.filter(
+            (header) => allTableColumnIds.includes(header) && visibleColumnIds.includes(header),
+          )
+          const newHeaders = headers.filter((header) => !allTableColumnIds.includes(header))
+          exportHeaders = [...existingHeaders, ...newHeaders]
         } else {
-          exportHeaders = visibleColumnIds;
+          exportHeaders = visibleColumnIds
         }
       }
 
       // Auto-generate column mapping from table headers if not provided
-      const exportColumnMapping = columnMapping || (() => {
-        const mapping: Record<string, string> = {};
-        orderedVisibleColumns.forEach(column => {
-          // Try to get header text if available
-          const headerText = column.columnDef.header as string;
-          
-          if (headerText && typeof headerText === 'string') {
-            mapping[column.id] = headerText;
-          } else {
-            // Fallback to formatted column ID
-            mapping[column.id] = column.id
-              .split(/(?=[A-Z])|_/)
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-              .join(' ');
-          }
-        });
-        return mapping;
-      })();
+      const exportColumnMapping =
+        columnMapping ||
+        (() => {
+          const mapping: Record<string, string> = {}
+          orderedVisibleColumns.forEach((column) => {
+            // Try to get header text if available
+            const headerText = column.columnDef.header as string
+
+            if (headerText && typeof headerText === "string") {
+              mapping[column.id] = headerText
+            } else {
+              // Fallback to formatted column ID
+              mapping[column.id] = column.id
+                .split(/(?=[A-Z])|_/)
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")
+            }
+          })
+          return mapping
+        })()
 
       // Filter column widths to match export headers
-      const exportColumnWidths = columnWidths ? 
-        exportHeaders.map((_, index) => columnWidths[index] || { wch: 15 }) :
-        exportHeaders.map(() => ({ wch: 15 }));
+      const exportColumnWidths = columnWidths
+        ? exportHeaders.map((_, index) => columnWidths[index] || { wch: 15 })
+        : exportHeaders.map(() => ({ wch: 15 }))
 
       // Use the generic export function with proper options
       await exportData(
@@ -341,119 +377,132 @@ export function DataTableExport<TData extends ExportableData>({
           headers: exportHeaders,
           columnMapping: exportColumnMapping,
           columnWidths: exportColumnWidths,
-          transformFunction
-        }
-      );
+          transformFunction,
+        },
+      )
     } catch (error) {
-      console.error("Error exporting data:", error);
+      console.error("Error exporting data:", error)
       toast.error("Экспорт не выполнен", {
         description: "Во время экспорта произошла ошибка. Попробуйте ещё раз.",
-        id: "export-data-toast"
-      });
-      setIsLoading(false);
+        id: "export-data-toast",
+      })
+      setIsLoading(false)
     }
-  };
+  }
 
   const exportAllPages = async (type: "csv" | "excel") => {
-    if (isLoading || !getAllItems) return;
-    setIsLoading(true);
-    
+    if (isLoading || !getAllItems) return
+    setIsLoading(true)
+
     try {
       // Show toast for long operations
       toast.loading("Подготавливаем экспорт...", {
         description: `Fetching all ${entityName}...`,
-        id: "export-data-toast"
-      });
-      
+        id: "export-data-toast",
+      })
+
       // Fetch all data with server-side sorting
-      const allData = await getAllItems();
-      
+      const allData = await getAllItems()
+
       if (allData.length === 0) {
         toast.error("Экспорт не выполнен", {
           description: "Нет данных для экспорта.",
-          id: "export-data-toast"
-        });
-        return;
+          id: "export-data-toast",
+        })
+        return
       }
-      
+
       // Get visible columns and apply export
-      const visibleColumns = table.getAllColumns()
-        .filter(column => column.getIsVisible())
-        .filter(column => column.id !== 'actions' && column.id !== 'select');
-      
+      const visibleColumns = table
+        .getAllColumns()
+        .filter((column) => column.getIsVisible())
+        .filter((column) => column.id !== "actions" && column.id !== "select")
+
       // Generate export headers - always start with visible columns only
-      const visibleColumnIds = visibleColumns.map(column => column.id);
+      const visibleColumnIds = visibleColumns.map((column) => column.id)
       // Get all table column IDs (visible + hidden) to identify what's a table column vs transform column
-      const allTableColumnIds = table.getAllColumns()
-        .filter(column => column.id !== 'actions' && column.id !== 'select')
-        .map(column => column.id);
-      
-      let exportHeaders: string[];
-      
+      const allTableColumnIds = table
+        .getAllColumns()
+        .filter((column) => column.id !== "actions" && column.id !== "select")
+        .map((column) => column.id)
+
+      let exportHeaders: string[]
+
       if (config?.allowExportNewColumns === false) {
         // Only export visible columns - no new columns from transform
-        exportHeaders = headers && headers.length > 0 
-          ? headers.filter(header => visibleColumnIds.includes(header))
-          : visibleColumnIds;
+        exportHeaders =
+          headers && headers.length > 0
+            ? headers.filter((header) => visibleColumnIds.includes(header))
+            : visibleColumnIds
       } else {
         // Allow new columns from transform function, but still filter existing columns by visibility
         if (headers && headers.length > 0) {
           // Split headers into existing table columns (must be visible) and new transform columns (allowed)
-          const existingHeaders = headers.filter(header => allTableColumnIds.includes(header) && visibleColumnIds.includes(header));
-          const newHeaders = headers.filter(header => !allTableColumnIds.includes(header));
-          exportHeaders = [...existingHeaders, ...newHeaders];
+          const existingHeaders = headers.filter(
+            (header) => allTableColumnIds.includes(header) && visibleColumnIds.includes(header),
+          )
+          const newHeaders = headers.filter((header) => !allTableColumnIds.includes(header))
+          exportHeaders = [...existingHeaders, ...newHeaders]
         } else {
-          exportHeaders = visibleColumnIds;
+          exportHeaders = visibleColumnIds
         }
       }
-      const exportColumnMapping = columnMapping || (() => {
-        const mapping: Record<string, string> = {};
-        
-        // If we have custom headers, generate mapping for them
-        if (headers && headers.length > 0) {
-          headers.forEach(header => {
-            mapping[header] = header
-              .split(/(?=[A-Z])|_/)
-              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-              .join(' ');
-          });
-        } else {
-          // Otherwise use visible columns
-          visibleColumns.forEach(column => {
-            const headerText = column.columnDef.header as string;
-            
-            if (headerText && typeof headerText === 'string') {
-              mapping[column.id] = headerText;
-            } else {
-              mapping[column.id] = column.id
+      const exportColumnMapping =
+        columnMapping ||
+        (() => {
+          const mapping: Record<string, string> = {}
+
+          // If we have custom headers, generate mapping for them
+          if (headers && headers.length > 0) {
+            headers.forEach((header) => {
+              mapping[header] = header
                 .split(/(?=[A-Z])|_/)
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(' ');
-            }
-          });
-        }
-        
-        return mapping;
-      })();
-      
-      const exportColumnWidths = columnWidths ?
-        exportHeaders.map((_, index) => columnWidths[index] || { wch: 15 }) :
-        exportHeaders.map(() => ({ wch: 15 }));
-      
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(" ")
+            })
+          } else {
+            // Otherwise use visible columns
+            visibleColumns.forEach((column) => {
+              const headerText = column.columnDef.header as string
+
+              if (headerText && typeof headerText === "string") {
+                mapping[column.id] = headerText
+              } else {
+                mapping[column.id] = column.id
+                  .split(/(?=[A-Z])|_/)
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                  .join(" ")
+              }
+            })
+          }
+
+          return mapping
+        })()
+
+      const exportColumnWidths = columnWidths
+        ? exportHeaders.map((_, index) => columnWidths[index] || { wch: 15 })
+        : exportHeaders.map(() => ({ wch: 15 }))
+
       // Update toast for processing
       toast.loading("Обрабатываем данные...", {
         description: "Формируем файл экспорта...",
-        id: "export-data-toast"
-      });
-      
+        id: "export-data-toast",
+      })
+
       // Generate timestamp for filename
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const filename = `${entityName}-all-pages-export-${timestamp}`;
-      
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+      const filename = `${entityName}-all-pages-export-${timestamp}`
+
       // Export based on type
-      let success = false;
+      let success = false
       if (type === "csv") {
-        success = exportToCSV(allData, filename, exportHeaders, exportColumnMapping, transformFunction);
+        success = exportToCSV(
+          allData,
+          filename,
+          exportHeaders,
+          exportColumnMapping,
+          transformFunction,
+        )
       } else {
         success = await exportToExcel(
           allData,
@@ -461,29 +510,29 @@ export function DataTableExport<TData extends ExportableData>({
           exportColumnMapping,
           exportColumnWidths,
           exportHeaders,
-          transformFunction
-        );
+          transformFunction,
+        )
       }
-      
+
       if (success) {
         toast.success("Экспорт завершён", {
           description: `Exported all ${allData.length} ${entityName} to ${type.toUpperCase()}.`,
-          id: "export-data-toast"
-        });
+          id: "export-data-toast",
+        })
       }
     } catch (error) {
-      console.error("Error exporting all pages:", error);
+      console.error("Error exporting all pages:", error)
       toast.error("Экспорт не выполнен", {
         description: "Не удалось экспортировать все страницы. Попробуйте ещё раз.",
-        id: "export-data-toast"
-      });
+        id: "export-data-toast",
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Check if any rows are selected
-  const hasSelection = selectedData && selectedData.length > 0;
+  const hasSelection = selectedData && selectedData.length > 0
 
   // If exportType and buttonText are provided, show single button
   if (exportType && buttonText) {
@@ -506,7 +555,7 @@ export function DataTableExport<TData extends ExportableData>({
           </>
         )}
       </Button>
-    );
+    )
   }
 
   return (
@@ -577,16 +626,10 @@ export function DataTableExport<TData extends ExportableData>({
             </DropdownMenuItem>
             {getAllItems && (
               <>
-                <DropdownMenuItem 
-                  onClick={() => exportAllPages("csv")} 
-                  disabled={isLoading}
-                >
+                <DropdownMenuItem onClick={() => exportAllPages("csv")} disabled={isLoading}>
                   Export All Pages as CSV
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => exportAllPages("excel")} 
-                  disabled={isLoading}
-                >
+                <DropdownMenuItem onClick={() => exportAllPages("excel")} disabled={isLoading}>
                   Export All Pages as XLS
                 </DropdownMenuItem>
               </>
@@ -595,5 +638,5 @@ export function DataTableExport<TData extends ExportableData>({
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

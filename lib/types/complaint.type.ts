@@ -1,7 +1,7 @@
 import { ExportableData } from "@/components/data-table/utils"
 
-import type { ComplaintStatus } from "./complaint-status.type"
 import type { DashboardLabel } from "./complaint-label.type"
+import type { ComplaintStatus } from "./complaint-status.type"
 
 /** Подключаемые источники мониторинга (VK, email). Telegram с бэкенда снят. */
 export enum Platform {
@@ -14,13 +14,7 @@ export type SourcePlatform = `${Platform}`
 /** Значение `platform` из API (в БД могут остаться старые `telegram_bot`). */
 export type ComplaintPlatform = SourcePlatform | "telegram_bot"
 
-export type ComplaintSortBy =
-  | "createdAt"
-  | "id"
-  | "label"
-  | "name"
-  | "status"
-  | "updatedAt"
+export type ComplaintSortBy = "createdAt" | "id" | "label" | "name" | "status" | "updatedAt"
 
 export interface Complaint extends ExportableData {
   id: number

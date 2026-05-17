@@ -1,21 +1,17 @@
-import {
-  Document,
-  Image,
-  Page,
-  Text,
-  View,
-} from "@react-pdf/renderer"
 import { format, isValid, parseISO } from "date-fns"
 import { ru } from "date-fns/locale"
+
+import { Document, Image, Page, Text, View } from "@react-pdf/renderer"
+
 import { PdfFooter } from "@/components/pdf/PdfFooter"
 import { PdfMetadata } from "@/components/pdf/PdfMetadata"
 import { PdfTable } from "@/components/pdf/PdfTable"
 import { commonStyles } from "@/components/pdf/styles"
-import type { Complaint } from "@/lib/types/complaint.type"
 import { getStatusLabelRu } from "@/lib/types/complaint-status.type"
+import type { Complaint } from "@/lib/types/complaint.type"
+import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
 import type { ReportPeriodAggregates } from "@/lib/utils/complaint-report-data"
 import { REPORT_TABLE_LIMIT } from "@/lib/utils/complaint-report-data"
-import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
 
 export type ComplaintsAdminReportDocumentProps = {
   origin: string
@@ -122,6 +118,17 @@ function truncateName(name: string): string {
   return `${t.slice(0, NAME_MAX_LEN - 1)}…`
 }
 
+function formatSourceUrl(complaint: Complaint): string {
+  const url = complaint.source_url || complaint.url
+  if (!url) return "—"
+  // Remove protocol and www for cleaner display
+  return url.replace(/^https?:\/\/(www\.)?/i, "").slice(0, 50)
+}
+
+function getSourceUrl(complaint: Complaint): string | undefined {
+  return complaint.source_url || complaint.url
+}
+
 function platformCompact(aggregates: ReportPeriodAggregates): string {
   const short = (p: string) => {
     if (p === "vk") return "ВК"
@@ -129,21 +136,22 @@ function platformCompact(aggregates: ReportPeriodAggregates): string {
     if (p === "telegram_bot") return "TG"
     return p
   }
-  return Object.entries(aggregates.counts_by_platform)
-    .filter(([, n]) => n > 0)
-    .sort((a, b) => b[1] - a[1])
-    .map(([p, n]) => `${short(p)} ${n}`)
-    .join(" · ") || "—"
+  return (
+    Object.entries(aggregates.counts_by_platform)
+      .filter(([, n]) => n > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([p, n]) => `${short(p)} ${n}`)
+      .join(" · ") || "—"
+  )
 }
 
-function labelsChipText(
-  label_counts: Record<string, number>,
-  maxLen: number,
-): string {
+function labelsChipText(label_counts: Record<string, number>, maxLen: number): string {
   const entries = Object.entries(label_counts).sort((a, b) => b[1] - a[1])
   const top = entries.slice(0, 4)
   if (top.length === 0) return "—"
-  const s = top.map(([name, n]) => `${name.slice(0, 12)}${name.length > 12 ? "…" : ""}:${n}`).join(" · ")
+  const s = top
+    .map(([name, n]) => `${name.slice(0, 12)}${name.length > 12 ? "…" : ""}:${n}`)
+    .join(" · ")
   return s.length > maxLen ? `${s.slice(0, maxLen - 1)}…` : s
 }
 
@@ -167,9 +175,7 @@ function KpiChip({
   isFirst?: boolean
   isLast?: boolean
 }) {
-  const p =
-    KPI_CHIP_PALETTES[paletteIndex % KPI_CHIP_PALETTES.length] ??
-    KPI_CHIP_PALETTES[0]
+  const p = KPI_CHIP_PALETTES[paletteIndex % KPI_CHIP_PALETTES.length] ?? KPI_CHIP_PALETTES[0]
 
   return (
     <View
@@ -199,9 +205,7 @@ function StatusBreakdownCard({
   paletteIndex: number
   isLastInRow?: boolean
 }) {
-  const p =
-    KPI_CHIP_PALETTES[paletteIndex % KPI_CHIP_PALETTES.length] ??
-    KPI_CHIP_PALETTES[0]
+  const p = KPI_CHIP_PALETTES[paletteIndex % KPI_CHIP_PALETTES.length] ?? KPI_CHIP_PALETTES[0]
   const pct = pctOf(total, data.count)
 
   return (
@@ -215,12 +219,8 @@ function StatusBreakdownCard({
         },
       ]}
     >
-      <Text style={[commonStyles.statusCardTitle, { color: p.color }]}>
-        {data.label}
-      </Text>
-      <Text style={[commonStyles.statusCardMetric, { color: p.color }]}>
-        {pct}%
-      </Text>
+      <Text style={[commonStyles.statusCardTitle, { color: p.color }]}>{data.label}</Text>
+      <Text style={[commonStyles.statusCardMetric, { color: p.color }]}>{pct}%</Text>
       <Text style={commonStyles.statusCardAbs}>
         Абсолютное: {data.count} из {total}
       </Text>
@@ -239,12 +239,8 @@ export function ComplaintsAdminReportDocument({
 }: ComplaintsAdminReportDocumentProps) {
   const logoSrc = `${origin.replace(/\/$/, "")}/ods_logo.svg`
   const doneCount =
-    (aggregates.counts_by_status.done ?? 0) +
-    (aggregates.counts_by_status.completed ?? 0)
-  const donePct =
-    aggregates.total > 0
-      ? Math.round((doneCount / aggregates.total) * 100)
-      : 0
+    (aggregates.counts_by_status.done ?? 0) + (aggregates.counts_by_status.completed ?? 0)
+  const donePct = aggregates.total > 0 ? Math.round((doneCount / aggregates.total) * 100) : 0
 
   const rows =
     tableRows.length > 0
@@ -255,14 +251,12 @@ export function ComplaintsAdminReportDocument({
           c.labels?.length ? c.labels.map((l) => l.name).join(", ") : "—",
           formatReportDate(c.createdAt),
           formatReportDate(c.updatedAt),
+          formatSourceUrl(c),
         ])
-      : [["—", "—", "—", "—", "—", "—"]]
+      : [["—", "—", "—", "—", "—", "—", "—"]]
 
   return (
-    <Document
-      title={`ODS Platform — отчёт ${reportShortId}`}
-      language="ru-RU"
-    >
+    <Document title={`ODS Platform — отчёт ${reportShortId}`} language="ru-RU">
       <Page size="A4" style={commonStyles.page}>
         <View style={commonStyles.brandRow}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
@@ -279,19 +273,9 @@ export function ComplaintsAdminReportDocument({
 
         <Text style={commonStyles.sectionTitle}>Сводка за период</Text>
         <View style={commonStyles.kpiStrip}>
-          <KpiChip
-            isFirst
-            paletteIndex={0}
-            line={`Всего · ${aggregates.total}`}
-          />
-          <KpiChip
-            paletteIndex={1}
-            line={`Завершено · ${donePct}% (${doneCount})`}
-          />
-          <KpiChip
-            paletteIndex={2}
-            line={`Каналы · ${platformCompact(aggregates)}`}
-          />
+          <KpiChip isFirst paletteIndex={0} line={`Всего · ${aggregates.total}`} />
+          <KpiChip paletteIndex={1} line={`Завершено · ${donePct}% (${doneCount})`} />
+          <KpiChip paletteIndex={2} line={`Каналы · ${platformCompact(aggregates)}`} />
           <KpiChip
             isLast
             paletteIndex={3}
@@ -314,11 +298,32 @@ export function ComplaintsAdminReportDocument({
           </View>
         ))}
 
+        {aggregates.source_urls.length > 0 ? (
+          <>
+            <Text style={commonStyles.subsectionTitle}>Используемые источники</Text>
+            <View style={commonStyles.summary}>
+              <Text style={commonStyles.summaryText}>
+                <Text style={commonStyles.summaryBold}>Всего источников: {aggregates.source_urls.length}</Text>
+              </Text>
+              {aggregates.source_urls.slice(0, 10).map((url, idx) => (
+                <Text key={idx} style={commonStyles.summaryText}>
+                  • {url.replace(/^https?:\/\/(www\.)?/i, "").slice(0, 60)}
+                  {url.length > 60 ? "…" : ""}
+                </Text>
+              ))}
+              {aggregates.source_urls.length > 10 ? (
+                <Text style={commonStyles.muted}>
+                  … и ещё {aggregates.source_urls.length - 10} источников
+                </Text>
+              ) : null}
+            </View>
+          </>
+        ) : null}
+
         {total > REPORT_TABLE_LIMIT ? (
           <Text style={commonStyles.warning}>
-            В таблице показаны первые {REPORT_TABLE_LIMIT} записей (сортировка:
-            дата создания, по убыванию). Всего в периоде: {total}. Сводка
-            посчитана по всем записям периода.
+            В таблице показаны первые {REPORT_TABLE_LIMIT} записей (сортировка: дата создания, по
+            убыванию). Всего в периоде: {total}. Сводка посчитана по всем записям периода.
           </Text>
         ) : null}
 
@@ -327,12 +332,13 @@ export function ComplaintsAdminReportDocument({
         </Text>
         <PdfTable
           columns={[
-            { header: "Платформа", flex: 0.85, cellBold: true },
-            { header: "Название", flex: 1.35 },
-            { header: "Статус", flex: 0.75 },
-            { header: "Метки", flex: 1.05 },
-            { header: "Дата создания", flex: 0.95 },
-            { header: "Дата обновления", flex: 0.95 },
+            { header: "Платформа", flex: 0.75, cellBold: true },
+            { header: "Название", flex: 1.2 },
+            { header: "Статус", flex: 0.7 },
+            { header: "Метки", flex: 0.9 },
+            { header: "Дата создания", flex: 0.85 },
+            { header: "Дата обновления", flex: 0.85 },
+            { header: "Источник", flex: 1.1 },
           ]}
           rows={rows}
         />

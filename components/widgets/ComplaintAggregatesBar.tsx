@@ -1,13 +1,13 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import type { ComplaintsAggregates } from "@/lib/types/complaint.type"
 import {
   COMPLAINT_STATUS_LABELS,
   ComplaintStatus,
   getStatusLabelRu,
   parseComplaintStatus,
 } from "@/lib/types/complaint-status.type"
+import type { ComplaintsAggregates } from "@/lib/types/complaint.type"
 import { cn } from "@/lib/utils"
 
 const ORDERED_STATUSES: ComplaintStatus[] = [
@@ -82,9 +82,7 @@ export function ComplaintAggregatesBar({
         {Object.entries(counts_by_status).map(([key, count]) => {
           if (ORDERED_STATUSES.includes(key as ComplaintStatus)) return null
           const parsed = parseComplaintStatus(key)
-          const label = parsed
-            ? COMPLAINT_STATUS_LABELS[parsed]
-            : getStatusLabelRu(key)
+          const label = parsed ? COMPLAINT_STATUS_LABELS[parsed] : getStatusLabelRu(key)
           const active = selectedStatuses.includes(key)
 
           return (

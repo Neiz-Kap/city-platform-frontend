@@ -9,9 +9,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  ComplaintStatus,
   COMPLAINT_STATUS_COLORS,
   COMPLAINT_STATUS_LABELS,
+  ComplaintStatus,
   getStatusLabelRu,
   parseComplaintStatus,
 } from "@/lib/types/complaint-status.type"
@@ -29,21 +29,13 @@ const FIXED_STATUSES: ComplaintStatus[] = [
   ComplaintStatus.DONE,
 ]
 
-export function StatusBadge({
-  status,
-  editable = false,
-  onStatusChange,
-}: StatusBadgeProps) {
+export function StatusBadge({ status, editable = false, onStatusChange }: StatusBadgeProps) {
   const parsed = parseComplaintStatus(status)
   const label = parsed ? COMPLAINT_STATUS_LABELS[parsed] : getStatusLabelRu(status)
-  const colorClass = parsed
-    ? COMPLAINT_STATUS_COLORS[parsed]
-    : "bg-slate-500"
+  const colorClass = parsed ? COMPLAINT_STATUS_COLORS[parsed] : "bg-slate-500"
 
   if (!editable) {
-    return (
-      <Badge className={cn(colorClass, "text-white")}>{label}</Badge>
-    )
+    return <Badge className={cn(colorClass, "text-white")}>{label}</Badge>
   }
 
   const selectValue = parsed ?? ComplaintStatus.BACKLOG
@@ -63,12 +55,7 @@ export function StatusBadge({
       <SelectContent>
         {FIXED_STATUSES.map((statusValue) => (
           <SelectItem key={statusValue} value={statusValue}>
-            <Badge
-              className={cn(
-                COMPLAINT_STATUS_COLORS[statusValue],
-                "text-white"
-              )}
-            >
+            <Badge className={cn(COMPLAINT_STATUS_COLORS[statusValue], "text-white")}>
               {COMPLAINT_STATUS_LABELS[statusValue]}
             </Badge>
           </SelectItem>

@@ -3,9 +3,9 @@ export const DEFAULT_THEME = {
   radius: "default",
   scale: "none",
   contentLayout: "full",
-} as const;
+} as const
 
-export type ThemeType = typeof DEFAULT_THEME;
+export type ThemeType = typeof DEFAULT_THEME
 
 export const THEMES = [
   {
@@ -48,4 +48,4 @@ export const THEMES = [
     value: "lavender-dream",
     colors: ["oklch(0.71 0.16 293.54)"],
   },
-];
+]

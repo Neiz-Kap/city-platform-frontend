@@ -1,8 +1,14 @@
-import type { SortingState, ColumnFiltersState, VisibilityState, PaginationState, ColumnSizingState } from "@tanstack/react-table";
+import type {
+  ColumnFiltersState,
+  ColumnSizingState,
+  PaginationState,
+  SortingState,
+  VisibilityState,
+} from "@tanstack/react-table"
 
-type SortingUpdater = (prev: SortingState) => SortingState;
-type StatePromise = Promise<URLSearchParams> | undefined;
-type SetStateFunction<T> = (value: T | ((prev: T) => T)) => StatePromise;
+type SortingUpdater = (prev: SortingState) => SortingState
+type StatePromise = Promise<URLSearchParams> | undefined
+type SetStateFunction<T> = (value: T | ((prev: T) => T)) => StatePromise
 
 /**
  * Handler for sorting changes in a data table
@@ -10,61 +16,59 @@ type SetStateFunction<T> = (value: T | ((prev: T) => T)) => StatePromise;
  */
 export function createSortingHandler(
   setSortBy: SetStateFunction<string>,
-  setSortOrder: SetStateFunction<"asc" | "desc">
+  setSortOrder: SetStateFunction<"asc" | "desc">,
 ) {
   return (updaterOrValue: SortingState | SortingUpdater): void => {
     // Handle both direct values and updater functions
-    const newSorting = typeof updaterOrValue === 'function'
-      ? updaterOrValue([])
-      : updaterOrValue;
-    
+    const newSorting = typeof updaterOrValue === "function" ? updaterOrValue([]) : updaterOrValue
+
     // Only update if there's a valid sorting instruction
     if (newSorting.length > 0) {
-      const columnId = newSorting[0].id;
-      const direction = newSorting[0].desc ? "desc" : "asc";
-      
+      const columnId = newSorting[0].id
+      const direction = newSorting[0].desc ? "desc" : "asc"
+
       // Important: Sequential updates to ensure proper synchronization
       // First update the column id
-      const sortByResult = setSortBy(columnId);
-      
+      const sortByResult = setSortBy(columnId)
+
       if (sortByResult instanceof Promise) {
         // If using URL state (Promise-based), chain the updates
         sortByResult.then(() => {
           // Then set the sort direction
-          setSortOrder(direction);
-        });
+          setSortOrder(direction)
+        })
       } else {
         // If using regular state (non-Promise), just update sequentially
-        setSortOrder(direction);
+        setSortOrder(direction)
       }
     }
     // Don't reset to defaults when sort is explicitly cleared
     // This prevents overriding user selections with default values
-  };
+  }
 }
 
 /**
  * Handler for column filters changes in a data table
  */
-export function createColumnFiltersHandler(
-  setColumnFilters: SetStateFunction<ColumnFiltersState>
-) {
-  return (updaterOrValue: ColumnFiltersState | ((prev: ColumnFiltersState) => ColumnFiltersState)) => {
+export function createColumnFiltersHandler(setColumnFilters: SetStateFunction<ColumnFiltersState>) {
+  return (
+    updaterOrValue: ColumnFiltersState | ((prev: ColumnFiltersState) => ColumnFiltersState),
+  ) => {
     // Pass through to setColumnFilters (which handles updater functions)
-    setColumnFilters(updaterOrValue);
-  };
+    setColumnFilters(updaterOrValue)
+  }
 }
 
 /**
  * Handler for column visibility changes in a data table
  */
 export function createColumnVisibilityHandler(
-  setColumnVisibility: SetStateFunction<VisibilityState>
+  setColumnVisibility: SetStateFunction<VisibilityState>,
 ) {
   return (updaterOrValue: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => {
     // Pass through to setColumnVisibility (which handles updater functions)
-    setColumnVisibility(updaterOrValue);
-  };
+    setColumnVisibility(updaterOrValue)
+  }
 }
 
 /**
@@ -74,17 +78,18 @@ export function createPaginationHandler(
   setPage: SetStateFunction<number>,
   setPageSize: SetStateFunction<number>,
   currentPage: number,
-  currentPageSize: number
+  currentPageSize: number,
 ) {
   return (updaterOrValue: PaginationState | ((prev: PaginationState) => PaginationState)) => {
     // Handle both direct values and updater functions
-    const newPagination = typeof updaterOrValue === 'function'
-      ? updaterOrValue({ pageIndex: currentPage - 1, pageSize: currentPageSize })
-      : updaterOrValue;
-    
-    setPage(newPagination.pageIndex + 1);
-    setPageSize(newPagination.pageSize);
-  };
+    const newPagination =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue({ pageIndex: currentPage - 1, pageSize: currentPageSize })
+        : updaterOrValue
+
+    setPage(newPagination.pageIndex + 1)
+    setPageSize(newPagination.pageSize)
+  }
 }
 
 /**
@@ -92,25 +97,19 @@ export function createPaginationHandler(
  */
 export function createColumnSizingHandler(
   setColumnSizing: SetStateFunction<ColumnSizingState>,
-  columnSizing: ColumnSizingState
+  columnSizing: ColumnSizingState,
 ) {
   return (updaterOrValue: ColumnSizingState | ((prev: ColumnSizingState) => ColumnSizingState)) => {
     // Handle both direct values and updater functions
-    const newSizing = typeof updaterOrValue === 'function'
-      ? updaterOrValue(columnSizing)
-      : updaterOrValue;
-    setColumnSizing(newSizing);
-  };
+    const newSizing =
+      typeof updaterOrValue === "function" ? updaterOrValue(columnSizing) : updaterOrValue
+    setColumnSizing(newSizing)
+  }
 }
 
 /**
  * Convert URL sorting parameters to TanStack Table SortingState
  */
-export function createSortingState(
-  sortBy?: string, 
-  sortOrder?: "asc" | "desc"
-): SortingState {
-  return sortBy && sortOrder
-    ? [{ id: sortBy, desc: sortOrder === "desc" }]
-    : [];
-} 
+export function createSortingState(sortBy?: string, sortOrder?: "asc" | "desc"): SortingState {
+  return sortBy && sortOrder ? [{ id: sortBy, desc: sortOrder === "desc" }] : []
+}

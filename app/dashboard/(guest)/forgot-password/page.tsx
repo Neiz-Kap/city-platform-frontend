@@ -1,68 +1,70 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
+import { CheckCircleIcon, Loader2Icon, MailIcon } from "lucide-react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import * as z from "zod"
+
+import { zodResolver } from "@hookform/resolvers/zod"
+
+import { Button } from "@/components/ui/button"
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle
-} from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon, MailIcon, CheckCircleIcon } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import * as z from "zod";
-import { AuthAPI } from "@/lib/api/auth.api";
-import { ApiErrorResponse } from "@/lib/types/auth.types";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { AuthAPI } from "@/lib/api/auth.api"
+import { ApiErrorResponse } from "@/lib/types/auth.types"
 
 const formSchema = z.object({
-  email: z.string().email("Введите корректный email адрес")
-});
+  email: z.string().email("Введите корректный email адрес"),
+})
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof formSchema>
 
 export default function Page() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: ""
-    }
-  });
+      email: "",
+    },
+  })
 
   const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true);
+    setIsSubmitting(true)
     try {
-      const response = await AuthAPI.forgotPassword({ email: data.email });
+      const response = await AuthAPI.forgotPassword({ email: data.email })
 
       if (response.success) {
-        setIsSubmitted(true);
-        toast.success(response.message);
+        setIsSubmitted(true)
+        toast.success(response.message)
 
         // В dev-режиме может вернуться resetToken для тестирования
         if (response.data?.resetToken) {
-          console.log("[Dev] Reset token:", response.data.resetToken);
+          console.log("[Dev] Reset token:", response.data.resetToken)
         }
       }
     } catch (error) {
-      const apiError = error as ApiErrorResponse;
+      const apiError = error as ApiErrorResponse
       if (apiError?.error?.message) {
-        toast.error(apiError.error.message);
+        toast.error(apiError.error.message)
       } else {
-        toast.error("Произошла ошибка при отправке запроса. Попробуйте позже.");
+        toast.error("Произошла ошибка при отправке запроса. Попробуйте позже.")
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   // Успешное состояние - инструкции отправлены
   if (isSubmitted) {
@@ -75,12 +77,14 @@ export default function Page() {
             </div>
             <CardTitle className="text-2xl">Проверьте email</CardTitle>
             <CardDescription>
-              Если указанный email зарегистрирован в системе, мы отправили на него инструкции по сбросу пароля.
+              Если указанный email зарегистрирован в системе, мы отправили на него инструкции по
+              сбросу пароля.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center text-sm text-muted-foreground">
             <p className="mb-4">
-              Проверьте папку &quot;Входящие&quot; и &quot;Спам&quot;. Ссылка для сброса пароля действительна в течение ограниченного времени.
+              Проверьте папку &quot;Входящие&quot; и &quot;Спам&quot;. Ссылка для сброса пароля
+              действительна в течение ограниченного времени.
             </p>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
@@ -88,8 +92,8 @@ export default function Page() {
               variant="outline"
               className="w-full"
               onClick={() => {
-                setIsSubmitted(false);
-                form.reset();
+                setIsSubmitted(false)
+                form.reset()
               }}
             >
               Отправить повторно
@@ -102,7 +106,7 @@ export default function Page() {
           </CardFooter>
         </Card>
       </div>
-    );
+    )
   }
 
   return (
@@ -111,7 +115,8 @@ export default function Page() {
         <CardHeader>
           <CardTitle className="text-2xl">Восстановление пароля</CardTitle>
           <CardDescription>
-            Введите email адрес, указанный при регистрации. Мы отправим вам инструкции по сбросу пароля.
+            Введите email адрес, указанный при регистрации. Мы отправим вам инструкции по сбросу
+            пароля.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -166,5 +171,5 @@ export default function Page() {
         </CardFooter>
       </Card>
     </div>
-  );
+  )
 }

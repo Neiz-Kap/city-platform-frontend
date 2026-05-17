@@ -5,6 +5,7 @@ import type {
   CreateComplaintRequest,
   UpdateComplaintRequest,
 } from "@/lib/types/complaint.type"
+
 import { BaseMapper } from "./base.mapper"
 
 // Zod schemas for strict backend validation
@@ -86,11 +87,9 @@ export class ComplaintMapper extends BaseMapper<
   updateToResponse(frontend: UpdateComplaintRequest): Record<string, unknown> {
     const result: Record<string, unknown> = {}
     if (frontend.name !== undefined) result.name = frontend.name
-    if (frontend.description !== undefined)
-      result.description = frontend.description
+    if (frontend.description !== undefined) result.description = frontend.description
     if (frontend.status !== undefined) result.status = frontend.status
-    if (frontend.departmentId !== undefined)
-      result.department_id = frontend.departmentId
+    if (frontend.departmentId !== undefined) result.department_id = frontend.departmentId
     if (frontend.label_ids !== undefined) result.label_ids = frontend.label_ids
     return result
   }

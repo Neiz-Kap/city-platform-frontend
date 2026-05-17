@@ -1,14 +1,13 @@
-"use client";
+"use client"
 
-import { useIsTablet } from "@/lib/hooks/use-mobile";
-import { ChevronsUpDown } from "lucide-react";
-import { usePathname } from "next/navigation";
-import * as React from "react";
-import { useEffect } from "react";
+import { ChevronsUpDown } from "lucide-react"
+import { usePathname } from "next/navigation"
+import * as React from "react"
+import { useEffect } from "react"
 
-import Logo from "@/components/layout/logo";
-import { NavMain } from "@/components/layout/sidebar/nav-main";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import Logo from "@/components/layout/logo"
+import { NavMain } from "@/components/layout/sidebar/nav-main"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Sidebar,
   SidebarContent,
@@ -18,20 +17,21 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/ui/sidebar"
+import { useIsTablet } from "@/lib/hooks/use-mobile"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname();
-  const { setOpen, setOpenMobile, isMobile } = useSidebar();
-  const isTablet = useIsTablet();
+  const pathname = usePathname()
+  const { setOpen, setOpenMobile, isMobile } = useSidebar()
+  const isTablet = useIsTablet()
 
   useEffect(() => {
-    if (isMobile) setOpenMobile(false);
-  }, [pathname]);
+    if (isMobile) setOpenMobile(false)
+  }, [pathname])
 
   useEffect(() => {
-    setOpen(!isTablet);
-  }, [isTablet]);
+    setOpen(!isTablet)
+  }, [isTablet])
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -51,8 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <NavMain />
         </ScrollArea>
       </SidebarContent>
-      <SidebarFooter>
-      </SidebarFooter>
+      <SidebarFooter></SidebarFooter>
     </Sidebar>
-  );
+  )
 }

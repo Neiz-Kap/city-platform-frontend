@@ -17,7 +17,7 @@ interface EmailDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-type EmailFormData = Omit<EmailMonitoringConfig, 'userId'>
+type EmailFormData = Omit<EmailMonitoringConfig, "userId">
 
 export default function EmailDialog({ open, onOpenChange }: EmailDialogProps) {
   const { createEmailParser, isCreatingEmail } = useSourceManagement()

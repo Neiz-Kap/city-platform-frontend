@@ -14,6 +14,8 @@ export type ReportPeriodAggregates = {
   counts_by_platform: Record<string, number>
   /** label name -> count of complaints that have that label */
   label_counts: Record<string, number>
+  /** unique source URLs found in complaints */
+  source_urls: string[]
 }
 
 export type ReportFetchProgress = (info: { page: number; pages: number }) => void
@@ -27,12 +29,17 @@ function consumeComplaints(
   counts_by_status: Record<string, number>,
   counts_by_platform: Record<string, number>,
   label_counts: Record<string, number>,
+  source_urls: Set<string>,
 ) {
   for (const c of list) {
     bump(counts_by_status, c.status)
     bump(counts_by_platform, c.platform)
     for (const l of c.labels ?? []) {
       bump(label_counts, l.name)
+    }
+    const sourceUrl = c.source_url || c.url
+    if (sourceUrl) {
+      source_urls.add(sourceUrl)
     }
   }
 }
@@ -63,13 +70,9 @@ export async function fetchComplaintsReportData(
   const counts_by_status: Record<string, number> = {}
   const counts_by_platform: Record<string, number> = {}
   const label_counts: Record<string, number> = {}
+  const source_urls = new Set<string>()
 
-  consumeComplaints(
-    first.data,
-    counts_by_status,
-    counts_by_platform,
-    label_counts,
-  )
+  consumeComplaints(first.data, counts_by_status, counts_by_platform, label_counts, source_urls)
 
   for (let page = 2; page <= pages; page++) {
     onProgress?.({ page, pages })
@@ -79,12 +82,7 @@ export async function fetchComplaintsReportData(
       page,
       per_page: REPORT_TABLE_LIMIT,
     })
-    consumeComplaints(
-      res.data,
-      counts_by_status,
-      counts_by_platform,
-      label_counts,
-    )
+    consumeComplaints(res.data, counts_by_status, counts_by_platform, label_counts, source_urls)
   }
 
   return {
@@ -95,6 +93,7 @@ export async function fetchComplaintsReportData(
       counts_by_status,
       counts_by_platform,
       label_counts,
+      source_urls: Array.from(source_urls).sort(),
     },
   }
 }

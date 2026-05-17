@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 
 /**
  * Route protection patterns
@@ -30,9 +30,7 @@ function isProtectedRoute(pathname: string): boolean {
   }
 
   // Check against protected patterns
-  return PROTECTED_ROUTE_PATTERNS.some((pattern) =>
-    pathname.startsWith(pattern),
-  )
+  return PROTECTED_ROUTE_PATTERNS.some((pattern) => pathname.startsWith(pattern))
 }
 
 /**
@@ -83,7 +81,5 @@ export function middleware(request: NextRequest) {
  * Match all paths except static files and API
  */
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 }

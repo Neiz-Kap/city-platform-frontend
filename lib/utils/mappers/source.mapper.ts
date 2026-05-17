@@ -1,9 +1,6 @@
 import { z } from "zod"
 
-import type {
-  EmailMonitoringConfig,
-  PlatformGroup,
-} from "@/lib/types/complaint.type"
+import type { EmailMonitoringConfig, PlatformGroup } from "@/lib/types/complaint.type"
 
 // Zod schemas for strict backend validation
 const VkGroupBackendSchema = z.object({

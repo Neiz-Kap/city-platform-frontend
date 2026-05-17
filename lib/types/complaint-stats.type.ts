@@ -1,4 +1,3 @@
-
 export type TimePeriod = "day" | "week" | "month"
 
 export interface StatItem {

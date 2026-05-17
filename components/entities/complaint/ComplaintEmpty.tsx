@@ -15,10 +15,7 @@ interface ComplaintEmptyProps {
  * Empty state component for complaints page
  * Displayed when no complaints are available (first-time users)
  */
-export function ComplaintEmpty({
-  isRefreshing = false,
-  onRefresh,
-}: ComplaintEmptyProps) {
+export function ComplaintEmpty({ isRefreshing = false, onRefresh }: ComplaintEmptyProps) {
   return (
     <Card className="my-8">
       <CardHeader className="text-center">
@@ -27,7 +24,8 @@ export function ComplaintEmpty({
         </div>
         <CardTitle className="text-xl">Жалобы пока не поступали</CardTitle>
         <CardDescription className="max-w-md mx-auto">
-          Ваш список жалоб пуст. Жалобы появятся автоматически, когда подключенные источники (VK, email) найдут новые обращения граждан.
+          Ваш список жалоб пуст. Жалобы появятся автоматически, когда подключенные источники (VK,
+          email) найдут новые обращения граждан.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:justify-center">

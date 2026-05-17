@@ -1,17 +1,19 @@
-import { fontVariables } from "@/lib/fonts"
-import { cn } from "@/lib/utils"
 import { ThemeProvider } from "next-themes"
 import { cookies } from "next/headers"
 import NextTopLoader from "nextjs-toploader"
-import { type ReactNode } from "react"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
+import { type ReactNode } from "react"
 
-import './envConfig.ts'
+import { fontVariables } from "@/lib/fonts"
+import { cn } from "@/lib/utils"
+
+import "./envConfig.ts"
 import "./globals.css"
 
 import { ActiveThemeProvider } from "@/components/active-theme"
 import { Toaster } from "@/components/ui/sonner"
 import { DEFAULT_THEME, type ThemeType } from "@/lib/themes"
+
 import Providers from "./providers"
 
 export default async function RootLayout({
@@ -21,12 +23,9 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies()
   const themeSettings = {
-    preset: (cookieStore.get("theme_preset")?.value ??
-      DEFAULT_THEME.preset) as ThemeType["preset"],
-    scale: (cookieStore.get("theme_scale")?.value ??
-      DEFAULT_THEME.scale) as ThemeType["scale"],
-    radius: (cookieStore.get("theme_radius")?.value ??
-      DEFAULT_THEME.radius) as ThemeType["radius"],
+    preset: (cookieStore.get("theme_preset")?.value ?? DEFAULT_THEME.preset) as ThemeType["preset"],
+    scale: (cookieStore.get("theme_scale")?.value ?? DEFAULT_THEME.scale) as ThemeType["scale"],
+    radius: (cookieStore.get("theme_radius")?.value ?? DEFAULT_THEME.radius) as ThemeType["radius"],
     contentLayout: (cookieStore.get("theme_content_layout")?.value ??
       DEFAULT_THEME.contentLayout) as ThemeType["contentLayout"],
   }
@@ -34,20 +33,13 @@ export default async function RootLayout({
   const bodyAttributes = Object.fromEntries(
     Object.entries(themeSettings)
       .filter(([, value]) => value)
-      .map(([key, value]) => [
-        `data-theme-${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`,
-        value,
-      ]),
+      .map(([key, value]) => [`data-theme-${key.replace(/([A-Z])/g, "-$1").toLowerCase()}`, value]),
   )
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script
-          async
-          crossOrigin="anonymous"
-          src="https://tweakcn.com/live-preview.min.js"
-        />
+        <script async crossOrigin="anonymous" src="https://tweakcn.com/live-preview.min.js" />
       </head>
       <body
         suppressHydrationWarning

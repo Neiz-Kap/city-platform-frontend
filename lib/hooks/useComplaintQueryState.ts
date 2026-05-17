@@ -10,8 +10,9 @@ import {
 } from "nuqs"
 import { useMemo } from "react"
 
-import type { DashboardTableFilters } from "@/components/features/complaint/data-table"
 import type { SortingState } from "@tanstack/react-table"
+
+import type { DashboardTableFilters } from "@/components/features/complaint/data-table"
 
 // URL parameter keys (shortened for cleaner URLs)
 const COMPLAINT_PARAM_KEYS = {
@@ -155,7 +156,14 @@ export function useComplaintQueryState(): UseComplaintQueryStateReturn {
       labelMatch: state.labelMatch,
       excludeLabelIds: state.excludeLabelIds,
     }),
-    [state.startDate, state.endDate, state.status, state.labelIds, state.labelMatch, state.excludeLabelIds],
+    [
+      state.startDate,
+      state.endDate,
+      state.status,
+      state.labelIds,
+      state.labelMatch,
+      state.excludeLabelIds,
+    ],
   )
 
   // TanStack Table compatible sorting state

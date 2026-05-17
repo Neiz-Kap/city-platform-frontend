@@ -1,5 +1,14 @@
 "use client"
 
+import {
+  ArrowBigLeftIcon,
+  ArrowBigRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "lucide-react"
+
+import type { Table } from "@tanstack/react-table"
+
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -8,13 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { Table } from "@tanstack/react-table"
-import {
-  ArrowBigLeftIcon,
-  ArrowBigRightIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from "lucide-react"
 
 const getButtonSizeClass = (size: "sm" | "default" | "lg") => {
   switch (size) {
@@ -87,11 +89,7 @@ export function DataTablePagination<TData>({
             </SelectTrigger>
             <SelectContent side="top" className="cursor-pointer">
               {pageSizeOptions.map((pageSize) => (
-                <SelectItem
-                  key={pageSize}
-                  value={`${pageSize}`}
-                  className="cursor-pointer"
-                >
+                <SelectItem key={pageSize} value={`${pageSize}`} className="cursor-pointer">
                   {pageSize}
                 </SelectItem>
               ))}
@@ -99,16 +97,13 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount() || 1}
+          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
         </div>
         <div className="flex items-center space-x-2">
           <Button
             aria-label="Go to first page"
             variant="outline"
-            className={`${getButtonSizeClass(
-              size,
-            )} hidden lg:flex cursor-pointer`}
+            className={`${getButtonSizeClass(size)} hidden lg:flex cursor-pointer`}
             onClick={() =>
               table.setPagination({
                 pageIndex: 0,
@@ -150,9 +145,7 @@ export function DataTablePagination<TData>({
           <Button
             aria-label="Go to last page"
             variant="outline"
-            className={`${getButtonSizeClass(
-              size,
-            )} hidden lg:flex cursor-pointer`}
+            className={`${getButtonSizeClass(size)} hidden lg:flex cursor-pointer`}
             onClick={() =>
               table.setPagination({
                 pageIndex: table.getPageCount() - 1,

@@ -1,7 +1,7 @@
 "use client"
 
-import dynamic from "next/dynamic"
 import { MoreHorizontal, Plus, Radio, Trash2 } from "lucide-react"
+import dynamic from "next/dynamic"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -27,10 +27,7 @@ import { PlatformGroup, PlatformSource, SourcePlatform } from "@/lib/types/compl
 const VkDialog = dynamic(() => import("@/components/modals/create-vk-modal"), {
   ssr: false,
 })
-const EmailDialog = dynamic(
-  () => import("@/components/modals/create-email-modal"),
-  { ssr: false },
-)
+const EmailDialog = dynamic(() => import("@/components/modals/create-email-modal"), { ssr: false })
 
 interface PlatformCardActions {
   deleteGroup: (group: PlatformGroup) => void
@@ -234,11 +231,7 @@ export default function PlatformSourcePage() {
     )
   }
 
-  const handleToggleAll = (
-    platform: SourcePlatform,
-    enabled: boolean,
-    label: string,
-  ) => {
+  const handleToggleAll = (platform: SourcePlatform, enabled: boolean, label: string) => {
     updateAllGroupsStatus(
       { platform, enabled },
       {
@@ -295,7 +288,9 @@ export default function PlatformSourcePage() {
                 </div>
                 <CardTitle className="text-xl">Источники не подключены</CardTitle>
                 <CardDescription className="max-w-md mx-auto">
-                  Для начала мониторинга жалоб необходимо добавить источники. Выберите платформу ниже и нажмите «Добавить источник», чтобы подключить группы ВКонтакте или почтовые ящики для отслеживания.
+                  Для начала мониторинга жалоб необходимо добавить источники. Выберите платформу
+                  ниже и нажмите «Добавить источник», чтобы подключить группы ВКонтакте или почтовые
+                  ящики для отслеживания.
                 </CardDescription>
               </CardHeader>
             </Card>

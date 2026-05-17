@@ -1,14 +1,13 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+
 import { LabelAPI } from "@/lib/api/labels.api"
+import type { PaginatedData } from "@/lib/types"
 import type {
   CreateLabelRequest,
   DashboardLabel,
   UpdateLabelRequest,
 } from "@/lib/types/complaint-label.type"
-import type {
-  Complaint,
-  ComplaintsAggregates,
-} from "@/lib/types/complaint.type"
-import type { PaginatedData } from "@/lib/types"
+import type { Complaint, ComplaintsAggregates } from "@/lib/types/complaint.type"
 import {
   mergeCreatedLabelIntoAggregates,
   patchComplaintLabelsMeta,
@@ -16,16 +15,12 @@ import {
   removeLabelFromAggregates,
   stripLabelFromComplaint,
 } from "@/lib/utils/complaint-cache-helpers"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  complaintAggregatesKey,
-  complaintKeys,
-} from "./useComplaints"
+
+import { complaintAggregatesKey, complaintKeys } from "./useComplaints"
 
 export const labelKeys = {
   all: ["labels"] as const,
-  list: (withCounts?: boolean) =>
-    [...labelKeys.all, "list", { withCounts }] as const,
+  list: (withCounts?: boolean) => [...labelKeys.all, "list", { withCounts }] as const,
 }
 
 export function useLabels(options?: { with_counts?: boolean }) {
@@ -52,13 +47,11 @@ export function useCreateLabel() {
         complaint_count: created.complaint_count ?? 0,
         userId: created.userId ?? 0,
       }
-      queryClient.setQueriesData<DashboardLabel[]>(
-        { queryKey: labelKeys.all },
-        (old) => (old ? [...old, row] : [row]),
+      queryClient.setQueriesData<DashboardLabel[]>({ queryKey: labelKeys.all }, (old) =>
+        old ? [...old, row] : [row],
       )
-      queryClient.setQueryData<ComplaintsAggregates | undefined>(
-        complaintAggregatesKey,
-        (agg) => mergeCreatedLabelIntoAggregates(agg, row),
+      queryClient.setQueryData<ComplaintsAggregates | undefined>(complaintAggregatesKey, (agg) =>
+        mergeCreatedLabelIntoAggregates(agg, row),
       )
     },
   })
@@ -76,12 +69,10 @@ export function useUpdateLabel() {
 
       queryClient.setQueriesData<DashboardLabel[]>(
         { queryKey: labelKeys.all },
-        (old) =>
-          old?.map((label) => (label.id === id ? { ...label, ...patch } : label)) ?? old,
+        (old) => old?.map((label) => (label.id === id ? { ...label, ...patch } : label)) ?? old,
       )
-      queryClient.setQueryData<ComplaintsAggregates | undefined>(
-        complaintAggregatesKey,
-        (agg) => patchLabelInAggregates(agg, id, patch),
+      queryClient.setQueryData<ComplaintsAggregates | undefined>(complaintAggregatesKey, (agg) =>
+        patchLabelInAggregates(agg, id, patch),
       )
       queryClient.setQueriesData<PaginatedData<Complaint>>(
         { queryKey: complaintKeys.lists() },
@@ -93,9 +84,8 @@ export function useUpdateLabel() {
           }
         },
       )
-      queryClient.setQueriesData<Complaint>(
-        { queryKey: complaintKeys.details() },
-        (old) => (old ? patchComplaintLabelsMeta(old, id, patch) : old),
+      queryClient.setQueriesData<Complaint>({ queryKey: complaintKeys.details() }, (old) =>
+        old ? patchComplaintLabelsMeta(old, id, patch) : old,
       )
     },
   })
@@ -110,9 +100,8 @@ export function useDeleteLabel() {
         { queryKey: labelKeys.all },
         (old) => old?.filter((l) => l.id !== id) ?? old,
       )
-      queryClient.setQueryData<ComplaintsAggregates | undefined>(
-        complaintAggregatesKey,
-        (agg) => removeLabelFromAggregates(agg, id),
+      queryClient.setQueryData<ComplaintsAggregates | undefined>(complaintAggregatesKey, (agg) =>
+        removeLabelFromAggregates(agg, id),
       )
       queryClient.setQueriesData<PaginatedData<Complaint>>(
         { queryKey: complaintKeys.lists() },
@@ -124,9 +113,8 @@ export function useDeleteLabel() {
           }
         },
       )
-      queryClient.setQueriesData<Complaint>(
-        { queryKey: complaintKeys.details() },
-        (old) => (old ? stripLabelFromComplaint(old, id) : old),
+      queryClient.setQueriesData<Complaint>({ queryKey: complaintKeys.details() }, (old) =>
+        old ? stripLabelFromComplaint(old, id) : old,
       )
     },
   })

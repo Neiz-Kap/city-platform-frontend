@@ -1,14 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import { Plus, Tags } from "lucide-react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
-
-import { MAX_LABELS_PER_ACCOUNT } from "@/lib/api/labels.api"
-import { getErrorMessage } from "@/lib/api/errors"
-import { useCreateLabel, useLabels } from "@/lib/hooks/useLabels"
-import type { DashboardLabel } from "@/lib/types/complaint-label.type"
-import { cn } from "@/lib/utils"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,11 +15,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { getErrorMessage } from "@/lib/api/errors"
+import { MAX_LABELS_PER_ACCOUNT } from "@/lib/api/labels.api"
+import { useCreateLabel, useLabels } from "@/lib/hooks/useLabels"
+import type { DashboardLabel } from "@/lib/types/complaint-label.type"
+import { cn } from "@/lib/utils"
 
 const DEFAULT_COLOR = "#6B7280"
 
@@ -88,9 +83,7 @@ export function DashboardLabelPicker({
     (label) => normalizeLabelName(label.name) === normalizedSearch,
   )
   const canCreate =
-    normalizedSearch.length > 0 &&
-    !hasMatchingLabel &&
-    allLabels.length < MAX_LABELS_PER_ACCOUNT
+    normalizedSearch.length > 0 && !hasMatchingLabel && allLabels.length < MAX_LABELS_PER_ACCOUNT
 
   const toggleLabel = (id: number) => {
     const next = new Set(selectedIds)
@@ -157,10 +150,7 @@ export function DashboardLabelPicker({
             <Button
               type="button"
               variant="outline"
-              className={cn(
-                "w-full justify-between",
-                disabled && "cursor-not-allowed",
-              )}
+              className={cn("w-full justify-between", disabled && "cursor-not-allowed")}
               disabled={disabled}
             >
               <span className="truncate">
@@ -185,9 +175,7 @@ export function DashboardLabelPicker({
               <CommandEmpty>
                 <div className="space-y-3 px-3 py-1 text-sm">
                   <p className="text-muted-foreground">
-                    {search.trim()
-                      ? "Совпадений не найдено."
-                      : "Метки пока не созданы."}
+                    {search.trim() ? "Совпадений не найдено." : "Метки пока не созданы."}
                   </p>
                   {canCreate ? (
                     <Button

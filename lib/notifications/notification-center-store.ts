@@ -42,8 +42,7 @@ function setItems(
     | DashboardNotificationItem[]
     | ((currentItems: DashboardNotificationItem[]) => DashboardNotificationItem[]),
 ) {
-  const resolvedItems =
-    typeof nextItems === "function" ? nextItems(items) : nextItems
+  const resolvedItems = typeof nextItems === "function" ? nextItems(items) : nextItems
 
   if (resolvedItems === items) {
     return false
@@ -78,18 +77,20 @@ function ensureLoaded() {
     const parsed = JSON.parse(rawValue)
     if (!Array.isArray(parsed)) return
 
-    setItems(parsed.filter((item): item is DashboardNotificationItem => {
-      return (
-        typeof item === "object" &&
-        item !== null &&
-        typeof item.id === "string" &&
-        typeof item.title === "string" &&
-        typeof item.description === "string" &&
-        typeof item.createdAt === "string" &&
-        typeof item.read === "boolean" &&
-        item.kind === "complaint"
-      )
-    }))
+    setItems(
+      parsed.filter((item): item is DashboardNotificationItem => {
+        return (
+          typeof item === "object" &&
+          item !== null &&
+          typeof item.id === "string" &&
+          typeof item.title === "string" &&
+          typeof item.description === "string" &&
+          typeof item.createdAt === "string" &&
+          typeof item.read === "boolean" &&
+          item.kind === "complaint"
+        )
+      }),
+    )
   } catch {
     setItems(EMPTY_ITEMS)
   }
@@ -114,16 +115,10 @@ export function subscribeToNotificationCenter(listener: () => void) {
 }
 
 export function useNotificationCenter() {
-  return useSyncExternalStore(
-    subscribeToNotificationCenter,
-    getSnapshot,
-    getServerSnapshot,
-  )
+  return useSyncExternalStore(subscribeToNotificationCenter, getSnapshot, getServerSnapshot)
 }
 
-export function pushDashboardNotification(
-  item: Omit<DashboardNotificationItem, "read">,
-) {
+export function pushDashboardNotification(item: Omit<DashboardNotificationItem, "read">) {
   ensureLoaded()
 
   setItems([{ ...item, read: false }, ...items].slice(0, MAX_ITEMS))
@@ -134,9 +129,7 @@ export function pushDashboardNotification(
 export function markNotificationAsRead(notificationId: string) {
   ensureLoaded()
 
-  setItems(items.map((item) =>
-    item.id === notificationId ? { ...item, read: true } : item,
-  ))
+  setItems(items.map((item) => (item.id === notificationId ? { ...item, read: true } : item)))
   persist()
   emitChange()
 }

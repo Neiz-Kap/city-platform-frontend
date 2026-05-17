@@ -1,12 +1,13 @@
 "use client"
 
-import type { SortingState } from "@tanstack/react-table"
 import { formatDistanceToNow } from "date-fns"
 import { ru } from "date-fns/locale"
 import { Bell, BellOff, FileDown, RefreshCw, Wifi, WifiOff } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
+
+import type { SortingState } from "@tanstack/react-table"
 
 import { createComplaintColumns } from "@/components/entities/complaint/columns"
 import { DataTable } from "@/components/features/complaint/data-table"
@@ -72,11 +73,7 @@ export default function ComplaintDataTable() {
       base.label_match = dashboardFilters.labelMatch
     }
 
-    if (
-      !hasInvalidDateRange &&
-      dashboardFilters.startDate &&
-      dashboardFilters.endDate
-    ) {
+    if (!hasInvalidDateRange && dashboardFilters.startDate && dashboardFilters.endDate) {
       return {
         ...base,
         end_date: toEndOfDayIso(dashboardFilters.endDate),
@@ -87,14 +84,7 @@ export default function ComplaintDataTable() {
     return base
   }, [hasInvalidDateRange, pagination, sortParams, search, dashboardFilters])
 
-  const {
-    data,
-    dataUpdatedAt,
-    error,
-    isFetching,
-    isLoading,
-    refetch,
-  } = useComplaints(queryParams)
+  const { data, dataUpdatedAt, error, isFetching, isLoading, refetch } = useComplaints(queryParams)
   const { data: aggregates } = useComplaintAggregates()
 
   const bumpNewComplaints = useCallback(() => {
@@ -176,10 +166,7 @@ export default function ComplaintDataTable() {
   const toggleNotifications = useCallback(() => {
     setNotificationsEnabled((previous) => !previous)
     if (!notificationsEnabled) {
-      if (
-        typeof Notification !== "undefined" &&
-        Notification.permission === "default"
-      ) {
+      if (typeof Notification !== "undefined" && Notification.permission === "default") {
         Notification.requestPermission()
       }
     }
@@ -219,8 +206,7 @@ export default function ComplaintDataTable() {
   }, [resetFilters])
 
   if (error && !hasInvalidDateRange) {
-    const message =
-      error instanceof Error ? error.message : "Не удалось загрузить жалобы."
+    const message = error instanceof Error ? error.message : "Не удалось загрузить жалобы."
     return (
       <div className="container mx-auto py-10">
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-center text-sm text-destructive">
@@ -257,7 +243,8 @@ export default function ComplaintDataTable() {
             </span>
             {dataUpdatedAt > 0 && (
               <span>
-                Обновлено {formatDistanceToNow(new Date(dataUpdatedAt), {
+                Обновлено{" "}
+                {formatDistanceToNow(new Date(dataUpdatedAt), {
                   addSuffix: true,
                   locale: ru,
                 })}
@@ -287,11 +274,7 @@ export default function ComplaintDataTable() {
             onClick={toggleNotifications}
             className="flex items-center gap-2"
           >
-            {notificationsEnabled ? (
-              <Bell className="h-4 w-4" />
-            ) : (
-              <BellOff className="h-4 w-4" />
-            )}
+            {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
             {notificationsEnabled ? "Уведомления включены" : "Уведомления выключены"}
           </Button>
 

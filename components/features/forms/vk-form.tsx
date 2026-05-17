@@ -1,20 +1,21 @@
-// lib/components/forms/vk-form.tsx
 "use client"
 
-import { Button } from "@/components/ui/button"
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import z from "zod"
+
+import { zodResolver } from "@hookform/resolvers/zod"
+
+import { Button } from "@/components/ui/button"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 
 const vkFormSchema = z.object({
   url: z
@@ -24,10 +25,7 @@ const vkFormSchema = z.object({
       /^(https?:\/\/)?(www\.)?vk\.com\/[a-zA-Z0-9_]+/,
       "Некорректная ссылка на группу ВКонтакте",
     ),
-  name: z
-    .string()
-    .min(1, "Введите название группы")
-    .max(100, "Название слишком длинное"),
+  name: z.string().min(1, "Введите название группы").max(100, "Название слишком длинное"),
 })
 
 type VkFormValues = z.infer<typeof vkFormSchema>
@@ -38,7 +36,6 @@ interface VkFormProps {
 }
 
 export function VkForm({ onSubmit, isSubmitting = false }: VkFormProps) {
-
   const form = useForm<VkFormValues>({
     resolver: zodResolver(vkFormSchema),
     defaultValues: {

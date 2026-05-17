@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+build/
+dist/
+out/
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Misc
+.backup/
+.omx/
+
+# Generated files
+next-env.d.ts
+
+# Coverage
+coverage/
+
+# Large data files
+*.min.js
+*.min.css

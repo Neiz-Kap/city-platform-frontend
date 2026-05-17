@@ -1,8 +1,9 @@
 "use client"
 
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { PaginationInfo } from "@/lib/types"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 interface PaginationProps {
   pagination: PaginationInfo

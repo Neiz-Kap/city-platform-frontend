@@ -2,18 +2,12 @@
 
 import Link from "next/link"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
+import { zodResolver } from "@hookform/resolvers/zod"
+
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -22,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/hooks/useAuth"
 
 /**
@@ -65,10 +60,7 @@ export default function LoginForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="grid gap-4"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -102,21 +94,13 @@ export default function LoginForm() {
                       </Link>
                     </div>
                     <FormControl>
-                      <Input
-                        type="password"
-                        disabled={isLoggingIn}
-                        {...field}
-                      />
+                      <Input type="password" disabled={isLoggingIn} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoggingIn}
-              >
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
                 {isLoggingIn ? "Вход..." : "Войти"}
               </Button>
             </form>

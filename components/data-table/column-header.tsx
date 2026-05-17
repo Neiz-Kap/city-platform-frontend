@@ -1,52 +1,46 @@
-import type { Column } from "@tanstack/react-table";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  ChevronsUpDown,
-  EyeOff,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDown, EyeOff } from "lucide-react"
 
-import { Button } from "@/components/ui/button";
+import type { Column } from "@tanstack/react-table"
+
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 
-
-interface DataTableColumnHeaderProps<TData, TValue>
-  extends React.HTMLAttributes<HTMLDivElement> {
-  column: Column<TData, TValue>;
-  title: string;
+interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes<HTMLDivElement> {
+  column: Column<TData, TValue>
+  title: string
 }
 
 export function DataTableColumnHeader<TData, TValue>({
   column,
   title,
-  className
+  className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return <div className={cn(className)}>{title}</div>;
+    return <div className={cn(className)}>{title}</div>
   }
 
   // Get the current sort direction for this column
-  const currentDirection = column.getIsSorted();
+  const currentDirection = column.getIsSorted()
 
   // Use direct method to set sort with an explicit direction
   const setSorting = (direction: "asc" | "desc" | false) => {
     // If we're clearing sort, use an empty array
     if (direction === false) {
-      column.toggleSorting(undefined, false);
-      return;
+      column.toggleSorting(undefined, false)
+      return
     }
 
     // Set explicit sort with the direction
     // The second param (false) prevents multi-sort
-    column.toggleSorting(direction === "desc", false);
-  };
+    column.toggleSorting(direction === "desc", false)
+  }
 
   return (
     <div className={cn("flex items-center space-x-2", className)}>
@@ -77,12 +71,12 @@ export function DataTableColumnHeader<TData, TValue>({
             Desc
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem  onClick={() => column.toggleVisibility(false)}>
+          <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
             <EyeOff className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
             Hide
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
-  );
+  )
 }

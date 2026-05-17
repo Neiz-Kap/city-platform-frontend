@@ -1,21 +1,14 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+
+import { getAccessToken, removeAccessToken, setAccessToken } from "@/lib/api"
 import { AuthAPI } from "@/lib/api/auth.api"
-import {
-  getAccessToken,
-  removeAccessToken,
-  setAccessToken,
-} from "@/lib/api"
 import { getErrorMessage } from "@/lib/api/errors"
-import type {
-  LoginRequest,
-  RegisterRequest,
-  User,
-} from "@/lib/types/auth.types"
+import type { LoginRequest, RegisterRequest, User } from "@/lib/types/auth.types"
 
 // Query keys for auth
 const authKeys = {
@@ -164,8 +157,7 @@ export function useUser() {
  * Useful for forms and buttons
  */
 export function useAuthActions() {
-  const { register, login, logout, isRegistering, isLoggingIn, isLoggingOut } =
-    useAuth()
+  const { register, login, logout, isRegistering, isLoggingIn, isLoggingOut } = useAuth()
   return {
     register,
     login,

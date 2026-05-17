@@ -1,31 +1,29 @@
-export type CaseFormat = 'snake_case' | 'camelCase' | 'PascalCase' | 'kebab-case';
+export type CaseFormat = "snake_case" | "camelCase" | "PascalCase" | "kebab-case"
 
 /**
  * Convert a string to snake_case
  */
 export function toSnakeCase(str: string): string {
   return str
-    .replace(/([A-Z])/g, '_$1')
-    .replace(/[-\s]/g, '_')
+    .replace(/([A-Z])/g, "_$1")
+    .replace(/[-\s]/g, "_")
     .toLowerCase()
-    .replace(/^_/, '');
+    .replace(/^_/, "")
 }
 
 /**
  * Convert a string to camelCase
  */
 export function toCamelCase(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[-_\s](.)/g, (_, char) => char.toUpperCase());
+  return str.toLowerCase().replace(/[-_\s](.)/g, (_, char) => char.toUpperCase())
 }
 
 /**
  * Convert a string to PascalCase
  */
 export function toPascalCase(str: string): string {
-  const camelCase = toCamelCase(str);
-  return camelCase.charAt(0).toUpperCase() + camelCase.slice(1);
+  const camelCase = toCamelCase(str)
+  return camelCase.charAt(0).toUpperCase() + camelCase.slice(1)
 }
 
 /**
@@ -33,10 +31,10 @@ export function toPascalCase(str: string): string {
  */
 export function toKebabCase(str: string): string {
   return str
-    .replace(/([A-Z])/g, '-$1')
-    .replace(/[_\s]/g, '-')
+    .replace(/([A-Z])/g, "-$1")
+    .replace(/[_\s]/g, "-")
     .toLowerCase()
-    .replace(/^-/, '');
+    .replace(/^-/, "")
 }
 
 /**
@@ -44,16 +42,16 @@ export function toKebabCase(str: string): string {
  */
 export function convertCase(str: string, format: CaseFormat): string {
   switch (format) {
-    case 'snake_case':
-      return toSnakeCase(str);
-    case 'camelCase':
-      return toCamelCase(str);
-    case 'PascalCase':
-      return toPascalCase(str);
-    case 'kebab-case':
-      return toKebabCase(str);
+    case "snake_case":
+      return toSnakeCase(str)
+    case "camelCase":
+      return toCamelCase(str)
+    case "PascalCase":
+      return toPascalCase(str)
+    case "kebab-case":
+      return toKebabCase(str)
     default:
-      return str;
+      return str
   }
 }
 
@@ -61,46 +59,46 @@ export function convertCase(str: string, format: CaseFormat): string {
  * Type for converted object keys
  */
 type ConvertedKeys<T extends Record<string, unknown>> = {
-  [K in keyof T as K extends string ? string : never]: T[K];
-};
+  [K in keyof T as K extends string ? string : never]: T[K]
+}
 
 /**
  * Convert all keys in an object to the specified case format
  */
 export function convertObjectKeys<T extends Record<string, unknown>>(
   obj: T,
-  format: CaseFormat
+  format: CaseFormat,
 ): ConvertedKeys<T> {
-  const result: Record<string, unknown> = {};
+  const result: Record<string, unknown> = {}
 
   Object.entries(obj).forEach(([key, value]) => {
-    const newKey = convertCase(key, format);
-    result[newKey] = value;
-  });
+    const newKey = convertCase(key, format)
+    result[newKey] = value
+  })
 
-  return result as ConvertedKeys<T>;
+  return result as ConvertedKeys<T>
 }
 
 /**
  * Type for custom key mapping function
  */
-export type KeyMappingFunction = (key: string) => string;
+export type KeyMappingFunction = (key: string) => string
 
 /**
  * Convert object keys using a custom mapping function
  */
 export function convertObjectKeysWithMapper<T extends Record<string, unknown>>(
   obj: T,
-  mapper: KeyMappingFunction
+  mapper: KeyMappingFunction,
 ): ConvertedKeys<T> {
-  const result: Record<string, unknown> = {};
+  const result: Record<string, unknown> = {}
 
   Object.entries(obj).forEach(([key, value]) => {
-    const newKey = mapper(key);
-    result[newKey] = value;
-  });
+    const newKey = mapper(key)
+    result[newKey] = value
+  })
 
-  return result as ConvertedKeys<T>;
+  return result as ConvertedKeys<T>
 }
 
 /**
@@ -108,18 +106,18 @@ export function convertObjectKeysWithMapper<T extends Record<string, unknown>>(
  */
 export interface CaseFormatConfig {
   /** Format for URL parameters */
-  urlFormat?: CaseFormat;
+  urlFormat?: CaseFormat
   /** Format for API parameters */
-  apiFormat?: CaseFormat;
+  apiFormat?: CaseFormat
   /** Custom key mapping function (overrides format settings) */
-  keyMapper?: KeyMappingFunction;
+  keyMapper?: KeyMappingFunction
 }
 
 /**
  * Default case format configuration
  */
 export const DEFAULT_CASE_CONFIG: Required<CaseFormatConfig> = {
-  urlFormat: 'camelCase',
-  apiFormat: 'snake_case',
+  urlFormat: "camelCase",
+  apiFormat: "snake_case",
   keyMapper: (key: string) => key, // No transformation by default
-};
+}

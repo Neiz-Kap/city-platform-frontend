@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
-import { useAuth } from "@/lib/hooks/useAuth"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/layout/sidebar/app-sidebar"
 import { SiteHeader } from "@/components/layout/header"
+import { AppSidebar } from "@/components/layout/sidebar/app-sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { useAuth } from "@/lib/hooks/useAuth"
 
 /**
  * Authenticated Layout
@@ -18,11 +18,7 @@ import { SiteHeader } from "@/components/layout/header"
  * 3. Redirects to login if not authenticated
  * 4. Renders the app sidebar and header for authenticated users
  */
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoadingUser } = useAuth()
   const router = useRouter()
 

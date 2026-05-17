@@ -1,7 +1,5 @@
 import { PaginatedData } from "../types"
-import {
-  StatItem
-} from "../types/complaint-stats.type"
+import { StatItem } from "../types/complaint-stats.type"
 
 // Преобразуем данные для Chart
 export function transformChartData(data: StatItem[], period: string) {
@@ -38,10 +36,7 @@ export function transformChartData(data: StatItem[], period: string) {
   })
 }
 
-
-export function getTotalComplaints(
-  data: PaginatedData<StatItem>,
-) {
+export function getTotalComplaints(data: PaginatedData<StatItem>) {
   return data.data.reduce((sum, item) => sum + item.value, 0)
 }
 

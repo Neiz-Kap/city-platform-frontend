@@ -5,13 +5,7 @@ import { ru } from "date-fns/locale"
 import { BellIcon, Clock3Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-import { useIsMobile } from "@/lib/hooks/use-mobile"
-import {
-  markAllNotificationsAsRead,
-  markNotificationAsRead,
-  useNotificationCenter,
-} from "@/lib/notifications/notification-center-store"
-
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +14,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Button } from "@/components/ui/button"
+import { useIsMobile } from "@/lib/hooks/use-mobile"
+import {
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  useNotificationCenter,
+} from "@/lib/notifications/notification-center-store"
 
 function formatNotificationTime(createdAt: string) {
   return formatDistanceToNow(new Date(createdAt), {
@@ -63,9 +62,7 @@ const Notifications = () => {
             <div>
               <div className="font-medium">Уведомления</div>
               <div className="text-muted-foreground text-xs">
-                {unreadCount > 0
-                  ? `${unreadCount} непрочитанных`
-                  : "Новых уведомлений нет"}
+                {unreadCount > 0 ? `${unreadCount} непрочитанных` : "Новых уведомлений нет"}
               </div>
             </div>
             {items.length > 0 && unreadCount > 0 && (

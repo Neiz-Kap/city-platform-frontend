@@ -4,6 +4,11 @@
  * PDF-отчёт по обращениям за период. При появлении авторизации ограничьте
  * доступ к `/dashboard/report` через middleware (только авторизованные).
  */
+import { format, parseISO, subDays } from "date-fns"
+import { ru } from "date-fns/locale"
+import { FileDown, Loader2 } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { toast } from "sonner"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -12,11 +17,6 @@ import { Label } from "@/components/ui/label"
 import { ComplaintAPI } from "@/lib/api/complaint.api"
 import { registerReportFonts } from "@/lib/pdf/register-report-fonts"
 import { fetchComplaintsReportData } from "@/lib/utils/complaint-report-data"
-import { format, parseISO, subDays } from "date-fns"
-import { ru } from "date-fns/locale"
-import { FileDown, Loader2 } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
 
 function toStartOfDayIso(d: string) {
   return `${d}T00:00:00`
@@ -33,19 +33,12 @@ function formatPeriodRu(startYmd: string, endYmd: string) {
 }
 
 export default function ReportPage() {
-  const [startDate, setStartDate] = useState(() =>
-    format(subDays(new Date(), 30), "yyyy-MM-dd"),
-  )
+  const [startDate, setStartDate] = useState(() => format(subDays(new Date(), 30), "yyyy-MM-dd"))
   const [endDate, setEndDate] = useState(() => format(new Date(), "yyyy-MM-dd"))
   const [loading, setLoading] = useState(false)
-  const [progress, setProgress] = useState<{ page: number; pages: number } | null>(
-    null,
-  )
+  const [progress, setProgress] = useState<{ page: number; pages: number } | null>(null)
 
-  const periodPreview = useMemo(
-    () => formatPeriodRu(startDate, endDate),
-    [startDate, endDate],
-  )
+  const periodPreview = useMemo(() => formatPeriodRu(startDate, endDate), [startDate, endDate])
 
   const [previewTotal, setPreviewTotal] = useState<number | null>(null)
 
@@ -147,9 +140,8 @@ export default function ReportPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Отчёт PDF</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Сводка за выбранный период и таблица обращений (до 100 строк). Данные
-          загружаются через API списка по датам; сводка по статусам и каналам
-          считается по всем записям периода.
+          Сводка за выбранный период и таблица обращений (до 100 строк). Данные загружаются через
+          API списка по датам; сводка по статусам и каналам считается по всем записям периода.
         </p>
       </div>
 
@@ -182,9 +174,9 @@ export default function ReportPage() {
         <Alert>
           <AlertTitle>Часть строк только в таблице PDF</AlertTitle>
           <AlertDescription>
-            За период найдено {previewTotal} обращений. В PDF-таблице будут
-            первые 100 (по дате создания, новые сверху). Сводные показатели в
-            PDF посчитаны по всем {previewTotal} записям.
+            За период найдено {previewTotal} обращений. В PDF-таблице будут первые 100 (по дате
+            создания, новые сверху). Сводные показатели в PDF посчитаны по всем {previewTotal}{" "}
+            записям.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -196,11 +188,7 @@ export default function ReportPage() {
           disabled={loading}
           className="text-white hover:text-white [&_svg]:text-white"
         >
-          {loading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <FileDown className="size-4" />
-          )}
+          {loading ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
           <span className="ml-2">Скачать PDF</span>
         </Button>
         {loading && progress ? (

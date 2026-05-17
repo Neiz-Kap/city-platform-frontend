@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { getErrorMessage } from "@/lib/api/errors"
 
@@ -38,8 +39,7 @@ function buildSources(vkGroups: PlatformGroup[], emailGroups: PlatformGroup[]) {
     {
       platform: "email",
       label: "Почта",
-      allEnabled:
-        emailGroups.length > 0 && emailGroups.every((group) => group.enabled),
+      allEnabled: emailGroups.length > 0 && emailGroups.every((group) => group.enabled),
       groups: emailGroups,
     },
   ] satisfies PlatformSource[]
@@ -118,9 +118,7 @@ export function useSourceManagement() {
 
       queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
         patchSourceGroup(current, platform, (groups) =>
-          groups.map((group) =>
-            group.id === id ? { ...group, enabled } : group,
-          ),
+          groups.map((group) => (group.id === id ? { ...group, enabled } : group)),
         ),
       )
 
@@ -157,9 +155,7 @@ export function useSourceManagement() {
       const previousSources = queryClient.getQueryData<PlatformSource[]>(sourceKeys.all)
 
       queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
-        patchSourceGroup(current, platform, (groups) =>
-          groups.filter((group) => group.id !== id),
-        ),
+        patchSourceGroup(current, platform, (groups) => groups.filter((group) => group.id !== id)),
       )
 
       return { previousSources }
@@ -226,9 +222,7 @@ export function useSourceManagement() {
   const createEmailParser = useMutation({
     mutationFn: (data: EmailFormData) => EmailApi.createParser(data),
     onError: (error) => {
-      toast.error(
-        getErrorMessage(error, "Не удалось добавить почтовый источник"),
-      )
+      toast.error(getErrorMessage(error, "Не удалось добавить почтовый источник"))
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: sourceKeys.all })

@@ -1,22 +1,20 @@
-import { api, apiRequest } from ".."
-import {
-  EmailMonitoringConfig,
-  PlatformGroup,
-} from "../../types/complaint.type"
 import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
+
+import { api, apiRequest } from ".."
+import { EmailMonitoringConfig, PlatformGroup } from "../../types/complaint.type"
 
 export const EmailApi = {
   async createParser(data: EmailMonitoringConfig): Promise<PlatformGroup> {
     const response = await apiRequest(
-      api.post("monitoring/email", { json: SourceMapper.emailConfigToResponse(data) }).json<unknown>(),
+      api
+        .post("monitoring/email", { json: SourceMapper.emailConfigToResponse(data) })
+        .json<unknown>(),
     )
     return SourceMapper.emailMonitoringToDomain(response)
   },
 
   async getParsers(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(
-      api.get("monitoring/email").json<unknown[]>(),
-    )
+    const data = await apiRequest(api.get("monitoring/email").json<unknown[]>())
     return SourceMapper.emailMonitoringToDomainMany(data)
   },
 

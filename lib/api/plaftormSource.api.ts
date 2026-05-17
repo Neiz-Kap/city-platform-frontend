@@ -1,10 +1,7 @@
-import { api, apiRequest } from "."
 import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
-import {
-  PlatformGroup,
-  PlatformSource,
-  SourcePlatform,
-} from "../types/complaint.type"
+
+import { api, apiRequest } from "."
+import { PlatformGroup, PlatformSource, SourcePlatform } from "../types/complaint.type"
 
 export class SourceService {
   // --- VK Groups ---
@@ -13,10 +10,7 @@ export class SourceService {
     return SourceMapper.vkGroupListToDomain(data)
   }
 
-  static async updateVkGroupStatus(
-    id: string,
-    action: "start" | "stop",
-  ): Promise<void> {
+  static async updateVkGroupStatus(id: string, action: "start" | "stop"): Promise<void> {
     await apiRequest(api.post(`vk/groups/${id}/${action}`))
   }
 
@@ -26,16 +20,11 @@ export class SourceService {
 
   // --- Email Monitoring ---
   static async getEmailParsers(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(
-      api.get("monitoring/email").json<unknown[]>(),
-    )
+    const data = await apiRequest(api.get("monitoring/email").json<unknown[]>())
     return SourceMapper.emailMonitoringToDomainMany(data)
   }
 
-  static async updateEmailParserStatus(
-    id: string,
-    action: "start" | "stop",
-  ): Promise<void> {
+  static async updateEmailParserStatus(id: string, action: "start" | "stop"): Promise<void> {
     await apiRequest(api.post(`monitoring/email/${id}/${action}`))
   }
 
@@ -60,18 +49,13 @@ export class SourceService {
       {
         platform: "email",
         label: "Почта",
-        allEnabled:
-          emailParsers.length > 0 && emailParsers.every((g) => g.enabled),
+        allEnabled: emailParsers.length > 0 && emailParsers.every((g) => g.enabled),
         groups: emailParsers,
       },
     ]
   }
 
-  static async updateGroupStatus(
-    platform: SourcePlatform,
-    id: string,
-    enabled: boolean,
-  ) {
+  static async updateGroupStatus(platform: SourcePlatform, id: string, enabled: boolean) {
     const action = enabled ? "start" : "stop"
     switch (platform) {
       case "vk":

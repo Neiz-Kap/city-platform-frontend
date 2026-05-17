@@ -18,9 +18,7 @@ export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
     const complaint = payload as { id?: number; name?: string }
     const title = complaint?.name?.trim() || "Новая жалоба"
     const href =
-      typeof complaint?.id === "number"
-        ? `/dashboard/complaint/${complaint.id}`
-        : undefined
+      typeof complaint?.id === "number" ? `/dashboard/complaint/${complaint.id}` : undefined
 
     pushDashboardNotification({
       createdAt: new Date().toISOString(),
@@ -35,10 +33,7 @@ export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
       description: title,
     })
 
-    if (
-      typeof Notification !== "undefined" &&
-      Notification.permission === "granted"
-    ) {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
       new Notification("Новая жалоба", {
         body: title,
         icon: "/notification-icon.png",

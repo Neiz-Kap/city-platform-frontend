@@ -1,4 +1,3 @@
-import { api, apiRequest } from "."
 import type {
   ChangePasswordRequest,
   ChangePasswordResponse,
@@ -14,6 +13,8 @@ import type {
   ResetPasswordResponse,
   User,
 } from "@/lib/types/auth.types"
+
+import { api, apiRequest } from "."
 
 /**
  * Authentication API client
@@ -56,9 +57,7 @@ export class AuthAPI {
    */
   static async getMe(): Promise<User> {
     const response = await apiRequest(
-      api
-        .get(`${this.prefix}/me`)
-        .json<{ success: true; data: User }>(),
+      api.get(`${this.prefix}/me`).json<{ success: true; data: User }>(),
     )
     return response.data
   }
@@ -67,13 +66,9 @@ export class AuthAPI {
    * POST /api/v1/auth/forgot-password
    * Request password reset email
    */
-  static async forgotPassword(
-    data: ForgotPasswordRequest,
-  ): Promise<ForgotPasswordResponse> {
+  static async forgotPassword(data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
     const response = await apiRequest(
-      api
-        .post(`${this.prefix}/forgot-password`, { json: data })
-        .json<ForgotPasswordResponse>(),
+      api.post(`${this.prefix}/forgot-password`, { json: data }).json<ForgotPasswordResponse>(),
     )
     return response
   }
@@ -82,13 +77,9 @@ export class AuthAPI {
    * POST /api/v1/auth/reset-password
    * Reset password with token
    */
-  static async resetPassword(
-    data: ResetPasswordRequest,
-  ): Promise<ResetPasswordResponse> {
+  static async resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
     const response = await apiRequest(
-      api
-        .post(`${this.prefix}/reset-password`, { json: data })
-        .json<ResetPasswordResponse>(),
+      api.post(`${this.prefix}/reset-password`, { json: data }).json<ResetPasswordResponse>(),
     )
     return response
   }
@@ -97,13 +88,9 @@ export class AuthAPI {
    * POST /api/v1/auth/change-password
    * Change password for authenticated user
    */
-  static async changePassword(
-    data: ChangePasswordRequest,
-  ): Promise<ChangePasswordResponse> {
+  static async changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
     const response = await apiRequest(
-      api
-        .post(`${this.prefix}/change-password`, { json: data })
-        .json<ChangePasswordResponse>(),
+      api.post(`${this.prefix}/change-password`, { json: data }).json<ChangePasswordResponse>(),
     )
     return response
   }
@@ -112,13 +99,9 @@ export class AuthAPI {
    * DELETE /api/v1/auth/me
    * Soft delete current user account
    */
-  static async deleteAccount(
-    data: DeleteAccountRequest,
-  ): Promise<DeleteAccountResponse> {
+  static async deleteAccount(data: DeleteAccountRequest): Promise<DeleteAccountResponse> {
     const response = await apiRequest(
-      api
-        .delete(`${this.prefix}/me`, { json: data })
-        .json<DeleteAccountResponse>(),
+      api.delete(`${this.prefix}/me`, { json: data }).json<DeleteAccountResponse>(),
     )
     return response
   }

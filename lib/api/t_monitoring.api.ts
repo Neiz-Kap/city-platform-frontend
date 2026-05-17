@@ -1,5 +1,6 @@
-import { api, apiRequest } from "."
 import type { EmailMonitoringConfig } from "@/lib/types/complaint.type"
+
+import { api, apiRequest } from "."
 
 export class MonitoringAPI {
   static startVKMonitoring() {
@@ -32,10 +33,7 @@ export class MonitoringAPI {
     return apiRequest(api.post(`monitoring/email/${id}/stop`).json<unknown>())
   }
 
-  static updateEmailMonitoring(
-    id: string,
-    update: Partial<EmailMonitoringConfig>,
-  ) {
+  static updateEmailMonitoring(id: string, update: Partial<EmailMonitoringConfig>) {
     return apiRequest(
       api
         .put(`monitoring/email/${id}`, {

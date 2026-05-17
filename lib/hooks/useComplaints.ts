@@ -1,10 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query"
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import type { PaginatedData } from "@/lib/types"
 import {
@@ -27,8 +22,7 @@ export const complaintKeys = {
   all: ["complaints"] as const,
   detail: (id: string) => [...complaintKeys.details(), id] as const,
   details: () => [...complaintKeys.all, "detail"] as const,
-  list: (filters: ComplaintsListFilters) =>
-    [...complaintKeys.lists(), { filters }] as const,
+  list: (filters: ComplaintsListFilters) => [...complaintKeys.lists(), { filters }] as const,
   lists: () => [...complaintKeys.all, "list"] as const,
 }
 
@@ -44,9 +38,8 @@ function patchComplaintInAllCaches(
   id: number,
   patch: Partial<Complaint>,
 ) {
-  queryClient.setQueryData<Complaint>(
-    complaintKeys.detail(String(id)),
-    (old) => (old ? { ...old, ...patch } : old),
+  queryClient.setQueryData<Complaint>(complaintKeys.detail(String(id)), (old) =>
+    old ? { ...old, ...patch } : old,
   )
 
   queryClient.setQueriesData<PaginatedData<Complaint>>(
@@ -61,31 +54,19 @@ function patchComplaintInAllCaches(
   )
 }
 
-function patchStatusAggregates(
-  queryClient: QueryClient,
-  prevStatus: string,
-  nextStatus: string,
-) {
+function patchStatusAggregates(queryClient: QueryClient, prevStatus: string, nextStatus: string) {
   if (prevStatus === nextStatus) return
-  queryClient.setQueryData<ComplaintsAggregates | undefined>(
-    complaintAggregatesKey,
-    (agg) => {
-      if (!agg) return agg
-      const counts = { ...agg.counts_by_status }
-      counts[prevStatus] = Math.max(0, (counts[prevStatus] ?? 0) - 1)
-      counts[nextStatus] = (counts[nextStatus] ?? 0) + 1
-      return { ...agg, counts_by_status: counts }
-    },
-  )
+  queryClient.setQueryData<ComplaintsAggregates | undefined>(complaintAggregatesKey, (agg) => {
+    if (!agg) return agg
+    const counts = { ...agg.counts_by_status }
+    counts[prevStatus] = Math.max(0, (counts[prevStatus] ?? 0) - 1)
+    counts[nextStatus] = (counts[nextStatus] ?? 0) + 1
+    return { ...agg, counts_by_status: counts }
+  })
 }
 
-function findCachedComplaint(
-  queryClient: QueryClient,
-  id: number,
-): Complaint | undefined {
-  const fromDetail = queryClient.getQueryData<Complaint>(
-    complaintKeys.detail(String(id)),
-  )
+function findCachedComplaint(queryClient: QueryClient, id: number): Complaint | undefined {
+  const fromDetail = queryClient.getQueryData<Complaint>(complaintKeys.detail(String(id)))
   if (fromDetail) return fromDetail
 
   for (const [, page] of queryClient.getQueriesData<PaginatedData<Complaint>>({
@@ -166,13 +147,8 @@ export const useCreateComplaint = () => {
 export const useUpdateComplaint = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      body,
-    }: {
-      body: UpdateComplaintRequest
-      id: number
-    }) => ComplaintAPI.update(id, body),
+    mutationFn: ({ id, body }: { body: UpdateComplaintRequest; id: number }) =>
+      ComplaintAPI.update(id, body),
     onSuccess: (_apiResponse, { id, body }) => {
       const patch = { ...body }
       delete patch.label_ids
@@ -191,13 +167,8 @@ export const useUpdateComplaint = () => {
 export const useUpdateComplaintLabels = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      label_ids,
-    }: {
-      id: number
-      label_ids: number[]
-    }) => ComplaintAPI.updateLabels(id, label_ids),
+    mutationFn: ({ id, label_ids }: { id: number; label_ids: number[] }) =>
+      ComplaintAPI.updateLabels(id, label_ids),
     onSuccess: (data, { id }) => {
       patchComplaintInAllCaches(queryClient, id, {
         labels: data.labels ?? [],

@@ -1,19 +1,18 @@
-import { toast } from "sonner";
-import ExcelJS from "exceljs";
-
+import ExcelJS from "exceljs"
+import { toast } from "sonner"
 
 // Generic type for exportable data - should have string keys and values that can be converted to string
 // Allow arrays for hierarchical data (subRows)
 export type ExportableData = Record<
   string,
   string | number | boolean | Date | null | undefined | unknown[]
->;
+>
 
-type ExportCellValue = string | number | boolean | Date | null;
+type ExportCellValue = string | number | boolean | Date | null
 
 function normalizeExportValue(value: unknown): ExportCellValue {
   if (value === null || value === undefined) {
-    return "";
+    return ""
   }
 
   if (
@@ -22,16 +21,14 @@ function normalizeExportValue(value: unknown): ExportCellValue {
     typeof value === "boolean" ||
     value instanceof Date
   ) {
-    return value;
+    return value
   }
 
   if (Array.isArray(value)) {
-    return value
-      .map((item) => normalizeExportValue(item))
-      .join(", ");
+    return value.map((item) => normalizeExportValue(item)).join(", ")
   }
 
-  return JSON.stringify(value);
+  return JSON.stringify(value)
 }
 
 /**
@@ -39,30 +36,28 @@ function normalizeExportValue(value: unknown): ExportCellValue {
  */
 export function flattenHierarchicalData<T extends ExportableData>(
   data: T[],
-  subRowsField: string = 'subRows',
-  includeDepth: boolean = false
+  subRowsField: string = "subRows",
+  includeDepth: boolean = false,
 ): T[] {
-  const flattened: T[] = [];
+  const flattened: T[] = []
 
   const flatten = (items: T[], depth: number = 0) => {
     items.forEach((item) => {
-      const subRows = item[subRowsField as keyof T];
-      const itemData: Partial<T> = { ...item };
-      delete itemData[subRowsField as keyof T];
+      const subRows = item[subRowsField as keyof T]
+      const itemData: Partial<T> = { ...item }
+      delete itemData[subRowsField as keyof T]
       flattened.push(
-        includeDepth
-          ? ({ ...itemData, _depth: depth } as unknown as T)
-          : (itemData as T)
-      );
+        includeDepth ? ({ ...itemData, _depth: depth } as unknown as T) : (itemData as T),
+      )
 
       if (subRows && Array.isArray(subRows) && subRows.length > 0) {
-        flatten(subRows as T[], depth + 1);
+        flatten(subRows as T[], depth + 1)
       }
-    });
-  };
+    })
+  }
 
-  flatten(data);
-  return flattened;
+  flatten(data)
+  return flattened
 }
 
 /**
@@ -70,88 +65,89 @@ export function flattenHierarchicalData<T extends ExportableData>(
  */
 export function exportParentRowsOnly<T extends ExportableData>(
   data: T[],
-  subRowsField: string = 'subRows'
+  subRowsField: string = "subRows",
 ): T[] {
   return data.map((item) => {
-    const parentData: Partial<T> = { ...item };
-    delete parentData[subRowsField as keyof T];
-    return parentData as T;
-  });
+    const parentData: Partial<T> = { ...item }
+    delete parentData[subRowsField as keyof T]
+    return parentData as T
+  })
 }
 
 // Type for transformation function that developers can provide
-export type DataTransformFunction<T extends ExportableData> = (row: T) => ExportableData;
+export type DataTransformFunction<T extends ExportableData> = (row: T) => ExportableData
 
 /**
  * Convert array of objects to CSV string
  */
 function convertToCSV<T extends ExportableData>(
-  data: T[], 
-  headers: string[], 
+  data: T[],
+  headers: string[],
   columnMapping?: Record<string, string>,
-  transformFunction?: DataTransformFunction<T>
+  transformFunction?: DataTransformFunction<T>,
 ): string {
   if (data.length === 0) {
-    throw new Error("No data to export");
+    throw new Error("No data to export")
   }
 
   // Create CSV header row with column mapping if provided
-  let csvContent = "";
+  let csvContent = ""
 
   if (columnMapping) {
     // Use column mapping for header names
-    const headerRow = headers.map(header => {
-      const mappedHeader = columnMapping[header] || header;
+    const headerRow = headers.map((header) => {
+      const mappedHeader = columnMapping[header] || header
       // Escape quotes and wrap in quotes if contains comma
       return mappedHeader.includes(",") || mappedHeader.includes('"')
         ? `"${mappedHeader.replace(/"/g, '""')}"`
-        : mappedHeader;
-    });
-    csvContent = `${headerRow.join(",")}\n`;
+        : mappedHeader
+    })
+    csvContent = `${headerRow.join(",")}\n`
   } else {
     // Use original headers
-    csvContent = `${headers.join(",")}\n`;
+    csvContent = `${headers.join(",")}\n`
   }
 
   // Add data rows
   for (const item of data) {
     // Apply transformation function if provided
-    const transformedItem = transformFunction ? transformFunction(item) : item;
-    
-    const row = headers.map(header => {
+    const transformedItem = transformFunction ? transformFunction(item) : item
+
+    const row = headers.map((header) => {
       // Get the value for this header from the transformed item
-      const value = transformedItem[header];
+      const value = transformedItem[header]
 
       // Convert all values to string and properly escape for CSV
-      const cellValue = String(normalizeExportValue(value));
+      const cellValue = String(normalizeExportValue(value))
       // Escape quotes and wrap in quotes if contains comma
-      const escapedValue = cellValue.includes(",") || cellValue.includes('"')
-        ? `"${cellValue.replace(/"/g, '""')}"`
-        : cellValue;
+      const escapedValue =
+        cellValue.includes(",") || cellValue.includes('"')
+          ? `"${cellValue.replace(/"/g, '""')}"`
+          : cellValue
 
-      return escapedValue;
-    });
+      return escapedValue
+    })
 
-    csvContent += `${row.join(",")}\n`;
+    csvContent += `${row.join(",")}\n`
   }
 
-  return csvContent;
+  return csvContent
 }
 
 /**
  * Download blob as file
  */
 function downloadFile(blob: Blob, filename: string) {
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a")
+  const url = URL.createObjectURL(blob)
 
-  link.setAttribute("href", url);
-  link.setAttribute("download", filename);
-  link.style.visibility = "hidden";
+  link.setAttribute("href", url)
+  link.setAttribute("download", filename)
+  link.style.visibility = "hidden"
 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
 
 /**
@@ -162,36 +158,36 @@ export function exportToCSV<T extends ExportableData>(
   filename: string,
   headers: string[] = Object.keys(data[0] || {}),
   columnMapping?: Record<string, string>,
-  transformFunction?: DataTransformFunction<T>
+  transformFunction?: DataTransformFunction<T>,
 ): boolean {
   if (data.length === 0) {
-    console.error("No data to export");
-    return false;
+    console.error("No data to export")
+    return false
   }
 
   try {
     // Apply transformation function first if provided, then filter data to only include specified headers
-    const processedData = data.map(item => {
+    const processedData = data.map((item) => {
       // Apply transformation function if provided
-      const transformedItem = transformFunction ? transformFunction(item) : item;
-      
+      const transformedItem = transformFunction ? transformFunction(item) : item
+
       // Filter to only include specified headers
-      const filteredItem: ExportableData = {};
+      const filteredItem: ExportableData = {}
       for (const header of headers) {
         if (header in transformedItem) {
-          filteredItem[header] = transformedItem[header];
+          filteredItem[header] = transformedItem[header]
         }
       }
-      return filteredItem;
-    });
+      return filteredItem
+    })
 
-    const csvContent = convertToCSV(processedData, headers, columnMapping);
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    downloadFile(blob, `${filename}.csv`);
-    return true;
+    const csvContent = convertToCSV(processedData, headers, columnMapping)
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    downloadFile(blob, `${filename}.csv`)
+    return true
   } catch (error) {
-    console.error("Error creating CSV:", error);
-    return false;
+    console.error("Error creating CSV:", error)
+    return false
   }
 }
 
@@ -204,69 +200,73 @@ export async function exportToExcel<T extends ExportableData>(
   columnMapping?: Record<string, string>,
   columnWidths?: Array<{ wch: number }>,
   headers?: string[],
-  transformFunction?: DataTransformFunction<T>
+  transformFunction?: DataTransformFunction<T>,
 ): Promise<boolean> {
   if (data.length === 0) {
-    console.error("No data to export");
-    return false;
+    console.error("No data to export")
+    return false
   }
 
   try {
     // If no column mapping is provided, create one from the data keys
-    const mapping = columnMapping ||
-      Object.keys(data[0] || {}).reduce((acc, key) => {
-        acc[key] = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ');
-        return acc;
-      }, {} as Record<string, string>);
+    const mapping =
+      columnMapping ||
+      Object.keys(data[0] || {}).reduce(
+        (acc, key) => {
+          acc[key] = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")
+          return acc
+        },
+        {} as Record<string, string>,
+      )
 
     // Create a new workbook and worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Data");
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet("Data")
 
     // Determine columns to export
-    const columnsToExport = headers || Object.keys(mapping);
+    const columnsToExport = headers || Object.keys(mapping)
 
     // Set up columns with headers and widths
     worksheet.columns = columnsToExport.map((key, index) => ({
       header: mapping[key] || key,
       key: key,
       width: columnWidths?.[index]?.wch || 15, // Default width of 15 if not specified
-    }));
+    }))
 
     // Apply transformation function first if provided, then add data rows
-    data.forEach(item => {
-      const transformedItem = transformFunction ? transformFunction(item) : item;
+    data.forEach((item) => {
+      const transformedItem = transformFunction ? transformFunction(item) : item
 
-      const row: Record<string, ExportCellValue> = {};
+      const row: Record<string, ExportCellValue> = {}
       for (const key of columnsToExport) {
         if (key in transformedItem) {
-          row[key] = normalizeExportValue(transformedItem[key]);
+          row[key] = normalizeExportValue(transformedItem[key])
         }
       }
-      worksheet.addRow(row);
-    });
+      worksheet.addRow(row)
+    })
 
     // Style the header row
-    worksheet.getRow(1).font = { bold: true };
+    worksheet.getRow(1).font = { bold: true }
     worksheet.getRow(1).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE0E0E0' }
-    };
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFE0E0E0" },
+    }
 
     // Generate Excel file buffer
-    const buffer = await workbook.xlsx.writeBuffer();
+    const buffer = await workbook.xlsx.writeBuffer()
 
     // Create blob and download
     const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    });
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    })
 
-    downloadFile(blob, `${filename}.xlsx`);
-    return true;
+    downloadFile(blob, `${filename}.xlsx`)
+    return true
   } catch (error) {
-    console.error("Error creating Excel file:", error);
-    return false;
+    console.error("Error creating Excel file:", error)
+    return false
   }
 }
 
@@ -279,65 +279,65 @@ export async function exportData<T extends ExportableData>(
   onLoadingStart?: () => void,
   onLoadingEnd?: () => void,
   options?: {
-    headers?: string[];
-    columnMapping?: Record<string, string>;
-    columnWidths?: Array<{ wch: number }>;
-    entityName?: string;
-    transformFunction?: DataTransformFunction<T>;
-  }
+    headers?: string[]
+    columnMapping?: Record<string, string>
+    columnWidths?: Array<{ wch: number }>
+    entityName?: string
+    transformFunction?: DataTransformFunction<T>
+  },
 ): Promise<boolean> {
   // Use a consistent toast ID to ensure only one toast is shown at a time
-  const TOAST_ID = "export-data-toast";
-  
+  const TOAST_ID = "export-data-toast"
+
   try {
     // Start loading
-    if (onLoadingStart) onLoadingStart();
+    if (onLoadingStart) onLoadingStart()
 
     // Show toast for long operations using consistent ID
     toast.loading("Подготавливаем экспорт...", {
       description: "Собираем данные для экспорта...",
-      id: TOAST_ID
-    });
+      id: TOAST_ID,
+    })
 
     // Get the data
-    const exportData = await getData();
+    const exportData = await getData()
 
     // Update the same toast for processing
     toast.loading("Обрабатываем данные...", {
       description: "Формируем файл экспорта...",
-      id: TOAST_ID
-    });
+      id: TOAST_ID,
+    })
 
     if (exportData.length === 0) {
       toast.error("Экспорт не выполнен", {
         description: "Нет данных для экспорта.",
-        id: TOAST_ID
-      });
-      return false;
+        id: TOAST_ID,
+      })
+      return false
     }
 
     // Get entity name for display in notifications
-    const entityName = options?.entityName || "записей";
+    const entityName = options?.entityName || "записей"
 
     // Generate timestamp for filename
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const filename = `${entityName}-export-${timestamp}`;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+    const filename = `${entityName}-export-${timestamp}`
 
     // Export based on type
-    let success = false;
+    let success = false
     if (type === "csv") {
       success = exportToCSV(
         exportData,
         filename,
         options?.headers,
         options?.columnMapping,
-        options?.transformFunction
-      );
+        options?.transformFunction,
+      )
       if (success) {
         toast.success("Экспорт завершён", {
           description: `Экспортировано ${exportData.length} ${entityName} в CSV.`,
-          id: TOAST_ID
-        });
+          id: TOAST_ID,
+        })
       }
     } else {
       success = await exportToExcel(
@@ -346,27 +346,27 @@ export async function exportData<T extends ExportableData>(
         options?.columnMapping,
         options?.columnWidths,
         options?.headers,
-        options?.transformFunction
-      );
+        options?.transformFunction,
+      )
       if (success) {
         toast.success("Экспорт завершён", {
           description: `Экспортировано ${exportData.length} ${entityName} в Excel.`,
-          id: TOAST_ID
-        });
+          id: TOAST_ID,
+        })
       }
     }
 
-    return success;
+    return success
   } catch (error) {
-    console.error("Error exporting data:", error);
-    
+    console.error("Error exporting data:", error)
+
     toast.error("Экспорт не выполнен", {
       description: "Во время экспорта произошла ошибка. Попробуйте ещё раз.",
-      id: TOAST_ID
-    });
-    return false;
+      id: TOAST_ID,
+    })
+    return false
   } finally {
     // End loading regardless of result
-    if (onLoadingEnd) onLoadingEnd();
+    if (onLoadingEnd) onLoadingEnd()
   }
 }

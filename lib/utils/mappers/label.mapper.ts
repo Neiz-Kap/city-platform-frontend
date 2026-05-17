@@ -5,6 +5,7 @@ import type {
   DashboardLabel,
   UpdateLabelRequest,
 } from "@/lib/types/complaint-label.type"
+
 import { BaseMapper } from "./base.mapper"
 
 // Zod schema for strict backend validation
@@ -22,11 +23,7 @@ type LabelBackend = z.infer<typeof LabelBackendSchema>
 /**
  * Mapper for Label entity with Zod validation
  */
-export class LabelMapper extends BaseMapper<
-  DashboardLabel,
-  CreateLabelRequest,
-  LabelBackend
-> {
+export class LabelMapper extends BaseMapper<DashboardLabel, CreateLabelRequest, LabelBackend> {
   protected readonly backendSchema = LabelBackendSchema
 
   protected parseToDomain(data: LabelBackend): DashboardLabel {

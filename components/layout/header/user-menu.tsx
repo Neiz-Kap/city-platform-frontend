@@ -12,8 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useUser, useAuthActions } from "@/lib/hooks/useAuth"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useAuthActions, useUser } from "@/lib/hooks/useAuth"
 
 /**
  * UserMenu component
@@ -110,10 +110,7 @@ export default function UserMenu() {
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-(--radix-dropdown-menu-trigger-width) min-w-60"
-        align="end"
-      >
+      <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-60" align="end">
         <DropdownMenuLabel className="p-0">
           <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <Avatar className="rounded-lg">
@@ -124,9 +121,7 @@ export default function UserMenu() {
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">{user.name}</span>
-              <span className="truncate text-xs text-muted-foreground">
-                {user.email}
-              </span>
+              <span className="truncate text-xs text-muted-foreground">{user.email}</span>
             </div>
           </div>
         </DropdownMenuLabel>

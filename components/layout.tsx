@@ -1,20 +1,20 @@
-import React from "react";
-import { cookies } from "next/headers";
+import { cookies } from "next/headers"
+import React from "react"
 
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/sidebar/app-sidebar";
-import { SiteHeader } from "@/components/layout/header";
+import { SiteHeader } from "@/components/layout/header"
+import { AppSidebar } from "@/components/layout/sidebar/app-sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
 // TODO: move Sidebar to AuthLayout
 export default async function GuestLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-  const cookieStore = await cookies();
+  const cookieStore = await cookies()
   const defaultOpen =
     cookieStore.get("sidebar_state")?.value === "true" ||
-    cookieStore.get("sidebar_state") === undefined;
+    cookieStore.get("sidebar_state") === undefined
 
   return (
     <SidebarProvider
@@ -36,5 +36,5 @@ export default async function GuestLayout({
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }

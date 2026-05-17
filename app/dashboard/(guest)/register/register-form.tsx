@@ -2,18 +2,12 @@
 
 import Link from "next/link"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 
+import { zodResolver } from "@hookform/resolvers/zod"
+
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -22,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/hooks/useAuth"
 
 /**
@@ -36,10 +31,7 @@ const registerSchema = z.object({
     .string()
     .min(2, "Имя обязательно")
     .max(255, "Максимум 255 символов")
-    .regex(
-      /^[а-яА-ЯёЁ\s-]+$/,
-      "Только кириллица, пробелы и дефисы",
-    )
+    .regex(/^[а-яА-ЯёЁ\s-]+$/, "Только кириллица, пробелы и дефисы")
     .refine((val) => val.trim().split(/\s+/).length >= 2, {
       message: "Введите фамилию и имя (минимум 2 слова)",
     }),
@@ -85,10 +77,7 @@ export default function RegisterForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="grid gap-4"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -96,11 +85,7 @@ export default function RegisterForm() {
                   <FormItem className="grid gap-2">
                     <FormLabel>ФИО</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="Иванов Иван"
-                        disabled={isRegistering}
-                        {...field}
-                      />
+                      <Input placeholder="Иванов Иван" disabled={isRegistering} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -142,11 +127,7 @@ export default function RegisterForm() {
                   </FormItem>
                 )}
               />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isRegistering}
-              >
+              <Button type="submit" className="w-full" disabled={isRegistering}>
                 {isRegistering ? "Создание..." : "Зарегистрироваться"}
               </Button>
             </form>

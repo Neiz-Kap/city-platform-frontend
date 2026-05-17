@@ -77,10 +77,7 @@ export default function ComplaintPage() {
       <h1 className="text-2xl font-bold mb-4">Жалобы</h1>
 
       {hasNoComplaints ? (
-        <ComplaintEmpty
-          isRefreshing={isFetching}
-          onRefresh={refetch}
-        />
+        <ComplaintEmpty isRefreshing={isFetching} onRefresh={refetch} />
       ) : (
         <>
           <ComplaintStatsBlock />

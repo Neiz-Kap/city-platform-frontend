@@ -1,10 +1,7 @@
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
 import type { Complaint, ComplaintsAggregates } from "@/lib/types/complaint.type"
 
-export function stripLabelFromComplaint(
-  c: Complaint,
-  labelId: number,
-): Complaint {
+export function stripLabelFromComplaint(c: Complaint, labelId: number): Complaint {
   return {
     ...c,
     labels: (c.labels ?? []).filter((l) => l.id !== labelId),
@@ -18,9 +15,7 @@ export function patchComplaintLabelsMeta(
 ): Complaint {
   return {
     ...c,
-    labels: (c.labels ?? []).map((l) =>
-      l.id === labelId ? { ...l, ...patch } : l,
-    ),
+    labels: (c.labels ?? []).map((l) => (l.id === labelId ? { ...l, ...patch } : l)),
   }
 }
 
@@ -34,10 +29,7 @@ export function patchAggregatesAfterComplaintUpdate(
 
   const counts_by_status = { ...agg.counts_by_status }
   if (prev.status !== next.status) {
-    counts_by_status[prev.status] = Math.max(
-      0,
-      (counts_by_status[prev.status] ?? 0) - 1,
-    )
+    counts_by_status[prev.status] = Math.max(0, (counts_by_status[prev.status] ?? 0) - 1)
     counts_by_status[next.status] = (counts_by_status[next.status] ?? 0) + 1
   }
 
@@ -97,8 +89,6 @@ export function patchLabelInAggregates(
   if (!agg) return agg
   return {
     ...agg,
-    counts_by_label: agg.counts_by_label.map((e) =>
-      e.id === labelId ? { ...e, ...patch } : e,
-    ),
+    counts_by_label: agg.counts_by_label.map((e) => (e.id === labelId ? { ...e, ...patch } : e)),
   }
 }

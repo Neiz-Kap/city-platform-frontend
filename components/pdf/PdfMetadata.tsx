@@ -1,14 +1,16 @@
-import React from 'react';
-import { Text, View } from '@react-pdf/renderer';
+import React from "react"
+
+import { Text, View } from "@react-pdf/renderer"
+
 import { commonStyles } from "./styles"
 
 export interface PdfMetadataProps {
-  systemName?: string;
-  period?: string;
-  filters?: Array<{ label: string; value: string }>;
-  systemLabel?: string;
-  periodLabel?: string;
-  filtersLabel?: string;
+  systemName?: string
+  period?: string
+  filters?: Array<{ label: string; value: string }>
+  systemLabel?: string
+  periodLabel?: string
+  filtersLabel?: string
 }
 
 /**
@@ -19,13 +21,13 @@ export const PdfMetadata: React.FC<PdfMetadataProps> = ({
   systemName,
   period,
   filters,
-  systemLabel = 'Система',
-  periodLabel = 'Период',
-  filtersLabel = 'Фильтры',
+  systemLabel = "Система",
+  periodLabel = "Период",
+  filtersLabel = "Фильтры",
 }) => {
   // Don't render if no metadata
   if (!systemName && !period && (!filters || filters.length === 0)) {
-    return null;
+    return null
   }
 
   return (
@@ -46,9 +48,7 @@ export const PdfMetadata: React.FC<PdfMetadataProps> = ({
 
       {filters && filters.length > 0 && (
         <View>
-          <Text style={[commonStyles.summaryText, commonStyles.summaryBold]}>
-            {filtersLabel}:
-          </Text>
+          <Text style={[commonStyles.summaryText, commonStyles.summaryBold]}>{filtersLabel}:</Text>
           {filters.map((filter, index) => (
             <View key={index} style={{ marginLeft: 10, marginBottom: 3 }}>
               <Text style={commonStyles.summaryBold}>{filter.label}: </Text>
@@ -58,5 +58,5 @@ export const PdfMetadata: React.FC<PdfMetadataProps> = ({
         </View>
       )}
     </View>
-  );
-};
+  )
+}

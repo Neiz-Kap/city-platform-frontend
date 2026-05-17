@@ -1,13 +1,15 @@
-import React from 'react';
-import { Text } from '@react-pdf/renderer';
+import React from "react"
+
+import { Text } from "@react-pdf/renderer"
+
 import { commonStyles } from "./styles"
 
 export interface PdfFooterProps {
-  timestamp?: string;
-  fixed?: boolean;
-  pageLabel?: string;
-  ofLabel?: string;
-  generatedLabel?: string;
+  timestamp?: string
+  fixed?: boolean
+  pageLabel?: string
+  ofLabel?: string
+  generatedLabel?: string
 }
 
 /**
@@ -34,11 +36,11 @@ export interface PdfFooterProps {
 export const PdfFooter: React.FC<PdfFooterProps> = ({
   timestamp,
   fixed = true,
-  pageLabel = 'Страница',
-  ofLabel = 'из',
-  generatedLabel = 'Сформирован',
+  pageLabel = "Страница",
+  ofLabel = "из",
+  generatedLabel = "Сформирован",
 }) => {
-  const displayTimestamp = timestamp || new Date().toLocaleString('ru-RU');
+  const displayTimestamp = timestamp || new Date().toLocaleString("ru-RU")
 
   return (
     <Text
@@ -48,5 +50,5 @@ export const PdfFooter: React.FC<PdfFooterProps> = ({
         `${pageLabel} ${pageNumber} ${ofLabel} ${totalPages} | ${generatedLabel}: ${displayTimestamp}`
       }
     />
-  );
-};
+  )
+}

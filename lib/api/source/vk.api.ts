@@ -1,6 +1,7 @@
+import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
+
 import { api, apiRequest } from ".."
 import { PlatformGroup } from "../../types/complaint.type"
-import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
 
 export const VkApi = {
   async createGroup(data: { url: string; name: string }): Promise<PlatformGroup> {

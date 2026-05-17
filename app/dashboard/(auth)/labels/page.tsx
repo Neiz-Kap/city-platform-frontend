@@ -1,8 +1,8 @@
 "use client"
 
+import { ArrowLeft, Tags, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { ArrowLeft, Tags, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -10,12 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MAX_LABELS_PER_ACCOUNT } from "@/lib/api/labels.api"
-import {
-  useCreateLabel,
-  useDeleteLabel,
-  useLabels,
-  useUpdateLabel,
-} from "@/lib/hooks/useLabels"
+import { useCreateLabel, useDeleteLabel, useLabels, useUpdateLabel } from "@/lib/hooks/useLabels"
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
 
 const DEFAULT_COLOR = "#6B7280"
@@ -112,12 +107,7 @@ function LabelRow({ label }: { label: DashboardLabel }) {
       </div>
       <div className="w-full space-y-2 sm:w-40">
         <Label htmlFor={`color-${label.id}`}>Цвет</Label>
-        <ColorField
-          id={`color-${label.id}`}
-          value={color}
-          onChange={setColor}
-          disabled={busy}
-        />
+        <ColorField id={`color-${label.id}`} value={color} onChange={setColor} disabled={busy} />
       </div>
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={handleSave} disabled={busy}>
@@ -164,8 +154,7 @@ export default function LabelsPage() {
           setNewName("")
           setNewColor(DEFAULT_COLOR)
         },
-        onError: () =>
-          toast.error("Не удалось создать метку (возможно, имя уже используется)"),
+        onError: () => toast.error("Не удалось создать метку (возможно, имя уже используется)"),
       },
     )
   }
@@ -174,15 +163,14 @@ export default function LabelsPage() {
     <div className="container mx-auto max-w-3xl px-4 py-8">
       <Button variant="ghost" size="sm" className="mb-6" asChild>
         <Link href="/dashboard/complaint">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          К списку жалоб
+          <ArrowLeft className="mr-2 h-4 w-4" />К списку жалоб
         </Link>
       </Button>
 
       <h1 className="mb-2 text-2xl font-bold">Метки дашборда</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт. Название и цвет
-        отображаются в таблице жалоб и в карточке жалобы.
+        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт. Название и цвет отображаются в таблице жалоб и
+        в карточке жалобы.
       </p>
 
       <div className="mb-8 space-y-3 rounded-lg border bg-muted/20 p-4">
@@ -207,11 +195,7 @@ export default function LabelsPage() {
               disabled={atLimit || createLabel.isPending}
             />
           </div>
-          <Button
-            type="button"
-            onClick={handleCreate}
-            disabled={atLimit || createLabel.isPending}
-          >
+          <Button type="button" onClick={handleCreate} disabled={atLimit || createLabel.isPending}>
             Создать
           </Button>
         </div>
@@ -233,7 +217,8 @@ export default function LabelsPage() {
             </div>
             <CardTitle className="text-xl">Метки пока не созданы</CardTitle>
             <CardDescription className="max-w-md mx-auto">
-              Метки помогают категоризировать жалобы по темам (например: «Дороги», «Освещение», «Мусор»). Создайте первую метку, используя форму выше.
+              Метки помогают категоризировать жалобы по темам (например: «Дороги», «Освещение»,
+              «Мусор»). Создайте первую метку, используя форму выше.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center text-sm text-muted-foreground">

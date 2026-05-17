@@ -1,9 +1,9 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useMemo } from "react"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import {
   Card,
@@ -23,15 +23,15 @@ import { Pagination } from "@/components/ui/pagination"
 import { useComplaintStats } from "@/lib/hooks/useComplaintStats"
 import { StatsQueryParams, TimePeriod } from "@/lib/types/complaint-stats.type"
 import {
-  applyComplaintStatsUrlState,
-  parseComplaintStatsUrlState,
-} from "@/lib/utils/dashboard-url-state"
-import {
   getPeriodDescription,
   getTotalComplaints,
   getXAxisLabel,
   transformChartData,
 } from "@/lib/utils/complaint.utils"
+import {
+  applyComplaintStatsUrlState,
+  parseComplaintStatsUrlState,
+} from "@/lib/utils/dashboard-url-state"
 
 import { PeriodFilter } from "../features/PeriodFilter"
 
@@ -40,13 +40,14 @@ export default function ComplaintStatsBlock() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const urlState = useMemo(
-    () => parseComplaintStatsUrlState(searchParams),
-    [searchParams],
-  )
+  const urlState = useMemo(() => parseComplaintStatsUrlState(searchParams), [searchParams])
 
   const replaceStatsUrl = useCallback(
-    (updater: (state: ReturnType<typeof parseComplaintStatsUrlState>) => ReturnType<typeof parseComplaintStatsUrlState>) => {
+    (
+      updater: (
+        state: ReturnType<typeof parseComplaintStatsUrlState>,
+      ) => ReturnType<typeof parseComplaintStatsUrlState>,
+    ) => {
       const nextState = updater(parseComplaintStatsUrlState(searchParams))
       const nextParams = applyComplaintStatsUrlState(
         new URLSearchParams(searchParams.toString()),
@@ -90,9 +91,7 @@ export default function ComplaintStatsBlock() {
     },
   } satisfies ChartConfig
 
-  const chartData = paginatedData
-    ? transformChartData(paginatedData.data, urlState.period)
-    : []
+  const chartData = paginatedData ? transformChartData(paginatedData.data, urlState.period) : []
   const totalComplaints = paginatedData ? getTotalComplaints(paginatedData) : 0
   const periodDescription = getPeriodDescription(urlState.period)
   const xAxisLabel = getXAxisLabel(urlState.period)
@@ -117,7 +116,8 @@ export default function ComplaintStatsBlock() {
           ) : error ? (
             <div className="flex min-h-[180px] flex-col items-center justify-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-center">
               <p className="text-sm text-destructive">
-                Не удалось загрузить статистику: {error instanceof Error ? error.message : "Неизвестная ошибка"}
+                Не удалось загрузить статистику:{" "}
+                {error instanceof Error ? error.message : "Неизвестная ошибка"}
               </p>
               <button
                 type="button"
@@ -161,10 +161,7 @@ export default function ComplaintStatsBlock() {
             Показаны данные за {periodDescription.toLowerCase()}
           </div>
           {paginatedData?.pagination && paginatedData.pagination.total > 0 && (
-            <Pagination
-              pagination={paginatedData.pagination}
-              onPageChange={handlePageChange}
-            />
+            <Pagination pagination={paginatedData.pagination} onPageChange={handlePageChange} />
           )}
         </CardFooter>
       </Card>

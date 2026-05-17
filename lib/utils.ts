@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from "clsx";
-import { Metadata } from "next";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from "clsx"
+import { Metadata } from "next"
+import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -9,21 +9,21 @@ export function cn(...inputs: ClassValue[]) {
 export function generateMeta({
   title,
   description,
-  canonical
+  canonical,
 }: {
-  title: string;
-  description: string;
-  canonical: string;
+  title: string
+  description: string
+  canonical: string
 }): Metadata {
   return {
     title: `${title} - ODS City Platform`,
     description: description,
     // metadataBase: new URL(`https://shadcnuikit.com`), // TODO: add actual base url
     alternates: {
-      canonical: `${canonical}`
+      canonical: `${canonical}`,
     },
     openGraph: {
-      images: [`/images/seo.jpg`] // TODO: add actual image
-    }
-  };
+      images: [`/images/seo.jpg`], // TODO: add actual image
+    },
+  }
 }

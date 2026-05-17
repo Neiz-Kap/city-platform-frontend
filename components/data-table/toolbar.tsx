@@ -1,31 +1,21 @@
 "use client"
 
-import type { Table } from "@tanstack/react-table"
-import {
-  CheckSquare, CrossIcon, EyeOff,
-  MoveHorizontal,
-  Settings,
-  Undo2
-} from "lucide-react"
+import { CheckSquare, CrossIcon, EyeOff, MoveHorizontal, Settings, Undo2 } from "lucide-react"
 import type { ReadonlyURLSearchParams } from "next/navigation"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 
+import type { Table } from "@tanstack/react-table"
+
 import { CalendarDatePicker } from "@/components/calendar-date-picker"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+
 import { DataTableExport } from "./data-export"
 import { formatDate } from "./utils/date-format"
 import { resetUrlState } from "./utils/deep-utils"
-import type {
-  DataTransformFunction,
-  ExportableData,
-} from "./utils/export-utils"
+import type { DataTransformFunction, ExportableData } from "./utils/export-utils"
 import type { TableConfig } from "./utils/table-config"
 import { parseDateFromUrl } from "./utils/url-state"
 import { DataTableViewOptions } from "./view-options"
@@ -140,17 +130,13 @@ export function DataTableToolbar<TData extends ExportableData>({
   // Get search value directly from URL query parameter
   const searchParamFromUrl = searchParams.get("search") || ""
   // Decode URL-encoded search parameter
-  const decodedSearchParam = searchParamFromUrl
-    ? decodeURIComponent(searchParamFromUrl)
-    : ""
+  const decodedSearchParam = searchParamFromUrl ? decodeURIComponent(searchParamFromUrl) : ""
 
   // Get search value from table state as fallback
   const currentSearchFromTable = (table.getState().globalFilter as string) || ""
 
   // Initialize local search state with URL value or table state
-  const [localSearch, setLocalSearch] = useState(
-    decodedSearchParam || currentSearchFromTable,
-  )
+  const [localSearch, setLocalSearch] = useState(decodedSearchParam || currentSearchFromTable)
 
   // Track if the search is being updated locally
   const [isLocallyUpdatingSearch, setIsLocallyUpdatingSearch] = useState(false)
@@ -166,14 +152,10 @@ export function DataTableToolbar<TData extends ExportableData>({
   }>(urlDates)
 
   // Track if user has explicitly changed dates
-  const [datesModified, setDatesModified] = useState(
-    !!urlDates.from || !!urlDates.to,
-  )
+  const [datesModified, setDatesModified] = useState(!!urlDates.from || !!urlDates.to)
   const [isUpdatingDates, setIsUpdatingDates] = useState(false)
   const activeDates = isUpdatingDates ? dates : urlDates
-  const activeDatesModified = isUpdatingDates
-    ? datesModified
-    : !!(urlDates.from || urlDates.to)
+  const activeDatesModified = isUpdatingDates ? datesModified : !!(urlDates.from || urlDates.to)
 
   // Determine if any filters are active
   const isFiltered = tableFiltered || !!searchValue || activeDatesModified
@@ -292,9 +274,7 @@ export function DataTableToolbar<TData extends ExportableData>({
   // Get selected items data for export - this is now just for the UI indication
   // The actual data fetching happens in the export component
   const selectedItems =
-    totalSelectedItems > 0
-      ? new Array(totalSelectedItems).fill({} as TData)
-      : []
+    totalSelectedItems > 0 ? new Array(totalSelectedItems).fill({} as TData) : []
 
   // Get all available items data for export
   const allItems = getAllItems ? getAllItems() : []
@@ -307,9 +287,7 @@ export function DataTableToolbar<TData extends ExportableData>({
             placeholder={config.searchPlaceholder || `Search ${entityName}...`}
             value={searchValue}
             onChange={handleSearchChange}
-            className={`w-[150px] lg:w-[250px] ${getInputSizeClass(
-              config.size,
-            )}`}
+            className={`w-[150px] lg:w-[250px] ${getInputSizeClass(config.size)}`}
           />
         )}
 
@@ -321,9 +299,7 @@ export function DataTableToolbar<TData extends ExportableData>({
                 to: activeDates.to,
               }}
               onDateSelect={handleDateSelect}
-              className={`w-fit cursor-pointer ${getInputSizeClass(
-                config.size,
-              )}`}
+              className={`w-fit cursor-pointer ${getInputSizeClass(config.size)}`}
               variant="outline"
             />
           </div>
@@ -361,11 +337,7 @@ export function DataTableToolbar<TData extends ExportableData>({
         )}
 
         {config.enableColumnVisibility && (
-          <DataTableViewOptions
-            table={table}
-            columnMapping={columnMapping}
-            size={config.size}
-          />
+          <DataTableViewOptions table={table} columnMapping={columnMapping} size={config.size} />
         )}
 
         <Popover>

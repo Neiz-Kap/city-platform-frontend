@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react"
+
 import { useUrlState } from "./url-state"
 
 /**
@@ -26,13 +27,10 @@ export function createConditionalStateHook(enableUrlState: boolean) {
     const [urlState, setUrlState] = useUrlState<T>(key, defaultValue, options)
 
     // Create a compatible setState function for regular state that matches the SetStateWithPromise signature
-    const setRegularStateWrapper = useCallback(
-      (valueOrUpdater: T | ((prevValue: T) => T)) => {
-        setRegularState(valueOrUpdater)
-        return undefined // Return undefined instead of void to match the type
-      },
-      [],
-    )
+    const setRegularStateWrapper = useCallback((valueOrUpdater: T | ((prevValue: T) => T)) => {
+      setRegularState(valueOrUpdater)
+      return undefined // Return undefined instead of void to match the type
+    }, [])
 
     // Return the appropriate state and setter based on config
     return useMemo(() => {
@@ -41,12 +39,6 @@ export function createConditionalStateHook(enableUrlState: boolean) {
       }
 
       return [regularState, setRegularStateWrapper] as const
-    }, [
-      enableUrlState,
-      regularState,
-      urlState,
-      setUrlState,
-      setRegularStateWrapper,
-    ])
+    }, [enableUrlState, regularState, urlState, setUrlState, setRegularStateWrapper])
   }
 }

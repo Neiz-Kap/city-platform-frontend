@@ -1,12 +1,14 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal } from "lucide-react"
 import Link from "next/link"
+
+import { ColumnDef } from "@tanstack/react-table"
 
 import { DashboardLabelPicker } from "@/components/entities/complaint/DashboardLabelPicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DataTableColumnHeader } from "@/components/ui/dataTableColumnHeader"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +17,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { DataTableColumnHeader } from "@/components/ui/dataTableColumnHeader"
 import type { DashboardLabel } from "@/lib/types/complaint-label.type"
-import { Complaint } from "@/lib/types/complaint.type"
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
+import { Complaint } from "@/lib/types/complaint.type"
 import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
 import { formatRuDate } from "@/lib/utils/date-format"
 
@@ -52,9 +53,7 @@ function labelContrastColor(hex: string): string {
   return yiq >= 128 ? "#111" : "#fff"
 }
 
-export function createComplaintColumns(
-  handlers: ComplaintColumnHandlers,
-): ColumnDef<Complaint>[] {
+export function createComplaintColumns(handlers: ComplaintColumnHandlers): ColumnDef<Complaint>[] {
   return [
     {
       accessorKey: "id",
@@ -87,18 +86,14 @@ export function createComplaintColumns(
     },
     {
       accessorKey: "platform",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Источник" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Источник" />,
       enableSorting: false,
       cell: ({ row }) => complaintPlatformLabelRu(row.original.platform),
     },
     {
       id: "status",
       accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Статус" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Статус" />,
       cell: ({ row }) => {
         const complaintId = row.original.id
         const busy = handlers.pendingComplaintId === complaintId
@@ -117,9 +112,7 @@ export function createComplaintColumns(
     {
       id: "label",
       accessorKey: "labels",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Метки" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Метки" />,
       enableSorting: true,
       cell: ({ row }) => {
         const complaint = row.original
@@ -144,9 +137,7 @@ export function createComplaintColumns(
               disabled={busy}
               labels={handlers.allLabels}
               mode="icon"
-              onChange={(labelIds) =>
-                handlers.onLabelIdsChange(complaint.id, labelIds)
-              }
+              onChange={(labelIds) => handlers.onLabelIdsChange(complaint.id, labelIds)}
               valueIds={(complaint.labels ?? []).map((label) => label.id)}
             />
           </div>
@@ -156,17 +147,13 @@ export function createComplaintColumns(
     {
       id: "createdAt",
       accessorKey: "createdAt",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Дата создания" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Дата создания" />,
       cell: ({ row }) => formatRuDate(row.original.createdAt),
     },
     {
       id: "updatedAt",
       accessorKey: "updatedAt",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Дата обновления" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Дата обновления" />,
       cell: ({ row }) => formatRuDate(row.original.updatedAt),
     },
     {
@@ -185,9 +172,7 @@ export function createComplaintColumns(
             <DropdownMenuLabel>Действия</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href={`/dashboard/complaint/${row.original.id}`}>
-                Подробнее
-              </Link>
+              <Link href={`/dashboard/complaint/${row.original.id}`}>Подробнее</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

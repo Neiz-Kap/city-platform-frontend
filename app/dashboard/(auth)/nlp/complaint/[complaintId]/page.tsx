@@ -1,5 +1,6 @@
 "use client"
 
+import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { notFound, useParams, useRouter } from "next/navigation"
 
@@ -8,18 +9,11 @@ import { ComplaintDetailSkeleton } from "@/components/entities/complaint/Complai
 import { Button } from "@/components/ui/button"
 import { ApiError, getErrorMessage } from "@/lib/api/errors"
 import { useComplaint } from "@/lib/hooks/useComplaints"
-import { ArrowLeft } from "lucide-react"
 
 export default function ComplaintDetailPage() {
   const { complaintId } = useParams<{ complaintId: string }>()
   const router = useRouter()
-  const {
-    data: complaint,
-    error,
-    isLoading,
-    isRefetching,
-    refetch,
-  } = useComplaint(complaintId)
+  const { data: complaint, error, isLoading, isRefetching, refetch } = useComplaint(complaintId)
 
   if (isLoading && !complaint) {
     return <ComplaintDetailSkeleton />

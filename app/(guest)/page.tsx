@@ -1,13 +1,7 @@
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 /**
  * Guest Landing Page
@@ -46,8 +40,8 @@ export default function GuestLandingPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-center text-muted-foreground">
-              Авторизуйтесь для доступа к системе управления жалобами, аналитике
-              и настройке источников.
+              Авторизуйтесь для доступа к системе управления жалобами, аналитике и настройке
+              источников.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link href="/dashboard/login" className="flex-1">

@@ -1,10 +1,12 @@
-import React from 'react';
-import { Text, View } from '@react-pdf/renderer';
+import React from "react"
+
+import { Text, View } from "@react-pdf/renderer"
+
 import { commonStyles } from "./styles"
 
 export interface PdfHeaderProps {
-  title: string;
-  subtitle?: string;
+  title: string
+  subtitle?: string
 }
 
 /**
@@ -16,4 +18,4 @@ export const PdfHeader: React.FC<PdfHeaderProps> = ({ title, subtitle }) => (
     <Text style={commonStyles.header}>{title}</Text>
     {subtitle && <Text style={commonStyles.subtitle}>{subtitle}</Text>}
   </View>
-);
+)
