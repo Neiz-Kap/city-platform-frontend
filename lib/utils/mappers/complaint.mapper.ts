@@ -22,17 +22,18 @@ const ComplaintBackendSchema = z.object({
   name: z.string(),
   description: z.string(),
   status: z.string(),
+  url: z.string().optional(),
   source_url: z.string().optional(),
   source_id: z.number().optional(),
   platform: z.string(),
-  user_id: z.number(),
-  department_id: z.number().optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  userId: z.number(),
+  departmentId: z.number().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  is_deleted: z.number().optional(),
   labels: z.array(LabelBackendSchema).optional(),
 })
 
-// Type inferred from schema
 type ComplaintBackend = z.infer<typeof ComplaintBackendSchema>
 
 /**
@@ -46,7 +47,7 @@ export class ComplaintMapper extends BaseMapper<
   protected readonly backendSchema = ComplaintBackendSchema
 
   protected parseToDomain(data: ComplaintBackend): Complaint {
-    const sourceUrl = data.source_url ?? ""
+    const sourceUrl = data.source_url ?? data.url ?? ""
 
     return {
       id: data.id,
@@ -56,10 +57,10 @@ export class ComplaintMapper extends BaseMapper<
       url: sourceUrl,
       source_url: sourceUrl,
       platform: data.platform as Complaint["platform"],
-      userId: data.user_id,
-      departmentId: data.department_id,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
+      userId: data.userId,
+      departmentId: data.departmentId ?? undefined,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
       labels: data.labels?.map((label) => ({
         id: label.id,
         name: label.name,
