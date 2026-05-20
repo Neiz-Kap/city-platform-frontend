@@ -42,6 +42,12 @@ function buildSources(vkGroups: PlatformGroup[], emailGroups: PlatformGroup[]) {
       allEnabled: emailGroups.length > 0 && emailGroups.every((group) => group.enabled),
       groups: emailGroups,
     },
+    {
+      platform: "max",
+      label: "Макс",
+      allEnabled: false,
+      groups: [],
+    },
   ] satisfies PlatformSource[]
 }
 

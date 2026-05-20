@@ -4,6 +4,7 @@ const PLATFORM_LABEL_RU: Record<string, string> = {
   vk: "ВКонтакте",
   email: "Электронная почта",
   telegram_bot: "Telegram",
+  max: "Макс",
 }
 
 export function complaintPlatformLabelRu(platform: ComplaintPlatform): string {

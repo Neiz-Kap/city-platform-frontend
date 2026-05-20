@@ -7,6 +7,7 @@ import type { ComplaintStatus } from "./complaint-status.type"
 export enum Platform {
   VK = "vk",
   EMAIL = "email",
+  MAX = "max",
 }
 
 export type SourcePlatform = `${Platform}`

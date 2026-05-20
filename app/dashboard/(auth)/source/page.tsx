@@ -100,6 +100,12 @@ function PlatformCard({
             Добавить почту
           </Button>
         )
+      case "max":
+        return (
+          <Button variant="outline" size="sm" disabled title="Интеграция в разработке">
+            Добавить источник
+          </Button>
+        )
       default:
         return null
     }
@@ -254,7 +260,7 @@ export default function PlatformSourcePage() {
     <div className="mx-auto max-w-4xl p-4 sm:p-6 md:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Источники жалоб</h1>
+          <h1 className="text-2xl font-bold">Источники предложений</h1>
           <p className="text-muted-foreground text-sm">
             Управляйте подключёнными каналами мониторинга без перезагрузки страницы.
           </p>
@@ -288,7 +294,7 @@ export default function PlatformSourcePage() {
                 </div>
                 <CardTitle className="text-xl">Источники не подключены</CardTitle>
                 <CardDescription className="max-w-md mx-auto">
-                  Для начала мониторинга жалоб необходимо добавить источники. Выберите платформу
+                  Для начала мониторинга предложений необходимо добавить источники. Выберите платформу
                   ниже и нажмите «Добавить источник», чтобы подключить группы ВКонтакте или почтовые
                   ящики для отслеживания.
                 </CardDescription>

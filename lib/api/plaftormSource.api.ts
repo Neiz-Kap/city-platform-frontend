@@ -52,6 +52,12 @@ export class SourceService {
         allEnabled: emailParsers.length > 0 && emailParsers.every((g) => g.enabled),
         groups: emailParsers,
       },
+      {
+        platform: 'max',
+        label: 'Макс',
+        allEnabled: false,
+        groups: [],
+      },
     ]
   }
 
@@ -62,6 +68,8 @@ export class SourceService {
         return this.updateVkGroupStatus(id, action)
       case 'email':
         return this.updateEmailParserStatus(id, action)
+      case 'max':
+        return
       default:
         throw new Error(`Unsupported platform: ${platform}`)
     }
@@ -73,6 +81,8 @@ export class SourceService {
         return this.deleteVkGroup(id)
       case 'email':
         return this.deleteEmailParser(id)
+      case 'max':
+        return
       default:
         throw new Error(`Unsupported platform: ${platform}`)
     }
