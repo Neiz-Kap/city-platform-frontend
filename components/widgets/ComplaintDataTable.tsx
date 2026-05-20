@@ -22,6 +22,7 @@ import {
 } from "@/lib/hooks/useComplaints"
 import { useComplaintsSocket } from "@/lib/hooks/useComplaintsSocket"
 import { useLabels } from "@/lib/hooks/useLabels"
+import { useUser } from "@/lib/hooks/useAuth"
 import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
 
 import { ComplaintAggregatesBar } from "./ComplaintAggregatesBar"
@@ -86,6 +87,7 @@ export default function ComplaintDataTable() {
 
   const { data, dataUpdatedAt, error, isFetching, isLoading, refetch } = useComplaints(queryParams)
   const { data: aggregates } = useComplaintAggregates()
+  const { user } = useUser()
 
   const bumpNewComplaints = useCallback(() => {
     setNewComplaintsCount((count) => count + 1)
@@ -96,6 +98,7 @@ export default function ComplaintDataTable() {
     enabled: notificationsEnabled,
     onNewComplaint: bumpNewComplaints,
     sources: complaintSocketSources,
+    userId: user?.userId,
   })
 
   const updateComplaint = useUpdateComplaint()

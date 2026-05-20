@@ -10,11 +10,10 @@ export function transformChartData(data: StatItem[], period: string) {
     let displayKey = item.key
 
     if (period === "day") {
-      // Преобразуем дату в формат "6 Дек"
       const date = new Date(item.key)
-      const day = date.getDate()
-      const month = date.toLocaleString("ru", { month: "short" })
-      displayKey = `${day} ${month}`
+      const day = String(date.getDate()).padStart(2, "0")
+      const month = String(date.getMonth() + 1).padStart(2, "0")
+      displayKey = `${day}.${month}`
     } else if (period === "week") {
       // Преобразуем неделю в формат "Неделя 49"
       const weekMatch = item.key.match(/W(\d+)/)

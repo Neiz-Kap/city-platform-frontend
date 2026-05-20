@@ -25,7 +25,6 @@ import { StatsQueryParams, TimePeriod } from "@/lib/types/complaint-stats.type"
 import {
   getPeriodDescription,
   getTotalComplaints,
-  getXAxisLabel,
   transformChartData,
 } from "@/lib/utils/complaint.utils"
 import {
@@ -94,8 +93,6 @@ export default function ComplaintStatsBlock() {
   const chartData = paginatedData ? transformChartData(paginatedData.data, urlState.period) : []
   const totalComplaints = paginatedData ? getTotalComplaints(paginatedData) : 0
   const periodDescription = getPeriodDescription(urlState.period)
-  const xAxisLabel = getXAxisLabel(urlState.period)
-
   return (
     <div className="mx-auto">
       <Card className="gap-4 py-4">
@@ -135,9 +132,9 @@ export default function ComplaintStatsBlock() {
                   dataKey="displayKey"
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={10}
-                  tickFormatter={(value) => value}
-                  label={{ position: "insideBottom", value: xAxisLabel }}
+                  tickMargin={8}
+                  interval="preserveStartEnd"
+                  minTickGap={40}
                 />
                 <YAxis tickLine={false} axisLine={false} tickMargin={10} />
                 <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />

@@ -13,6 +13,7 @@ interface UseComplaintsSocketProps {
   interval?: number
   onNewComplaint?: () => void
   sources?: string[]
+  userId?: number
 }
 
 function shouldUsePollingOnly(apiBaseUrl: string) {
@@ -31,6 +32,7 @@ export const useComplaintsSocket = ({
   sources = ["all"],
   interval = 300,
   onNewComplaint,
+  userId,
 }: UseComplaintsSocketProps = {}) => {
   const socketRef = useRef<Socket | null>(null)
   const connectRef = useRef<() => void>(() => {})
@@ -67,6 +69,7 @@ export const useComplaintsSocket = ({
 
     const subscribe = () => {
       socket.emit("subscribe_complaints", {
+        userId,
         interval,
         sources: normalizedSources,
       })
@@ -79,6 +82,7 @@ export const useComplaintsSocket = ({
         queryClient.invalidateQueries({ queryKey: complaintAggregatesKey })
         onNewComplaintRef.current?.()
       },
+      queryClient,
     })
 
     const onConnect = () => {
@@ -126,7 +130,7 @@ export const useComplaintsSocket = ({
       disconnectRef.current = () => {}
       resubscribeRef.current = () => false
     }
-  }, [enabled, interval, normalizedSources, queryClient, usePollingOnly])
+  }, [enabled, interval, normalizedSources, queryClient, usePollingOnly, userId])
 
   const connect = useCallback(() => {
     connectRef.current()

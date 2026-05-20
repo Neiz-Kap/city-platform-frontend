@@ -8,7 +8,8 @@ const VkGroupBackendSchema = z.object({
   name: z.string(),
   url: z.string(),
   is_monitoring: z.union([z.boolean(), z.number()]),
-  user_id: z.number(),
+  userId: z.number().optional(),
+  user_id: z.number().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 })
@@ -79,7 +80,7 @@ class VkGroupMapper extends SourceBaseMapper<VkGroupBackend> {
       name: data.name,
       enabled: data.is_monitoring === true || data.is_monitoring === 1,
       platform: "vk",
-      userId: data.user_id,
+      userId: data.userId ?? data.user_id ?? 0,
     }
   }
 

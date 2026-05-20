@@ -36,7 +36,7 @@ export function patchAggregatesAfterComplaintUpdate(
   const prevIds = new Set((prev.labels ?? []).map((l) => l.id))
   const nextIds = new Set((next.labels ?? []).map((l) => l.id))
 
-  const counts_by_label = agg.counts_by_label.map((entry) => {
+  const counts_by_label = (agg.counts_by_label ?? []).map((entry) => {
     let c = entry.complaint_count
     if (prevIds.has(entry.id) && !nextIds.has(entry.id)) {
       c = Math.max(0, c - 1)
@@ -55,11 +55,12 @@ export function mergeCreatedLabelIntoAggregates(
   label: DashboardLabel,
 ): ComplaintsAggregates | undefined {
   if (!agg) return agg
-  if (agg.counts_by_label.some((e) => e.id === label.id)) return agg
+  const countsByLabel = agg.counts_by_label ?? []
+  if (countsByLabel.some((e) => e.id === label.id)) return agg
   return {
     ...agg,
     counts_by_label: [
-      ...agg.counts_by_label,
+      ...countsByLabel,
       {
         id: label.id,
         name: label.name,
@@ -77,7 +78,7 @@ export function removeLabelFromAggregates(
   if (!agg) return agg
   return {
     ...agg,
-    counts_by_label: agg.counts_by_label.filter((e) => e.id !== labelId),
+    counts_by_label: (agg.counts_by_label ?? []).filter((e) => e.id !== labelId),
   }
 }
 
@@ -89,6 +90,8 @@ export function patchLabelInAggregates(
   if (!agg) return agg
   return {
     ...agg,
-    counts_by_label: agg.counts_by_label.map((e) => (e.id === labelId ? { ...e, ...patch } : e)),
+    counts_by_label: (agg.counts_by_label ?? []).map((e) =>
+      e.id === labelId ? { ...e, ...patch } : e,
+    ),
   }
 }

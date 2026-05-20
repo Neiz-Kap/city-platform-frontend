@@ -13,7 +13,8 @@ const LabelBackendSchema = z.object({
   id: z.number(),
   name: z.string(),
   color: z.string(),
-  user_id: z.number(),
+  user_id: z.number().optional(),
+  userId: z.number().optional(),
   complaint_count: z.number().optional(),
 })
 
@@ -65,7 +66,7 @@ export class ComplaintMapper extends BaseMapper<
         id: label.id,
         name: label.name,
         color: label.color,
-        userId: label.user_id,
+        userId: label.user_id ?? label.userId ?? 0,
         complaint_count: label.complaint_count,
       })),
     }

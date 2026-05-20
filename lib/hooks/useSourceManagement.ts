@@ -2,7 +2,7 @@ import { toast } from "sonner"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { getErrorMessage } from "@/lib/api/errors"
+import { ApiError, getErrorMessage } from "@/lib/api/errors"
 
 import { EmailApi } from "../api/source/email.api"
 import { VkApi } from "../api/source/vk.api"
@@ -209,7 +209,11 @@ export function useSourceManagement() {
   const createVkGroup = useMutation({
     mutationFn: (data: VkFormData) => VkApi.createGroup(data),
     onError: (error) => {
-      toast.error(getErrorMessage(error, "Не удалось добавить группу ВКонтакте"))
+      const message =
+        error instanceof ApiError && error.status === 409
+          ? "Группа ВКонтакте с таким URL уже добавлена"
+          : getErrorMessage(error, "Не удалось добавить группу ВКонтакте")
+      toast.error(message)
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: sourceKeys.all })
