@@ -18,7 +18,7 @@ type ServerEventHandler = (
 export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
   new_complaint: (_socket, payload, ctx) => {
     const complaint = payload as { id?: number; name?: string }
-    const title = complaint?.name?.trim() || "Новая жалоба"
+    const title = complaint?.name?.trim() || "Новое предложение"
     const href =
       typeof complaint?.id === "number" ? `/dashboard/complaint/${complaint.id}` : undefined
 
@@ -28,15 +28,15 @@ export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
       href,
       id: `complaint-${complaint?.id ?? crypto.randomUUID()}`,
       kind: "complaint",
-      title: "Новая жалоба",
+      title: "Новое предложение",
     })
 
-    toast.info("Новая жалоба", {
+    toast.info("Новое предложение", {
       description: title,
     })
 
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      new Notification("Новая жалоба", {
+      new Notification("Новое предложение", {
         body: title,
         icon: "/notification-icon.png",
       })

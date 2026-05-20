@@ -44,7 +44,7 @@ export default function ComplaintDetailPage() {
         </Button>
 
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
-          <p className="font-medium">Не удалось открыть карточку жалобы.</p>
+          <p className="font-medium">Не удалось открыть карточку предложения.</p>
           <p className="mt-2 text-destructive/80">
             {getErrorMessage(error, "Попробуйте обновить страницу или повторить попытку позже.")}
           </p>
@@ -53,7 +53,7 @@ export default function ComplaintDetailPage() {
               {isRefetching ? "Повторяем запрос…" : "Повторить"}
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/dashboard/complaint">К списку жалоб</Link>
+              <Link href="/dashboard/complaint">К списку предложений</Link>
             </Button>
           </div>
         </div>

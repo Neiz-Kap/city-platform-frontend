@@ -36,7 +36,7 @@ function ComplaintPageLoader() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Загрузка жалоб...</span>
+              <span className="text-sm text-muted-foreground">Загрузка предложений...</span>
             </div>
             <Skeleton className="h-8 w-32" />
           </div>
@@ -66,7 +66,7 @@ export default function ComplaintPage() {
   if (isLoading) {
     return (
       <section>
-        <h1 className="text-2xl font-bold mb-4">Жалобы</h1>
+        <h1 className="text-2xl font-bold mb-4">Предложения</h1>
         <ComplaintPageLoader />
       </section>
     )
@@ -74,7 +74,7 @@ export default function ComplaintPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold mb-4">Жалобы</h1>
+      <h1 className="text-2xl font-bold mb-4">Предложения</h1>
 
       {hasNoComplaints ? (
         <ComplaintEmpty isRefreshing={isFetching} onRefresh={refetch} />

@@ -16,7 +16,7 @@ export default function GuestLandingPage() {
       <header className="border-b bg-background px-6 py-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold">ODS City Platform</span>
+            <span className="text-xl font-bold">ГорПульс</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/dashboard/login">
@@ -40,7 +40,7 @@ export default function GuestLandingPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-center text-muted-foreground">
-              Авторизуйтесь для доступа к системе управления жалобами, аналитике и настройке
+              Авторизуйтесь для доступа к системе управления предложениями, аналитике и настройке
               источников.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -60,7 +60,7 @@ export default function GuestLandingPage() {
       {/* Footer */}
       <footer className="border-t px-6 py-4">
         <div className="mx-auto max-w-7xl text-center text-sm text-muted-foreground">
-          ODS City Platform 2026
+          ГорПульс 2026
         </div>
       </footer>
     </div>

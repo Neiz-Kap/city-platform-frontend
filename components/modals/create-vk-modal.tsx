@@ -33,7 +33,7 @@ export default function VkDialog({ open, onOpenChange }: VkDialogProps) {
         <DialogHeader>
           <DialogTitle>Добавить источник ВКонтакте</DialogTitle>
           <DialogDescription>
-            Добавьте новую группу ВКонтакте для мониторинга жалоб
+            Добавьте новую группу ВКонтакте для мониторинга предложений
           </DialogDescription>
         </DialogHeader>
         <VkForm onSubmit={handleSubmit} />

@@ -22,8 +22,8 @@ type FlatNavItem = {
 /** Закомментированные пункты: «Главная», «Проблемы». */
 export const flatNavItems: FlatNavItem[] = [
   // { title: "Главная", href: "/dashboard/default", icon: Home },
-  { title: "Жалобы", href: "/dashboard/complaint", icon: ListOrdered },
-  { title: "Источники жалоб", href: "/dashboard/source", icon: Radio },
+  { title: "Предложения", href: "/dashboard/complaint", icon: ListOrdered },
+  { title: "Источники предложений", href: "/dashboard/source", icon: Radio },
   { title: "Метки", href: "/dashboard/labels", icon: Tags },
   { title: "Уведомления", href: "/dashboard/notifications", icon: BellIcon },
   { title: "Отчёт PDF", href: "/dashboard/report", icon: FileDown },

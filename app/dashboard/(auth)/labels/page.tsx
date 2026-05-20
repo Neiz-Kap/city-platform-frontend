@@ -163,14 +163,14 @@ export default function LabelsPage() {
     <div className="container mx-auto max-w-3xl px-4 py-8">
       <Button variant="ghost" size="sm" className="mb-6" asChild>
         <Link href="/dashboard/complaint">
-          <ArrowLeft className="mr-2 h-4 w-4" />К списку жалоб
+          <ArrowLeft className="mr-2 h-4 w-4" />К списку предложений
         </Link>
       </Button>
 
       <h1 className="mb-2 text-2xl font-bold">Метки дашборда</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт. Название и цвет отображаются в таблице жалоб и
-        в карточке жалобы.
+        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт. Название и цвет отображаются в таблице предложений и
+        в карточке предложения.
       </p>
 
       <div className="mb-8 space-y-3 rounded-lg border bg-muted/20 p-4">
@@ -217,7 +217,7 @@ export default function LabelsPage() {
             </div>
             <CardTitle className="text-xl">Метки пока не созданы</CardTitle>
             <CardDescription className="max-w-md mx-auto">
-              Метки помогают категоризировать жалобы по темам (например: «Дороги», «Освещение»,
+              Метки помогают категоризировать предложения по темам (например: «Дороги», «Освещение»,
               «Мусор»). Создайте первую метку, используя форму выше.
             </CardDescription>
           </CardHeader>

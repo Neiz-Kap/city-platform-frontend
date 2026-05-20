@@ -16,7 +16,7 @@ export function generateMeta({
   canonical: string
 }): Metadata {
   return {
-    title: `${title} - ODS City Platform`,
+    title: `${title} - ГорПульс`,
     description: description,
     // metadataBase: new URL(`https://shadcnuikit.com`), // TODO: add actual base url
     alternates: {

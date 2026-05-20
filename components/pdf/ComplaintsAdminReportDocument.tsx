@@ -256,13 +256,13 @@ export function ComplaintsAdminReportDocument({
       : [["—", "—", "—", "—", "—", "—", "—"]]
 
   return (
-    <Document title={`ODS Platform — отчёт ${reportShortId}`} language="ru-RU">
+    <Document title={`ГорПульс — отчёт ${reportShortId}`} language="ru-RU">
       <Page size="A4" style={commonStyles.page}>
         <View style={commonStyles.brandRow}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image src={logoSrc} style={{ width: 88, height: 28 }} />
           <View style={{ marginLeft: 14, flex: 1 }}>
-            <Text style={commonStyles.brandTitle}>ODS Platform</Text>
+            <Text style={commonStyles.brandTitle}>ГорПульс</Text>
             <Text style={commonStyles.brandSubtitle}>
               Отчёт по обращениям граждан · № {reportShortId}
             </Text>

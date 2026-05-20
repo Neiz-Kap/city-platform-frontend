@@ -248,7 +248,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
         <div className="flex flex-wrap items-end gap-2">
           <FieldShell wide>
             <Input
-              placeholder="Поиск по жалобам..."
+              placeholder="Поиск по предложениям..."
               value={searchQuery}
               onChange={(event) => onSearchQueryChange(event.target.value)}
               className="h-9 max-w-sm"
@@ -395,7 +395,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
           <div className="text-sm text-muted-foreground">
             {hasActiveFilters
               ? "Фильтры применены к текущей выборке"
-              : "Показываем все жалобы без дополнительных фильтров"}
+              : "Показываем все предложения без дополнительных фильтров"}
           </div>
           <div className="flex items-center gap-2">
             {hasActiveFilters && onResetFilters && (
@@ -452,7 +452,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                   colSpan={columns.length}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  Загрузка жалоб...
+                  Загрузка предложений...
                 </TableCell>
               </TableRow>
             ) : table.getRowModel().rows.length > 0 ? (
@@ -472,8 +472,8 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
                     <SearchX className="h-5 w-5" />
                     <span>
                       {hasActiveFilters
-                        ? "По текущим фильтрам жалобы не найдены."
-                        : "Жалобы пока не появились."}
+                        ? "По текущим фильтрам предложения не найдены."
+                        : "Предложения пока не появились."}
                     </span>
                     {hasActiveFilters && onResetFilters && (
                       <Button variant="outline" size="sm" onClick={onResetFilters}>
@@ -490,7 +490,7 @@ export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
 
       <div className="flex items-center justify-between pt-4">
         <div className="text-sm text-muted-foreground">
-          Показано {data.length} из {serverPagination.total} жалоб · страница {pagination.page}
+          Показано {data.length} из {serverPagination.total} предложений · страница {pagination.page}
         </div>
         <div className="flex items-center space-x-2">
           <Button

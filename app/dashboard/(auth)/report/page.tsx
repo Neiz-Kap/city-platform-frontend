@@ -112,7 +112,7 @@ export default function ReportPage() {
         />,
       ).toBlob()
 
-      const filename = `ODS_report_${startDate}_${endDate}_${reportShortId}.pdf`
+      const filename = `gorpuls_report_${startDate}_${endDate}_${reportShortId}.pdf`
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url

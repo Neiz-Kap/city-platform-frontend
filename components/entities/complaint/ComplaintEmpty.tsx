@@ -22,10 +22,10 @@ export function ComplaintEmpty({ isRefreshing = false, onRefresh }: ComplaintEmp
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
           <Inbox className="h-8 w-8 text-muted-foreground" />
         </div>
-        <CardTitle className="text-xl">Жалобы пока не поступали</CardTitle>
+        <CardTitle className="text-xl">Предложений пока не поступало</CardTitle>
         <CardDescription className="max-w-md mx-auto">
-          Ваш список жалоб пуст. Жалобы появятся автоматически, когда подключенные источники (VK,
-          email) найдут новые обращения граждан.
+          Ваш список предложений пуст. Предложения появятся автоматически, когда подключенные
+          источники (VK, email) найдут новые обращения граждан.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 sm:flex-row sm:justify-center">

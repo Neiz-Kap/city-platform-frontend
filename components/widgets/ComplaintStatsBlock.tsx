@@ -86,7 +86,7 @@ export default function ComplaintStatsBlock() {
   const chartConfig = {
     complaints: {
       color: "var(--chart-1)",
-      label: "Жалобы",
+      label: "Предложения",
     },
   } satisfies ChartConfig
 
@@ -99,7 +99,7 @@ export default function ComplaintStatsBlock() {
         <CardHeader className="gap-0">
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
-              <CardTitle>Статистика жалоб</CardTitle>
+              <CardTitle>Статистика предложений</CardTitle>
               <CardDescription>{periodDescription}</CardDescription>
             </div>
             <PeriodFilter value={urlState.period} onChange={handlePeriodChange} />
@@ -143,13 +143,13 @@ export default function ComplaintStatsBlock() {
             </ChartContainer>
           ) : (
             <div className="text-muted-foreground flex min-h-[180px] items-center justify-center rounded-lg border border-dashed text-sm">
-              За выбранный период жалоб пока нет.
+              За выбранный период предложений пока нет.
             </div>
           )}
         </CardContent>
         <CardFooter className="flex-col items-start gap-4 text-sm">
           <div className="flex gap-2 font-medium leading-none">
-            Всего жалоб: <span className="font-bold">{totalComplaints}</span>
+            Всего предложений: <span className="font-bold">{totalComplaints}</span>
             {paginatedData?.pagination.total && totalComplaints > 0 && (
               <TrendingUp className="h-4 w-4" />
             )}

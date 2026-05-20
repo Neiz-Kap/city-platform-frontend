@@ -36,7 +36,7 @@ export default function EmailDialog({ open, onOpenChange }: EmailDialogProps) {
         <DialogHeader>
           <DialogTitle>Создать почтовый источник</DialogTitle>
           <DialogDescription>
-            Настройте IMAP-подключение для приёма жалоб по электронной почте.
+            Настройте IMAP-подключение для приёма предложений по электронной почте.
           </DialogDescription>
         </DialogHeader>
         <EmailForm onSubmit={handleSubmit} isSubmitting={isCreatingEmail} />
