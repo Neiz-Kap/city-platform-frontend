@@ -1,16 +1,16 @@
-import { SourceMapper } from "@/lib/utils/mappers/source.mapper"
+import { SourceMapper } from '@/lib/utils/mappers/source.mapper'
 
-import { api, apiRequest } from "."
-import { PlatformGroup, PlatformSource, SourcePlatform } from "../types/complaint.type"
+import { api, apiRequest } from '.'
+import { PlatformGroup, PlatformSource, SourcePlatform } from '../types/complaint.type'
 
 export class SourceService {
   // --- VK Groups ---
   static async getVkGroups(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(api.get("api/v1/vk/groups").json<unknown[]>())
-    return SourceMapper.vkGroupListToDomain(data)
+    const data = await apiRequest(api.get('api/v1/vk/groups').json<unknown[]>())
+    return SourceMapper.vkGroupToDomainMany(data)
   }
 
-  static async updateVkGroupStatus(id: string, action: "start" | "stop"): Promise<void> {
+  static async updateVkGroupStatus(id: string, action: 'start' | 'stop'): Promise<void> {
     await apiRequest(api.post(`api/v1/vk/groups/${id}/${action}`))
   }
 
@@ -20,11 +20,11 @@ export class SourceService {
 
   // --- Email Monitoring ---
   static async getEmailParsers(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(api.get("api/v1/monitoring/email").json<unknown[]>())
+    const data = await apiRequest(api.get('api/v1/monitoring/email').json<unknown[]>())
     return SourceMapper.emailMonitoringToDomainMany(data)
   }
 
-  static async updateEmailParserStatus(id: string, action: "start" | "stop"): Promise<void> {
+  static async updateEmailParserStatus(id: string, action: 'start' | 'stop'): Promise<void> {
     await apiRequest(api.post(`api/v1/monitoring/email/${id}/${action}`))
   }
 
@@ -41,14 +41,14 @@ export class SourceService {
 
     return [
       {
-        platform: "vk",
-        label: "ВКонтакте",
+        platform: 'vk',
+        label: 'ВКонтакте',
         allEnabled: vkGroups.length > 0 && vkGroups.every((g) => g.enabled),
         groups: vkGroups,
       },
       {
-        platform: "email",
-        label: "Почта",
+        platform: 'email',
+        label: 'Почта',
         allEnabled: emailParsers.length > 0 && emailParsers.every((g) => g.enabled),
         groups: emailParsers,
       },
@@ -56,11 +56,11 @@ export class SourceService {
   }
 
   static async updateGroupStatus(platform: SourcePlatform, id: string, enabled: boolean) {
-    const action = enabled ? "start" : "stop"
+    const action = enabled ? 'start' : 'stop'
     switch (platform) {
-      case "vk":
+      case 'vk':
         return this.updateVkGroupStatus(id, action)
-      case "email":
+      case 'email':
         return this.updateEmailParserStatus(id, action)
       default:
         throw new Error(`Unsupported platform: ${platform}`)
@@ -69,9 +69,9 @@ export class SourceService {
 
   static async deleteGroup(platform: SourcePlatform, id: string) {
     switch (platform) {
-      case "vk":
+      case 'vk':
         return this.deleteVkGroup(id)
-      case "email":
+      case 'email':
         return this.deleteEmailParser(id)
       default:
         throw new Error(`Unsupported platform: ${platform}`)

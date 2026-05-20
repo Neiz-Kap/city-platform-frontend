@@ -1,5 +1,5 @@
-import { betterAuth } from "better-auth"
-import { bearer } from "better-auth/plugins"
+import { betterAuth } from 'better-auth'
+import { bearer } from 'better-auth/plugins'
 
 /**
  * Better Auth configuration with Bearer token plugin
@@ -35,10 +35,10 @@ export const auth = betterAuth({
     },
     // Disable default cookie attributes since we use Bearer tokens
     defaultCookieAttributes: {
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: "strict",
-      path: "/",
+      sameSite: 'strict',
+      path: '/',
     },
   },
 
@@ -46,7 +46,7 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || process.env.NEXT_PUBLIC_BETTER_AUTH_SECRET,
 
   // Base URL
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
 
   // Database configuration
   // Note: Since we're using external backend API for auth,
