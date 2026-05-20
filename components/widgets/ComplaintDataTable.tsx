@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns"
 import { ru } from "date-fns/locale"
-import { Bell, BellOff, FileDown, RefreshCw, Wifi, WifiOff } from "lucide-react"
+import { Download, FileDown, RefreshCw, Wifi, WifiOff } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -24,6 +24,9 @@ import { useComplaintsSocket } from "@/lib/hooks/useComplaintsSocket"
 import { useLabels } from "@/lib/hooks/useLabels"
 import { useUser } from "@/lib/hooks/useAuth"
 import { DEFAULT_PAGINATED_DATA } from "@/lib/mock-data/complaint.data"
+import { COMPLAINT_STATUS_LABELS } from "@/lib/types/complaint-status.type"
+import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
+import { exportToCSV } from "@/components/data-table/utils/export-utils"
 
 import { ComplaintAggregatesBar } from "./ComplaintAggregatesBar"
 
@@ -50,7 +53,6 @@ export default function ComplaintDataTable() {
     hasInvalidDateRange,
   } = useComplaintQueryState()
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [newComplaintsCount, setNewComplaintsCount] = useState(0)
 
   const { data: labels = [] } = useLabels({ with_counts: false })
@@ -95,7 +97,7 @@ export default function ComplaintDataTable() {
   const complaintSocketSources = useMemo(() => ["all"], [])
 
   const { isConnected, requestUpdate } = useComplaintsSocket({
-    enabled: notificationsEnabled,
+    enabled: true,
     onNewComplaint: bumpNewComplaints,
     sources: complaintSocketSources,
     userId: user?.userId,
@@ -166,15 +168,6 @@ export default function ComplaintDataTable() {
     requestUpdate()
   }, [refetch, requestUpdate])
 
-  const toggleNotifications = useCallback(() => {
-    setNotificationsEnabled((previous) => !previous)
-    if (!notificationsEnabled) {
-      if (typeof Notification !== "undefined" && Notification.permission === "default") {
-        Notification.requestPermission()
-      }
-    }
-  }, [notificationsEnabled])
-
   const toggleStatusChip = useCallback(
     (statusKey: string) => {
       const newStatuses = dashboardFilters.selectedStatuses.includes(statusKey)
@@ -208,12 +201,36 @@ export default function ComplaintDataTable() {
     resetFilters()
   }, [resetFilters])
 
+  const handleExportCsv = useCallback(() => {
+    const rows = (data?.data ?? []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      status: COMPLAINT_STATUS_LABELS[c.status as keyof typeof COMPLAINT_STATUS_LABELS] ?? c.status,
+      platform: complaintPlatformLabelRu(c.platform),
+      labels: (c.labels ?? []).map((l) => l.name).join("; "),
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }))
+    const ok = exportToCSV(rows, "proposals_export.csv", ["id","name","description","status","platform","labels","createdAt","updatedAt"], {
+      id: "ID",
+      name: "Название",
+      description: "Описание",
+      status: "Статус",
+      platform: "Платформа",
+      labels: "Метки",
+      createdAt: "Создано",
+      updatedAt: "Обновлено",
+    })
+    if (!ok) toast.error("Нет данных для экспорта")
+  }, [data])
+
   if (error && !hasInvalidDateRange) {
-    const message = error instanceof Error ? error.message : "Не удалось загрузить жалобы."
+    const message = error instanceof Error ? error.message : "Не удалось загрузить предложения."
     return (
       <div className="container mx-auto py-10">
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-center text-sm text-destructive">
-          Ошибка загрузки жалоб: {message}
+          Ошибка загрузки предложений: {message}
         </div>
       </div>
     )
@@ -224,7 +241,7 @@ export default function ComplaintDataTable() {
       <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-2xl font-bold">Таблица жалоб</h3>
+            <h3 className="text-2xl font-bold">Таблица предложений</h3>
             {newComplaintsCount > 0 && (
               <span className="animate-pulse text-sm font-medium text-destructive">
                 +{newComplaintsCount} новых
@@ -238,11 +255,7 @@ export default function ComplaintDataTable() {
               ) : (
                 <WifiOff className="h-4 w-4 text-muted-foreground" />
               )}
-              {notificationsEnabled
-                ? isConnected
-                  ? "Онлайн-канал подключён"
-                  : "Онлайн-канал переподключается"
-                : "Онлайн-канал выключен"}
+              {isConnected ? "Онлайн-канал подключён" : "Онлайн-канал переподключается"}
             </span>
             {dataUpdatedAt > 0 && (
               <span>
@@ -261,24 +274,15 @@ export default function ComplaintDataTable() {
           <Button variant="outline" size="sm" asChild>
             <Link href="/dashboard/labels">Метки</Link>
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled
-            title="PDF-отчёт: ожидается контракт API"
-            className="gap-2"
-          >
-            <FileDown className="h-4 w-4" />
-            Отчёт PDF
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExportCsv}>
+            <Download className="h-4 w-4" />
+            Скачать CSV
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleNotifications}
-            className="flex items-center gap-2"
-          >
-            {notificationsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-            {notificationsEnabled ? "Уведомления включены" : "Уведомления выключены"}
+          <Button variant="outline" size="sm" className="gap-2" asChild>
+            <Link href="/dashboard/report">
+              <FileDown className="h-4 w-4" />
+              Отчёт PDF
+            </Link>
           </Button>
 
           <Button
