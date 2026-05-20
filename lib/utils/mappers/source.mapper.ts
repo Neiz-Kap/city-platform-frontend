@@ -4,12 +4,13 @@ import type { EmailMonitoringConfig, PlatformGroup } from "@/lib/types/complaint
 
 // Zod schemas for strict backend validation
 const VkGroupBackendSchema = z.object({
-  id: z.number(),
+  id: z.coerce.number(),
   name: z.string(),
-  url: z.string(),
-  is_monitoring: z.union([z.boolean(), z.number()]),
-  userId: z.number().optional(),
-  user_id: z.number().optional(),
+  url: z.string().optional().default(""),
+  is_monitoring: z.union([z.boolean(), z.number()]).optional().default(false),
+  userId: z.number().nullish(),
+  user_id: z.number().nullish(),
+  is_deleted: z.boolean().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 })
@@ -144,7 +145,7 @@ export class SourceMapper {
   }
 
   static vkGroupToDomainMany(backends: unknown[]): PlatformGroup[] {
-    return vkGroupMapper.listToDomain(backends)
+    return vkGroupMapper.listToDomainSafe(backends)
   }
 
   static vkGroupToResponse(data: { url: string; name: string }): Record<string, unknown> {
