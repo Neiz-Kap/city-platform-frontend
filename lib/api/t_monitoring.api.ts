@@ -4,21 +4,21 @@ import { api, apiRequest } from "."
 
 export class MonitoringAPI {
   static startVKMonitoring() {
-    return apiRequest(api.post("monitoring/vk/start").json<unknown>())
+    return apiRequest(api.post("api/v1/monitoring/vk/start").json<unknown>())
   }
 
   static stopVKMonitoring() {
-    return apiRequest(api.post("monitoring/vk/stop").json<unknown>())
+    return apiRequest(api.post("api/v1/monitoring/vk/stop").json<unknown>())
   }
 
   static getVKMonitoringStatus() {
-    return apiRequest(api.get("monitoring/vk/status").json<unknown>())
+    return apiRequest(api.get("api/v1/monitoring/vk/status").json<unknown>())
   }
 
   static createEmailMonitoring(config: EmailMonitoringConfig) {
     return apiRequest(
       api
-        .post("monitoring/email", {
+        .post("api/v1/monitoring/email", {
           json: config,
         })
         .json<unknown>(),
@@ -26,17 +26,17 @@ export class MonitoringAPI {
   }
 
   static startEmailMonitoring(id: string) {
-    return apiRequest(api.post(`monitoring/email/${id}/start`).json<unknown>())
+    return apiRequest(api.post(`api/v1/monitoring/email/${id}/start`).json<unknown>())
   }
 
   static stopEmailMonitoring(id: string) {
-    return apiRequest(api.post(`monitoring/email/${id}/stop`).json<unknown>())
+    return apiRequest(api.post(`api/v1/monitoring/email/${id}/stop`).json<unknown>())
   }
 
   static updateEmailMonitoring(id: string, update: Partial<EmailMonitoringConfig>) {
     return apiRequest(
       api
-        .put(`monitoring/email/${id}`, {
+        .put(`api/v1/monitoring/email/${id}`, {
           json: update,
         })
         .json<unknown>(),
@@ -44,11 +44,11 @@ export class MonitoringAPI {
   }
 
   static async deleteEmailMonitoring(id: string) {
-    await apiRequest(api.delete(`monitoring/email/${id}`))
+    await apiRequest(api.delete(`api/v1/monitoring/email/${id}`))
     return { success: true }
   }
 
   static getMonitoringStatus() {
-    return apiRequest(api.get("monitoring/status").json<unknown>())
+    return apiRequest(api.get("api/v1/monitoring/status").json<unknown>())
   }
 }

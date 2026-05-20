@@ -12,14 +12,14 @@ const MAX_LABELS_PER_ACCOUNT = 10
 export { MAX_LABELS_PER_ACCOUNT }
 
 export class LabelAPI {
-  private static prefix = "labels"
+  private static prefix = "api/v1/labels"
 
   static async list(options?: { with_counts?: boolean }) {
     const searchParams: Record<string, string> = {}
     if (options?.with_counts) searchParams.with_counts = "1"
 
     const response = await apiRequest(api.get(this.prefix, { searchParams }).json<unknown[]>())
-    return labelMapper.listToDomain(response)
+    return labelMapper.toDomainMany(response)
   }
 
   static async create(body: CreateLabelRequest) {

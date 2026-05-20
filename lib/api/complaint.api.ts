@@ -39,7 +39,7 @@ function normalizePaginated(raw: PaginatedData<unknown>): PaginatedData<Complain
 }
 
 export class ComplaintAPI {
-  private static prefix = "complaints"
+  private static prefix = "api/v1/complaints"
 
   static async getAll(params: ComplaintQueryParams = {}) {
     const response = await apiRequest(
@@ -81,13 +81,13 @@ export class ComplaintAPI {
         .get(`${this.prefix}/source/${sourcePlatform}`)
         .json<{ source: string; count: number; complaints: unknown[] }>(),
     )
-    return { ...response, complaints: complaintMapper.listToDomain(response.complaints) }
+    return { ...response, complaints: complaintMapper.toDomainMany(response.complaints) }
   }
 
   static async create(complaintData: CreateComplaintRequest) {
     const raw = await apiRequest(
       api
-        .post("complaint", { json: complaintMapper.toResponse(complaintData) })
+        .post("api/v1/complaint", { json: complaintMapper.toResponse(complaintData) })
         .json<Record<string, unknown>>(),
     )
     if (typeof raw.id === "number" && raw.name == null) {
@@ -98,21 +98,21 @@ export class ComplaintAPI {
 
   static update(id: string | number, body: UpdateComplaintRequest) {
     return apiRequest(
-      api.put(`complaint/${id}`, { json: complaintMapper.updateToResponse(body) }).json<unknown>(),
+      api.put(`api/v1/complaint/${id}`, { json: complaintMapper.updateToResponse(body) }).json<unknown>(),
     )
   }
 
   static async updateLabels(id: string | number, label_ids: number[]) {
     const response = await apiRequest(
       api
-        .put(`complaint/${id}/labels`, { json: { label_ids } })
+        .put(`api/v1/complaint/${id}/labels`, { json: { label_ids } })
         .json<{ message?: string; labels: Complaint["labels"] }>(),
     )
     return { ...response, labels: response.labels ?? [] }
   }
 
   static async delete(id: string | number) {
-    await apiRequest(api.delete(`complaint/${id}`))
+    await apiRequest(api.delete(`api/v1/complaint/${id}`))
     return { success: true }
   }
 }
@@ -120,7 +120,7 @@ export class ComplaintAPI {
 export const ComplaintStatsApi = {
   async getStats(params: StatsQueryParams) {
     return apiRequest(
-      api.post("complaints/statistics", { json: params }).json<PaginatedData<StatItem>>(),
+      api.post("api/v1/complaints/statistics", { json: params }).json<PaginatedData<StatItem>>(),
     )
   },
 }

@@ -6,30 +6,30 @@ import { PlatformGroup, PlatformSource, SourcePlatform } from "../types/complain
 export class SourceService {
   // --- VK Groups ---
   static async getVkGroups(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(api.get("vk/groups").json<unknown[]>())
+    const data = await apiRequest(api.get("api/v1/vk/groups").json<unknown[]>())
     return SourceMapper.vkGroupListToDomain(data)
   }
 
   static async updateVkGroupStatus(id: string, action: "start" | "stop"): Promise<void> {
-    await apiRequest(api.post(`vk/groups/${id}/${action}`))
+    await apiRequest(api.post(`api/v1/vk/groups/${id}/${action}`))
   }
 
   static async deleteVkGroup(id: string): Promise<void> {
-    await apiRequest(api.delete(`vk/groups/${id}`))
+    await apiRequest(api.delete(`api/v1/vk/groups/${id}`))
   }
 
   // --- Email Monitoring ---
   static async getEmailParsers(): Promise<PlatformGroup[]> {
-    const data = await apiRequest(api.get("monitoring/email").json<unknown[]>())
+    const data = await apiRequest(api.get("api/v1/monitoring/email").json<unknown[]>())
     return SourceMapper.emailMonitoringToDomainMany(data)
   }
 
   static async updateEmailParserStatus(id: string, action: "start" | "stop"): Promise<void> {
-    await apiRequest(api.post(`monitoring/email/${id}/${action}`))
+    await apiRequest(api.post(`api/v1/monitoring/email/${id}/${action}`))
   }
 
   static async deleteEmailParser(id: string): Promise<void> {
-    await apiRequest(api.delete(`monitoring/email/${id}`))
+    await apiRequest(api.delete(`api/v1/monitoring/email/${id}`))
   }
 
   // --- Unified Methods ---
