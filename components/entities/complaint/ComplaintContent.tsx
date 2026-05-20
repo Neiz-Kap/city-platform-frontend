@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import dynamic from "next/dynamic"
 import { toast } from "sonner"
 
 import { API_BASE_URL } from "@/lib/api"
 import { useUpdateComplaint, useUpdateComplaintLabels } from "@/lib/hooks/useComplaints"
+
+const ComplaintMap = dynamic(() => import("@/components/ui/ComplaintMap"), { ssr: false })
 import { ComplaintStatus } from "@/lib/types/complaint-status.type"
 import { Complaint } from "@/lib/types/complaint.type"
 import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
@@ -55,7 +57,6 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
 
   const mediaUrl = resolveMediaUrl(complaint.url || complaint.source_url)
   const busy = updateComplaint.isPending || updateLabels.isPending
-  const [failedMediaUrl, setFailedMediaUrl] = useState<string | null>(null)
 
   return (
     <div className="space-y-6">
@@ -66,36 +67,19 @@ export function ComplaintContent({ complaint }: ComplaintContentProps) {
 
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="border rounded-lg p-6 bg-muted/50 min-h-64 flex items-center justify-center">
-            {!mediaUrl || failedMediaUrl === mediaUrl ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="96"
-                height="96"
-                viewBox="0 0 96 96"
-                fill="none"
-                className="text-muted-foreground/40"
-              >
+          {/* OpenStreetMap (картинка-заглушка закомментирована ниже) */}
+          <div className="overflow-hidden rounded-lg border">
+            <ComplaintMap />
+          </div>
+          {/* {!mediaUrl || failedMediaUrl === mediaUrl ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" fill="none" className="text-muted-foreground/40">
                 <rect x="4" y="12" width="88" height="72" rx="6" stroke="currentColor" strokeWidth="4" />
                 <circle cx="30" cy="36" r="10" stroke="currentColor" strokeWidth="4" />
-                <polyline
-                  points="4,76 32,44 54,64 70,48 92,76"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
+                <polyline points="4,76 32,44 54,64 70,48 92,76" stroke="currentColor" strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
               </svg>
             ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={mediaUrl}
-                alt="Изображение проблемы"
-                className="max-w-full h-auto rounded"
-                onError={() => setFailedMediaUrl(mediaUrl ?? null)}
-              />
-            )}
-          </div>
+              <img src={mediaUrl} alt="Изображение проблемы" className="max-w-full h-auto rounded" onError={() => setFailedMediaUrl(mediaUrl ?? null)} />
+            )} */}
 
           <div className="border rounded-lg p-4">
             <h3 className="text-sm font-medium text-muted-foreground mb-2">Источник</h3>
