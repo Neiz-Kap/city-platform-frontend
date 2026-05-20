@@ -1,5 +1,7 @@
 import { ThemeProvider } from "next-themes"
 import { cookies } from "next/headers"
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages } from "next-intl/server"
 import NextTopLoader from "nextjs-toploader"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 import { type ReactNode } from "react"
@@ -21,6 +23,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: ReactNode
 }>) {
+  const messages = await getMessages()
   const cookieStore = await cookies()
   const themeSettings = {
     preset: (cookieStore.get("theme_preset")?.value ?? DEFAULT_THEME.preset) as ThemeType["preset"],
@@ -37,7 +40,7 @@ export default async function RootLayout({
   )
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ru" suppressHydrationWarning>
       <head>
         <script async crossOrigin="anonymous" src="https://tweakcn.com/live-preview.min.js" />
       </head>
@@ -46,6 +49,7 @@ export default async function RootLayout({
         className={cn("bg-background group/layout font-sans", fontVariables)}
         {...bodyAttributes}
       >
+        <NextIntlClientProvider messages={messages} locale="ru">
         <Providers>
           <ThemeProvider
             attribute="class"
@@ -70,6 +74,7 @@ export default async function RootLayout({
             </NuqsAdapter>
           </ThemeProvider>
         </Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   )
