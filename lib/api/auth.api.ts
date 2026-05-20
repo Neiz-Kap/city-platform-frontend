@@ -107,11 +107,26 @@ export class AuthAPI {
   }
 
   /**
-   * Logout - client-side only, clears stored token
+   * POST /api/v1/auth/refresh
+   * Exchange a refresh token for a new access + refresh token pair
+   */
+  static async refresh(refreshToken: string): Promise<LoginResponse> {
+    const response = await apiRequest(
+      api
+        .post(`${this.prefix}/refresh`, { json: { refreshToken } })
+        .json<{ success: true; data: LoginResponse }>(),
+    )
+    return response.data
+  }
+
+  /**
+   * Logout - client-side only, clears stored tokens
    */
   static logout(): void {
     if (typeof window !== "undefined") {
       localStorage.removeItem("accessToken")
+      localStorage.removeItem("refreshToken")
+      document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax"
     }
   }
 }

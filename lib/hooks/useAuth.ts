@@ -5,7 +5,7 @@ import { toast } from "sonner"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { getAccessToken, removeAccessToken, setAccessToken } from "@/lib/api"
+import { getAccessToken, removeAccessToken, removeRefreshToken, setAccessToken, setRefreshToken } from "@/lib/api"
 import { AuthAPI } from "@/lib/api/auth.api"
 import { getErrorMessage } from "@/lib/api/errors"
 import type { LoginRequest, RegisterRequest, User } from "@/lib/types/auth.types"
@@ -84,8 +84,8 @@ export function useAuth() {
   const loginMutation = useMutation({
     mutationFn: async (data: LoginRequest) => {
       const response = await AuthAPI.login(data)
-      // Store the access token
       setAccessToken(response.accessToken)
+      setRefreshToken(response.refreshToken)
       return response
     },
     onSuccess: async () => {
@@ -103,8 +103,8 @@ export function useAuth() {
   // Mutation: Logout user
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // Clear token on client side
       removeAccessToken()
+      removeRefreshToken()
     },
     onSuccess: () => {
       // Clear user data from cache
