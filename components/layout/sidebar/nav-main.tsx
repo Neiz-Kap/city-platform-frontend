@@ -1,6 +1,6 @@
 "use client"
 
-import { FileDown, ListOrdered, Radio, Tags, type LucideIcon } from "lucide-react"
+import { BellIcon, FileDown, ListOrdered, Radio, Tags, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -25,6 +25,7 @@ export const flatNavItems: FlatNavItem[] = [
   { title: "Жалобы", href: "/dashboard/complaint", icon: ListOrdered },
   { title: "Источники жалоб", href: "/dashboard/source", icon: Radio },
   { title: "Метки", href: "/dashboard/labels", icon: Tags },
+  { title: "Уведомления", href: "/dashboard/notifications", icon: BellIcon },
   { title: "Отчёт PDF", href: "/dashboard/report", icon: FileDown },
   // { title: "Проблемы", href: "/dashboard/nlp/problem", icon: AlertCircle },
 ]

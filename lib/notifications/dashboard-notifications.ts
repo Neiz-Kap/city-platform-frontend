@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query"
 import type { Socket } from "socket.io-client"
 import { toast } from "sonner"
 
@@ -5,6 +6,7 @@ import { pushDashboardNotification } from "./notification-center-store"
 
 export type DashboardNotificationContext = {
   onNewComplaint?: (payload: { id?: number; name?: string }) => void
+  queryClient?: QueryClient
 }
 
 type ServerEventHandler = (
@@ -41,6 +43,33 @@ export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
     }
 
     ctx.onNewComplaint?.(complaint)
+  },
+
+  new_notification: (_socket, payload, ctx) => {
+    const notification = payload as {
+      id?: number
+      complaintId?: number
+      complaint?: { id?: number; name?: string }
+      createdAt?: string
+    }
+
+    pushDashboardNotification({
+      id: String(notification.id ?? crypto.randomUUID()),
+      title: "Обнаружена новая проблема!",
+      description: (notification.complaint?.name ?? "").slice(0, 55),
+      createdAt: notification.createdAt ?? new Date().toISOString(),
+      href:
+        typeof notification.complaintId === "number"
+          ? `/dashboard/complaint/${notification.complaintId}`
+          : undefined,
+      kind: "complaint",
+    })
+
+    ctx.queryClient?.invalidateQueries({ queryKey: ["notifications"] })
+
+    toast.info("Обнаружена новая проблема!", {
+      description: (notification.complaint?.name ?? "").slice(0, 55),
+    })
   },
 }
 

@@ -126,15 +126,6 @@ export default function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem asChild>
-            <a href="/dashboard/profile" className="flex items-center gap-2 cursor-pointer">
-              <BadgeCheck className="h-4 w-4" />
-              Профиль
-            </a>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => logout()}
           className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
