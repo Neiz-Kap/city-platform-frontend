@@ -1,33 +1,33 @@
-"use client"
+'use client'
 
-import { MoreHorizontal, Plus, Radio, Trash2 } from "lucide-react"
-import dynamic from "next/dynamic"
-import { useState } from "react"
-import { toast } from "sonner"
+import { ExternalLink, MoreHorizontal, Plus, Radio, Trash2 } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+} from '@/components/ui/accordion'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Switch } from "@/components/ui/switch"
-import { getErrorMessage } from "@/lib/api/errors"
-import { useSourceManagement } from "@/lib/hooks/useSourceManagement"
-import { PlatformGroup, PlatformSource, SourcePlatform } from "@/lib/types/complaint.type"
+} from '@/components/ui/dropdown-menu'
+import { Switch } from '@/components/ui/switch'
+import { getErrorMessage } from '@/lib/api/errors'
+import { useSourceManagement } from '@/lib/hooks/useSourceManagement'
+import { PlatformGroup, PlatformSource, SourcePlatform } from '@/lib/types/complaint.type'
 
-const VkDialog = dynamic(() => import("@/components/modals/create-vk-modal"), {
+const VkDialog = dynamic(() => import('@/components/modals/create-vk-modal'), {
   ssr: false,
 })
-const EmailDialog = dynamic(() => import("@/components/modals/create-email-modal"), { ssr: false })
+const EmailDialog = dynamic(() => import('@/components/modals/create-email-modal'), { ssr: false })
 
 interface PlatformCardActions {
   deleteGroup: (group: PlatformGroup) => void
@@ -46,7 +46,21 @@ interface GroupItemProps {
 function GroupItem({ group, isBusy, onDelete, onToggle }: GroupItemProps) {
   return (
     <li className="flex items-center justify-between rounded bg-gray-50 p-3 transition hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700">
-      <span className="flex-1 truncate">{group.name}</span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate">{group.name}</span>
+        {group.url && (
+          <a
+            href={group.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-primary flex items-center gap-1 truncate text-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="h-3 w-3 shrink-0" />
+            {group.url}
+          </a>
+        )}
+      </div>
       <div className="ml-4 flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -88,19 +102,19 @@ function PlatformCard({
 
   const getAddButton = () => {
     switch (platform.platform) {
-      case "vk":
+      case 'vk':
         return (
           <Button variant="outline" size="sm" onClick={() => setVkDialogOpen(true)}>
             Добавить источник
           </Button>
         )
-      case "email":
+      case 'email':
         return (
           <Button variant="outline" size="sm" onClick={() => setEmailDialogOpen(true)}>
             Добавить почту
           </Button>
         )
-      case "max":
+      case 'max':
         return (
           <Button variant="outline" size="sm" disabled title="Интеграция в разработке">
             Добавить источник
@@ -204,7 +218,7 @@ export default function PlatformSourcePage() {
       { id: group.id, platform: group.platform },
       {
         onError: (error) => {
-          toast.error(getErrorMessage(error, "Не удалось удалить группу."))
+          toast.error(getErrorMessage(error, 'Не удалось удалить группу.'))
         },
         onSuccess: () => {
           toast.success(`Группа «${group.name}» успешно удалена.`)
@@ -226,12 +240,12 @@ export default function PlatformSourcePage() {
           toast.error(
             getErrorMessage(
               error,
-              `Не удалось ${enabled ? "включить" : "выключить"} группу «${groupName}».`,
+              `Не удалось ${enabled ? 'включить' : 'выключить'} группу «${groupName}».`,
             ),
           )
         },
         onSuccess: () => {
-          toast.success(`Группа «${groupName}» ${enabled ? "включена" : "выключена"}`)
+          toast.success(`Группа «${groupName}» ${enabled ? 'включена' : 'выключена'}`)
         },
       },
     )
@@ -245,19 +259,19 @@ export default function PlatformSourcePage() {
           toast.error(
             getErrorMessage(
               error,
-              `Не удалось ${enabled ? "включить" : "выключить"} все группы ${label}.`,
+              `Не удалось ${enabled ? 'включить' : 'выключить'} все группы ${label}.`,
             ),
           )
         },
         onSuccess: () => {
-          toast.success(`Все группы ${label} ${enabled ? "включены" : "выключены"}`)
+          toast.success(`Все группы ${label} ${enabled ? 'включены' : 'выключены'}`)
         },
       },
     )
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-6 md:p-8">
+    <>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">Источники предложений</h1>
@@ -294,9 +308,9 @@ export default function PlatformSourcePage() {
                 </div>
                 <CardTitle className="text-xl">Источники не подключены</CardTitle>
                 <CardDescription className="max-w-md mx-auto">
-                  Для начала мониторинга предложений необходимо добавить источники. Выберите платформу
-                  ниже и нажмите «Добавить источник», чтобы подключить группы ВКонтакте или почтовые
-                  ящики для отслеживания.
+                  Для начала мониторинга предложений необходимо добавить источники. Выберите
+                  платформу ниже и нажмите «Добавить источник», чтобы подключить группы ВКонтакте
+                  или почтовые ящики для отслеживания.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -315,6 +329,6 @@ export default function PlatformSourcePage() {
           ))}
         </>
       )}
-    </div>
+    </>
   )
 }

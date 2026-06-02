@@ -7,10 +7,11 @@ const VkGroupBackendSchema = z.object({
   id: z.coerce.number(),
   name: z.string(),
   url: z.string().optional().default(""),
+  is_active: z.union([z.boolean(), z.number()]).optional().default(false),
   is_monitoring: z.union([z.boolean(), z.number()]).optional().default(false),
   userId: z.number().nullish(),
   user_id: z.number().nullish(),
-  is_deleted: z.boolean().optional(),
+  is_deleted: z.union([z.boolean(), z.number()]).optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 })
@@ -79,7 +80,12 @@ class VkGroupMapper extends SourceBaseMapper<VkGroupBackend> {
     return {
       id: data.id.toString(),
       name: data.name,
-      enabled: data.is_monitoring === true || data.is_monitoring === 1,
+      url: data.url || undefined,
+      enabled:
+        data.is_monitoring === true ||
+        data.is_monitoring === 1 ||
+        data.is_active === true ||
+        data.is_active === 1,
       platform: "vk",
       userId: data.userId ?? data.user_id ?? 0,
     }

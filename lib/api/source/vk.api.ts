@@ -6,9 +6,9 @@ import { PlatformGroup } from "../../types/complaint.type"
 export const VkApi = {
   async createGroup(data: { url: string; name: string }): Promise<PlatformGroup> {
     const response = await apiRequest(
-      api.post("api/v1/vk/groups", { json: SourceMapper.vkGroupToResponse(data) }).json<unknown>(),
+      api.post("api/v1/vk/groups", { json: SourceMapper.vkGroupToResponse(data) }).json<{ group?: unknown }>(),
     )
-    return SourceMapper.vkGroupToDomain(response)
+    return SourceMapper.vkGroupToDomain(response.group ?? response)
   },
 
   async getGroups(): Promise<PlatformGroup[]> {

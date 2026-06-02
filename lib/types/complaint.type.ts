@@ -36,6 +36,7 @@ export interface Complaint extends ExportableData {
 export interface PlatformGroup {
   id: string
   name: string
+  url?: string
   enabled: boolean
   platform: SourcePlatform
   userId: number
