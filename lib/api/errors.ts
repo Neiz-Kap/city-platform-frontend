@@ -27,6 +27,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
+function isZodError(error: unknown): error is Error {
+  return (
+    error instanceof Error &&
+    error.constructor.name === "ZodError" &&
+    "issues" in error
+  )
+}
+
 function firstString(...values: unknown[]) {
   return values.find(
     (value): value is string => typeof value === "string" && value.trim().length > 0,
@@ -39,6 +47,11 @@ async function parseErrorPayload(response: Response): Promise<unknown> {
   try {
     if (contentType.includes("application/json")) {
       return await response.clone().json()
+    }
+
+    // Don't expose raw HTML (e.g. Next.js 404 page) as an error message
+    if (contentType.includes("text/html")) {
+      return undefined
     }
 
     const text = await response.clone().text()
@@ -96,6 +109,10 @@ export async function normalizeApiError(error: unknown): Promise<ApiError> {
     return error
   }
 
+  if (isZodError(error)) {
+    return new ApiError("Ошибка формата данных от сервера.", { cause: error })
+  }
+
   if (isTimeoutError(error)) {
     return new ApiError("Сервер не ответил вовремя. Повторите попытку позже.", {
       cause: error,
@@ -150,6 +167,10 @@ export async function normalizeApiError(error: unknown): Promise<ApiError> {
 export function getErrorMessage(error: unknown, fallback = "Произошла непредвиденная ошибка.") {
   if (error instanceof ApiError) {
     return error.message
+  }
+
+  if (isZodError(error)) {
+    return "Ошибка формата данных от сервера."
   }
 
   if (error instanceof Error && error.message.trim().length > 0) {
