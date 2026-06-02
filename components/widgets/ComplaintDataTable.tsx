@@ -228,7 +228,7 @@ export default function ComplaintDataTable() {
   if (error && !hasInvalidDateRange) {
     const message = error instanceof Error ? error.message : "Не удалось загрузить предложения."
     return (
-      <div className="container mx-auto py-10">
+      <div className="w-full py-10">
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-center text-sm text-destructive">
           Ошибка загрузки предложений: {message}
         </div>
@@ -237,7 +237,7 @@ export default function ComplaintDataTable() {
   }
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="w-full py-6">
       <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">

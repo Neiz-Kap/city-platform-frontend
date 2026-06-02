@@ -1,17 +1,17 @@
-"use client"
+'use client'
 
-import { formatDistanceToNow } from "date-fns"
-import { ru } from "date-fns/locale"
-import { BellIcon, ChevronLeftIcon, ChevronRightIcon, Clock3Icon, SearchIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { formatDistanceToNow } from 'date-fns'
+import { ru } from 'date-fns/locale'
+import { BellIcon, ChevronLeftIcon, ChevronRightIcon, Clock3Icon, SearchIcon } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useDebounce } from "@/lib/hooks/useDebounce"
-import { useMarkSeen, useNotificationsPage } from "@/lib/hooks/useNotifications"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useDebounce } from '@/lib/hooks/useDebounce'
+import { useMarkSeen, useNotificationsPage } from '@/lib/hooks/useNotifications'
+import { cn } from '@/lib/utils'
 
 function formatNotificationTime(createdAt: string) {
   return formatDistanceToNow(new Date(createdAt), {
@@ -23,7 +23,7 @@ function formatNotificationTime(createdAt: string) {
 export function NotificationsPageClient() {
   const router = useRouter()
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState('')
   const debouncedSearch = useDebounce(search, 300)
   const markSeen = useMarkSeen()
 
@@ -55,7 +55,7 @@ export function NotificationsPageClient() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6">
+    <>
       {/* Header */}
       <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Уведомления</h1>
@@ -110,8 +110,8 @@ export function NotificationsPageClient() {
                   key={item.id}
                   type="button"
                   className={cn(
-                    "hover:bg-muted/50 flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-colors",
-                    isUnread && "bg-primary/5",
+                    'hover:bg-muted/50 flex w-full cursor-pointer items-start gap-3 px-4 py-3 text-left transition-colors',
+                    isUnread && 'bg-primary/5',
                   )}
                   onClick={() => handleNotificationClick(item.id, item.complaintId)}
                 >
@@ -168,6 +168,6 @@ export function NotificationsPageClient() {
           </Button>
         </div>
       )}
-    </div>
+    </>
   )
 }

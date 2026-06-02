@@ -136,7 +136,7 @@ export default function ReportPage() {
   }, [startDate, endDate])
 
   return (
-    <section className="w-full max-w-5xl space-y-6">
+    <section className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Отчёт PDF</h1>
         <p className="text-muted-foreground mt-1 text-sm">

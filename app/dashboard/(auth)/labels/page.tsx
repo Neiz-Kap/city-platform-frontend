@@ -1,19 +1,19 @@
-"use client"
+'use client'
 
-import { ArrowLeft, Tags, Trash2 } from "lucide-react"
-import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
-import { toast } from "sonner"
+import { ArrowLeft, Tags, Trash2 } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { MAX_LABELS_PER_ACCOUNT } from "@/lib/api/labels.api"
-import { useCreateLabel, useDeleteLabel, useLabels, useUpdateLabel } from "@/lib/hooks/useLabels"
-import type { DashboardLabel } from "@/lib/types/complaint-label.type"
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { MAX_LABELS_PER_ACCOUNT } from '@/lib/api/labels.api'
+import { useCreateLabel, useDeleteLabel, useLabels, useUpdateLabel } from '@/lib/hooks/useLabels'
+import type { DashboardLabel } from '@/lib/types/complaint-label.type'
 
-const DEFAULT_COLOR = "#6B7280"
+const DEFAULT_COLOR = '#6B7280'
 
 function ColorField({
   disabled,
@@ -74,14 +74,14 @@ function LabelRow({ label }: { label: DashboardLabel }) {
 
   const handleSave = () => {
     if (!name.trim()) {
-      toast.error("Введите название метки")
+      toast.error('Введите название метки')
       return
     }
     updateLabel.mutate(
       { id: label.id, body: { name: name.trim(), color } },
       {
-        onSuccess: () => toast.success("Метка сохранена"),
-        onError: () => toast.error("Не удалось сохранить метку"),
+        onSuccess: () => toast.success('Метка сохранена'),
+        onError: () => toast.error('Не удалось сохранить метку'),
       },
     )
   }
@@ -89,8 +89,8 @@ function LabelRow({ label }: { label: DashboardLabel }) {
   const handleDelete = () => {
     if (!confirm(`Удалить метку «${label.name}»?`)) return
     deleteLabel.mutate(label.id, {
-      onSuccess: () => toast.success("Метка удалена"),
-      onError: () => toast.error("Не удалось удалить метку"),
+      onSuccess: () => toast.success('Метка удалена'),
+      onError: () => toast.error('Не удалось удалить метку'),
     })
   }
 
@@ -132,7 +132,7 @@ export default function LabelsPage() {
   const { data: labels = [], isLoading } = useLabels({ with_counts: true })
   const createLabel = useCreateLabel()
 
-  const [newName, setNewName] = useState("")
+  const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState(DEFAULT_COLOR)
 
   const atLimit = labels.length >= MAX_LABELS_PER_ACCOUNT
@@ -143,24 +143,24 @@ export default function LabelsPage() {
       return
     }
     if (!newName.trim()) {
-      toast.error("Введите название метки")
+      toast.error('Введите название метки')
       return
     }
     createLabel.mutate(
       { name: newName.trim(), color: newColor },
       {
         onSuccess: () => {
-          toast.success("Метка создана")
-          setNewName("")
+          toast.success('Метка создана')
+          setNewName('')
           setNewColor(DEFAULT_COLOR)
         },
-        onError: () => toast.error("Не удалось создать метку (возможно, имя уже используется)"),
+        onError: () => toast.error('Не удалось создать метку (возможно, имя уже используется)'),
       },
     )
   }
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-8">
+    <div className="">
       <Button variant="ghost" size="sm" className="mb-6" asChild>
         <Link href="/dashboard/complaint">
           <ArrowLeft className="mr-2 h-4 w-4" />К списку предложений
@@ -169,8 +169,8 @@ export default function LabelsPage() {
 
       <h1 className="mb-2 text-2xl font-bold">Метки дашборда</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт. Название и цвет отображаются в таблице предложений и
-        в карточке предложения.
+        До {MAX_LABELS_PER_ACCOUNT} меток на аккаунт. Название и цвет отображаются в таблице
+        предложений и в карточке предложения.
       </p>
 
       <div className="mb-8 space-y-3 rounded-lg border bg-muted/20 p-4">

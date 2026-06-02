@@ -1,14 +1,14 @@
-"use client"
+'use client'
 
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { notFound, useParams, useRouter } from "next/navigation"
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
+import { notFound, useParams, useRouter } from 'next/navigation'
 
-import { ComplaintContent } from "@/components/entities/complaint/ComplaintContent"
-import { ComplaintDetailSkeleton } from "@/components/entities/complaint/ComplaintDetailSkeleton"
-import { Button } from "@/components/ui/button"
-import { ApiError, getErrorMessage } from "@/lib/api/errors"
-import { useComplaint } from "@/lib/hooks/useComplaints"
+import { ComplaintContent } from '@/components/entities/complaint/ComplaintContent'
+import { ComplaintDetailSkeleton } from '@/components/entities/complaint/ComplaintDetailSkeleton'
+import { Button } from '@/components/ui/button'
+import { ApiError, getErrorMessage } from '@/lib/api/errors'
+import { useComplaint } from '@/lib/hooks/useComplaints'
 
 export default function ComplaintDetailPage() {
   const { complaintId } = useParams<{ complaintId: string }>()
@@ -25,17 +25,17 @@ export default function ComplaintDetailPage() {
 
   if (error && !complaint) {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8">
+      <div className="">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => {
-            if (typeof window !== "undefined" && window.history.length > 1) {
+            if (typeof window !== 'undefined' && window.history.length > 1) {
               router.back()
               return
             }
 
-            router.push("/dashboard/complaint")
+            router.push('/dashboard/complaint')
           }}
           className="mb-6"
         >
@@ -46,11 +46,11 @@ export default function ComplaintDetailPage() {
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
           <p className="font-medium">Не удалось открыть карточку предложения.</p>
           <p className="mt-2 text-destructive/80">
-            {getErrorMessage(error, "Попробуйте обновить страницу или повторить попытку позже.")}
+            {getErrorMessage(error, 'Попробуйте обновить страницу или повторить попытку позже.')}
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button onClick={() => void refetch()} disabled={isRefetching}>
-              {isRefetching ? "Повторяем запрос…" : "Повторить"}
+              {isRefetching ? 'Повторяем запрос…' : 'Повторить'}
             </Button>
             <Button variant="outline" asChild>
               <Link href="/dashboard/complaint">К списку предложений</Link>
@@ -66,17 +66,17 @@ export default function ComplaintDetailPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8">
+    <div className="">
       <Button
         variant="ghost"
         size="sm"
         onClick={() => {
-          if (typeof window !== "undefined" && window.history.length > 1) {
+          if (typeof window !== 'undefined' && window.history.length > 1) {
             router.back()
             return
           }
 
-          router.push("/dashboard/complaint")
+          router.push('/dashboard/complaint')
         }}
         className="mb-6"
       >
