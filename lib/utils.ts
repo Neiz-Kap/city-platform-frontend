@@ -1,6 +1,6 @@
-import { clsx, type ClassValue } from "clsx"
-import { Metadata } from "next"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx'
+import { Metadata } from 'next'
+import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -16,7 +16,7 @@ export function generateMeta({
   canonical: string
 }): Metadata {
   return {
-    title: `${title} - ГорПульс`,
+    title: `${title} - ГрадПульс`,
     description: description,
     // metadataBase: new URL(`https://shadcnuikit.com`), // TODO: add actual base url
     alternates: {

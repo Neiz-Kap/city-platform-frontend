@@ -1,17 +1,17 @@
-import { format, isValid, parseISO } from "date-fns"
-import { ru } from "date-fns/locale"
+import { format, isValid, parseISO } from 'date-fns'
+import { ru } from 'date-fns/locale'
 
-import { Document, Image, Page, Text, View } from "@react-pdf/renderer"
+import { Document, Image, Page, Text, View } from '@react-pdf/renderer'
 
-import { PdfFooter } from "@/components/pdf/PdfFooter"
-import { PdfMetadata } from "@/components/pdf/PdfMetadata"
-import { PdfTable } from "@/components/pdf/PdfTable"
-import { commonStyles } from "@/components/pdf/styles"
-import { getStatusLabelRu } from "@/lib/types/complaint-status.type"
-import type { Complaint } from "@/lib/types/complaint.type"
-import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
-import type { ReportPeriodAggregates } from "@/lib/utils/complaint-report-data"
-import { REPORT_TABLE_LIMIT } from "@/lib/utils/complaint-report-data"
+import { PdfFooter } from '@/components/pdf/PdfFooter'
+import { PdfMetadata } from '@/components/pdf/PdfMetadata'
+import { PdfTable } from '@/components/pdf/PdfTable'
+import { commonStyles } from '@/components/pdf/styles'
+import { getStatusLabelRu } from '@/lib/types/complaint-status.type'
+import type { Complaint } from '@/lib/types/complaint.type'
+import { complaintPlatformLabelRu } from '@/lib/utils/complaint-platform-label'
+import type { ReportPeriodAggregates } from '@/lib/utils/complaint-report-data'
+import { REPORT_TABLE_LIMIT } from '@/lib/utils/complaint-report-data'
 
 export type ComplaintsAdminReportDocumentProps = {
   origin: string
@@ -58,22 +58,22 @@ function buildStatusCards(aggregates: ReportPeriodAggregates): StatusCardData[] 
   const done = (raw.done ?? 0) + (raw.completed ?? 0)
 
   cards.push({
-    key: "backlog",
-    label: getStatusLabelRu("backlog"),
+    key: 'backlog',
+    label: getStatusLabelRu('backlog'),
     count: backlog,
   })
   cards.push({
-    key: "in_progress",
-    label: getStatusLabelRu("in_progress"),
+    key: 'in_progress',
+    label: getStatusLabelRu('in_progress'),
     count: inProg,
   })
   cards.push({
-    key: "done",
-    label: getStatusLabelRu("done"),
+    key: 'done',
+    label: getStatusLabelRu('done'),
     count: done,
   })
 
-  const skip = new Set(["backlog", "in_progress", "done", "completed"])
+  const skip = new Set(['backlog', 'in_progress', 'done', 'completed'])
 
   const othersSorted = Object.entries(raw)
     .filter(([k, n]) => !skip.has(k) && n > 0)
@@ -81,9 +81,9 @@ function buildStatusCards(aggregates: ReportPeriodAggregates): StatusCardData[] 
 
   for (const [key, n] of othersSorted) {
     const trimmed = key.trim()
-    const label = trimmed === "" ? "Без статуса" : getStatusLabelRu(key)
+    const label = trimmed === '' ? 'Без статуса' : getStatusLabelRu(key)
     cards.push({
-      key: trimmed === "" ? "__empty__" : key,
+      key: trimmed === '' ? '__empty__' : key,
       label,
       count: n,
     })
@@ -93,8 +93,8 @@ function buildStatusCards(aggregates: ReportPeriodAggregates): StatusCardData[] 
   const residual = total - sumStatuses
   if (residual > 0) {
     cards.push({
-      key: "__residual__",
-      label: "Расхождение с суммой статусов",
+      key: '__residual__',
+      label: 'Расхождение с суммой статусов',
       count: residual,
     })
   }
@@ -106,7 +106,7 @@ function formatReportDate(iso: string): string {
   try {
     const d = parseISO(iso)
     if (!isValid(d)) return iso
-    return format(d, "dd.MM.yyyy HH:mm", { locale: ru })
+    return format(d, 'dd.MM.yyyy HH:mm', { locale: ru })
   } catch {
     return iso
   }
@@ -114,15 +114,15 @@ function formatReportDate(iso: string): string {
 
 function truncateName(name: string): string {
   const t = name.trim()
-  if (t.length <= NAME_MAX_LEN) return t || "—"
+  if (t.length <= NAME_MAX_LEN) return t || '—'
   return `${t.slice(0, NAME_MAX_LEN - 1)}…`
 }
 
 function formatSourceUrl(complaint: Complaint): string {
   const url = complaint.source_url || complaint.url
-  if (!url) return "—"
+  if (!url) return '—'
   // Remove protocol and www for cleaner display
-  return url.replace(/^https?:\/\/(www\.)?/i, "").slice(0, 50)
+  return url.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 50)
 }
 
 function getSourceUrl(complaint: Complaint): string | undefined {
@@ -131,9 +131,9 @@ function getSourceUrl(complaint: Complaint): string | undefined {
 
 function platformCompact(aggregates: ReportPeriodAggregates): string {
   const short = (p: string) => {
-    if (p === "vk") return "ВК"
-    if (p === "email") return "Почта"
-    if (p === "telegram_bot") return "TG"
+    if (p === 'vk') return 'ВК'
+    if (p === 'email') return 'Почта'
+    if (p === 'telegram_bot') return 'TG'
     return p
   }
   return (
@@ -141,27 +141,27 @@ function platformCompact(aggregates: ReportPeriodAggregates): string {
       .filter(([, n]) => n > 0)
       .sort((a, b) => b[1] - a[1])
       .map(([p, n]) => `${short(p)} ${n}`)
-      .join(" · ") || "—"
+      .join(' · ') || '—'
   )
 }
 
 function labelsChipText(label_counts: Record<string, number>, maxLen: number): string {
   const entries = Object.entries(label_counts).sort((a, b) => b[1] - a[1])
   const top = entries.slice(0, 4)
-  if (top.length === 0) return "—"
+  if (top.length === 0) return '—'
   const s = top
-    .map(([name, n]) => `${name.slice(0, 12)}${name.length > 12 ? "…" : ""}:${n}`)
-    .join(" · ")
+    .map(([name, n]) => `${name.slice(0, 12)}${name.length > 12 ? '…' : ''}:${n}`)
+    .join(' · ')
   return s.length > maxLen ? `${s.slice(0, maxLen - 1)}…` : s
 }
 
 /** Разные фоны и рамки для читаемости блоков KPI */
 const KPI_CHIP_PALETTES = [
-  { bg: "#dbeafe", border: "#2563eb", color: "#1e3a8a" },
-  { bg: "#d1fae5", border: "#059669", color: "#064e3b" },
-  { bg: "#ffedd5", border: "#ea580c", color: "#7c2d12" },
-  { bg: "#e9d5ff", border: "#7c3aed", color: "#4c1d95" },
-  { bg: "#fce7f3", border: "#db2777", color: "#831843" },
+  { bg: '#dbeafe', border: '#2563eb', color: '#1e3a8a' },
+  { bg: '#d1fae5', border: '#059669', color: '#064e3b' },
+  { bg: '#ffedd5', border: '#ea580c', color: '#7c2d12' },
+  { bg: '#e9d5ff', border: '#7c3aed', color: '#4c1d95' },
+  { bg: '#fce7f3', border: '#db2777', color: '#831843' },
 ] as const
 
 function KpiChip({
@@ -215,7 +215,7 @@ function StatusBreakdownCard({
         {
           backgroundColor: p.bg,
           borderColor: p.border,
-          marginRight: isLastInRow ? 0 : "2.5%",
+          marginRight: isLastInRow ? 0 : '2.5%',
         },
       ]}
     >
@@ -237,7 +237,7 @@ export function ComplaintsAdminReportDocument({
   total,
   aggregates,
 }: ComplaintsAdminReportDocumentProps) {
-  const logoSrc = `${origin.replace(/\/$/, "")}/ods_logo.svg`
+  const logoSrc = `${origin.replace(/\/$/, '')}/ods_logo.svg`
   const doneCount =
     (aggregates.counts_by_status.done ?? 0) + (aggregates.counts_by_status.completed ?? 0)
   const donePct = aggregates.total > 0 ? Math.round((doneCount / aggregates.total) * 100) : 0
@@ -246,23 +246,23 @@ export function ComplaintsAdminReportDocument({
     tableRows.length > 0
       ? tableRows.map((c) => [
           complaintPlatformLabelRu(c.platform),
-          truncateName(c.name ?? ""),
+          truncateName(c.name ?? ''),
           getStatusLabelRu(c.status),
-          c.labels?.length ? c.labels.map((l) => l.name).join(", ") : "—",
+          c.labels?.length ? c.labels.map((l) => l.name).join(', ') : '—',
           formatReportDate(c.createdAt),
           formatReportDate(c.updatedAt),
           formatSourceUrl(c),
         ])
-      : [["—", "—", "—", "—", "—", "—", "—"]]
+      : [['—', '—', '—', '—', '—', '—', '—']]
 
   return (
-    <Document title={`ГорПульс — отчёт ${reportShortId}`} language="ru-RU">
+    <Document title={`ГрадПульс — отчёт ${reportShortId}`} language="ru-RU">
       <Page size="A4" style={commonStyles.page}>
         <View style={commonStyles.brandRow}>
           {/* eslint-disable-next-line jsx-a11y/alt-text */}
           <Image src={logoSrc} style={{ width: 88, height: 28 }} />
           <View style={{ marginLeft: 14, flex: 1 }}>
-            <Text style={commonStyles.brandTitle}>ГорПульс</Text>
+            <Text style={commonStyles.brandTitle}>ГрадПульс</Text>
             <Text style={commonStyles.brandSubtitle}>
               Отчёт по обращениям граждан · № {reportShortId}
             </Text>
@@ -303,12 +303,14 @@ export function ComplaintsAdminReportDocument({
             <Text style={commonStyles.subsectionTitle}>Используемые источники</Text>
             <View style={commonStyles.summary}>
               <Text style={commonStyles.summaryText}>
-                <Text style={commonStyles.summaryBold}>Всего источников: {aggregates.source_urls.length}</Text>
+                <Text style={commonStyles.summaryBold}>
+                  Всего источников: {aggregates.source_urls.length}
+                </Text>
               </Text>
               {aggregates.source_urls.slice(0, 10).map((url, idx) => (
                 <Text key={idx} style={commonStyles.summaryText}>
-                  • {url.replace(/^https?:\/\/(www\.)?/i, "").slice(0, 60)}
-                  {url.length > 60 ? "…" : ""}
+                  • {url.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 60)}
+                  {url.length > 60 ? '…' : ''}
                 </Text>
               ))}
               {aggregates.source_urls.length > 10 ? (
@@ -332,13 +334,13 @@ export function ComplaintsAdminReportDocument({
         </Text>
         <PdfTable
           columns={[
-            { header: "Платформа", flex: 0.75, cellBold: true },
-            { header: "Название", flex: 1.2 },
-            { header: "Статус", flex: 0.7 },
-            { header: "Метки", flex: 0.9 },
-            { header: "Дата создания", flex: 0.85 },
-            { header: "Дата обновления", flex: 0.85 },
-            { header: "Источник", flex: 1.1 },
+            { header: 'Платформа', flex: 0.75, cellBold: true },
+            { header: 'Название', flex: 1.2 },
+            { header: 'Статус', flex: 0.7 },
+            { header: 'Метки', flex: 0.9 },
+            { header: 'Дата создания', flex: 0.85 },
+            { header: 'Дата обновления', flex: 0.85 },
+            { header: 'Источник', flex: 1.1 },
           ]}
           rows={rows}
         />

@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
-import { Complaint } from "@/lib/types/complaint.type"
-import { formatRuLongDate } from "@/lib/utils/date-format"
+import { Complaint } from '@/lib/types/complaint.type'
+import { formatRuLongDate } from '@/lib/utils/date-format'
 
 interface ComplaintMetadataProps {
   complaint: Complaint
@@ -22,11 +22,13 @@ export function ComplaintMetadata({ complaint }: ComplaintMetadataProps) {
 
       <div>
         <h3 className="mb-1 text-sm font-medium text-muted-foreground">Исполнитель</h3>
-        <p className="text-sm">Платформа ГорПульс</p>
+        <p className="text-sm">Платформа ГрадПульс</p>
       </div>
 
       <div>
-        <h3 className="mb-1 text-sm font-medium text-muted-foreground">Идентификатор предложения</h3>
+        <h3 className="mb-1 text-sm font-medium text-muted-foreground">
+          Идентификатор предложения
+        </h3>
         <p className="font-mono text-sm">№ {complaint.id}</p>
       </div>
     </div>

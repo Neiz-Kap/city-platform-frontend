@@ -1,7 +1,7 @@
-import Link from "next/link"
+import Link from 'next/link'
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 /**
  * Guest Landing Page
@@ -16,7 +16,7 @@ export default function GuestLandingPage() {
       <header className="border-b bg-background px-6 py-4">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold">ГорПульс</span>
+            <span className="text-xl font-bold">ГрадПульс</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/dashboard/login">
@@ -60,7 +60,7 @@ export default function GuestLandingPage() {
       {/* Footer */}
       <footer className="border-t px-6 py-4">
         <div className="mx-auto max-w-7xl text-center text-sm text-muted-foreground">
-          ГорПульс 2026
+          ГрадПульс 2026
         </div>
       </footer>
     </div>

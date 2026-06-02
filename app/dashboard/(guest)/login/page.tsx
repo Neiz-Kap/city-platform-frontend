@@ -1,11 +1,11 @@
-import type { Metadata } from "next"
+import type { Metadata } from 'next'
 
-import { generateMeta } from "@/lib/utils"
+import { generateMeta } from '@/lib/utils'
 
 export const metadata: Metadata = generateMeta({
-  title: "Вход в систему",
-  description: "Войдите в ГорПульс для доступа к управлению жалобами и аналитике.",
-  canonical: "/dashboard/login",
+  title: 'Вход в систему',
+  description: 'Войдите в ГрадПульс для доступа к управлению жалобами и аналитике.',
+  canonical: '/dashboard/login',
 })
 
-export { default } from "./login-form"
+export { default } from './login-form'
