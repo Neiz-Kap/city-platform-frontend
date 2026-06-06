@@ -1,9 +1,11 @@
-import type { QueryClient } from "@tanstack/react-query"
-import type { Socket } from "socket.io-client"
-import { toast } from "sonner"
+import type { Socket } from 'socket.io-client'
+import { toast } from 'sonner'
 
-import { uid } from "@/lib/utils/uid"
-import { pushDashboardNotification } from "./notification-center-store"
+import type { QueryClient } from '@tanstack/react-query'
+
+import { uid } from '@/lib/utils/uid'
+
+import { pushDashboardNotification } from './notification-center-store'
 
 export type DashboardNotificationContext = {
   onNewComplaint?: (payload: { id?: number; name?: string }) => void
@@ -19,27 +21,27 @@ type ServerEventHandler = (
 export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
   new_complaint: (_socket, payload, ctx) => {
     const complaint = payload as { id?: number; name?: string }
-    const title = complaint?.name?.trim() || "Новое предложение"
+    const title = complaint?.name?.trim() || 'Новое предложение'
     const href =
-      typeof complaint?.id === "number" ? `/dashboard/complaint/${complaint.id}` : undefined
+      typeof complaint?.id === 'number' ? `/dashboard/complaint/${complaint.id}` : undefined
 
     pushDashboardNotification({
       createdAt: new Date().toISOString(),
       description: title,
       href,
       id: `complaint-${complaint?.id ?? uid()}`,
-      kind: "complaint",
-      title: "Новое предложение",
+      kind: 'complaint',
+      title: 'Новое предложение',
     })
 
-    toast.info("Новое предложение", {
+    toast.info('Новое предложение', {
       description: title,
     })
 
-    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      new Notification("Новое предложение", {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification('Новое предложение', {
         body: title,
-        icon: "/notification-icon.png",
+        // icon: "/notification-icon.png",
       })
     }
 
@@ -56,20 +58,20 @@ export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
 
     pushDashboardNotification({
       id: String(notification.id ?? uid()),
-      title: "Обнаружена новая проблема!",
-      description: (notification.complaint?.name ?? "").slice(0, 55),
+      title: 'Обнаружена новая проблема!',
+      description: (notification.complaint?.name ?? '').slice(0, 55),
       createdAt: notification.createdAt ?? new Date().toISOString(),
       href:
-        typeof notification.complaintId === "number"
+        typeof notification.complaintId === 'number'
           ? `/dashboard/complaint/${notification.complaintId}`
           : undefined,
-      kind: "complaint",
+      kind: 'complaint',
     })
 
-    ctx.queryClient?.invalidateQueries({ queryKey: ["notifications"] })
+    ctx.queryClient?.invalidateQueries({ queryKey: ['notifications'] })
 
-    toast.info("Обнаружена новая проблема!", {
-      description: (notification.complaint?.name ?? "").slice(0, 55),
+    toast.info('Обнаружена новая проблема!', {
+      description: (notification.complaint?.name ?? '').slice(0, 55),
     })
   },
 }

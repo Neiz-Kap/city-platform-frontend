@@ -1,14 +1,14 @@
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button'
 import {
   COMPLAINT_STATUS_LABELS,
   ComplaintStatus,
   getStatusLabelRu,
   parseComplaintStatus,
-} from "@/lib/types/complaint-status.type"
-import type { ComplaintsAggregates } from "@/lib/types/complaint.type"
-import { cn } from "@/lib/utils"
+} from '@/lib/types/complaint-status.type'
+import type { ComplaintsAggregates } from '@/lib/types/complaint.type'
+import { cn } from '@/lib/utils'
 
 const ORDERED_STATUSES: ComplaintStatus[] = [
   ComplaintStatus.BACKLOG,
@@ -31,17 +31,17 @@ function darkenHexColor(hex: string, amount = 24) {
   let normalized = match[1]
   if (normalized.length === 3) {
     normalized = normalized
-      .split("")
+      .split('')
       .map((char) => char + char)
-      .join("")
+      .join('')
   }
 
   const value = Number.parseInt(normalized, 16)
   const channel = (shift: number) => Math.max(0, ((value >> shift) & 255) - amount)
 
   return `#${[channel(16), channel(8), channel(0)]
-    .map((part) => part.toString(16).padStart(2, "0"))
-    .join("")}`
+    .map((part) => part.toString(16).padStart(2, '0'))
+    .join('')}`
 }
 
 export function ComplaintAggregatesBar({
@@ -71,16 +71,16 @@ export function ComplaintAggregatesBar({
             <Button
               key={key}
               type="button"
-              variant={active ? "default" : "outline"}
+              variant={active ? 'default' : 'outline'}
               size="sm"
-              className={cn("h-8", active && "text-white")}
+              className={cn('h-8', active && 'text-white')}
               onClick={() => onToggleStatus(key)}
             >
-              {COMPLAINT_STATUS_LABELS[key]} ({count})
+              {COMPLAINT_STATUS_LABELS[key]}
             </Button>
           )
         })}
-        {Object.entries(counts_by_status).map(([key, count]) => {
+        {Object.entries(counts_by_status).map(([key]) => {
           if (ORDERED_STATUSES.includes(key as ComplaintStatus)) return null
           const parsed = parseComplaintStatus(key)
           const label = parsed ? COMPLAINT_STATUS_LABELS[parsed] : getStatusLabelRu(key)
@@ -90,12 +90,12 @@ export function ComplaintAggregatesBar({
             <Button
               key={key}
               type="button"
-              variant={active ? "default" : "outline"}
+              variant={active ? 'default' : 'outline'}
               size="sm"
-              className={cn("h-8", active && "text-white")}
+              className={cn('h-8', active && 'text-white')}
               onClick={() => onToggleStatus(key)}
             >
-              {label} ({count})
+              {label}
             </Button>
           )
         })}
@@ -112,16 +112,16 @@ export function ComplaintAggregatesBar({
                 type="button"
                 onClick={() => onToggleLabel(label.id)}
                 className={cn(
-                  "rounded-full border-2 px-2.5 py-0.5 text-xs font-medium text-white transition-opacity",
-                  !active && "opacity-85 hover:opacity-100",
+                  'rounded-full border-2 px-2.5 py-0.5 text-xs font-medium text-white transition-opacity',
+                  !active && 'opacity-85 hover:opacity-100',
                 )}
                 style={{
                   backgroundColor: label.color,
-                  borderColor: active ? darkenHexColor(label.color) : "transparent",
-                  color: "#fff",
+                  borderColor: active ? darkenHexColor(label.color) : 'transparent',
+                  color: '#fff',
                 }}
               >
-                {label.name} ({label.complaint_count})
+                {label.name}
               </button>
             )
           })}
