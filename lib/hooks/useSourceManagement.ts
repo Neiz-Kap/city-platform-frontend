@@ -3,6 +3,7 @@ import { toast } from "sonner"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { ApiError, getErrorMessage } from "@/lib/api/errors"
+import { MonitoringAPI } from "@/lib/api/t_monitoring.api"
 
 import { EmailApi } from "../api/source/email.api"
 import { VkApi } from "../api/source/vk.api"
@@ -28,12 +29,17 @@ type SourceMutationContext = {
   previousSources?: PlatformSource[]
 }
 
-function buildSources(vkGroups: PlatformGroup[], emailGroups: PlatformGroup[]) {
+function buildSources(
+  vkGroups: PlatformGroup[],
+  emailGroups: PlatformGroup[],
+  vkGlobalMonitoring: boolean,
+) {
   return [
     {
       platform: "vk",
       label: "ВКонтакте",
-      allEnabled: vkGroups.length > 0 && vkGroups.every((group) => group.enabled),
+      // allEnabled отражает состояние глобального мониторинга ВК (/monitoring/vk/status)
+      allEnabled: vkGlobalMonitoring,
       groups: vkGroups,
     },
     {
@@ -52,19 +58,22 @@ function buildSources(vkGroups: PlatformGroup[], emailGroups: PlatformGroup[]) {
 }
 
 async function fetchSources() {
-  const [vkResult, emailResult] = await Promise.allSettled([
+  const [vkResult, emailResult, vkStatusResult] = await Promise.allSettled([
     VkApi.getGroups(),
     EmailApi.getParsers(),
+    MonitoringAPI.getVKMonitoringStatus() as Promise<{ is_monitoring: boolean }>,
   ])
 
   const vkGroups = vkResult.status === "fulfilled" ? vkResult.value : []
   const emailGroups = emailResult.status === "fulfilled" ? emailResult.value : []
+  const vkGlobalMonitoring =
+    vkStatusResult.status === "fulfilled" && !!(vkStatusResult.value as { is_monitoring: boolean }).is_monitoring
 
   if (vkResult.status === "rejected" && emailResult.status === "rejected") {
     throw vkResult.reason
   }
 
-  return buildSources(vkGroups, emailGroups)
+  return buildSources(vkGroups, emailGroups, vkGlobalMonitoring)
 }
 
 function patchSourceGroup(
@@ -74,14 +83,18 @@ function patchSourceGroup(
 ) {
   return sources.map((source) => {
     if (source.platform !== platform) return source
-
-    const groups = updater(source.groups)
-    return {
-      ...source,
-      allEnabled: groups.length > 0 && groups.every((group) => group.enabled),
-      groups,
-    }
+    return { ...source, groups: updater(source.groups) }
   })
+}
+
+function patchSourceAllEnabled(
+  sources: PlatformSource[],
+  platform: SourcePlatform,
+  allEnabled: boolean,
+) {
+  return sources.map((source) =>
+    source.platform === platform ? { ...source, allEnabled } : source,
+  )
 }
 
 export function useSourceManagement() {
@@ -178,17 +191,20 @@ export function useSourceManagement() {
     SourceMutationContext
   >({
     mutationFn: async ({ platform, enabled }) => {
+      if (platform === "vk") {
+        // Переключатель «Все группы» управляет глобальным мониторингом ВК
+        if (enabled) {
+          await MonitoringAPI.startVKMonitoring()
+        } else {
+          await MonitoringAPI.stopVKMonitoring()
+        }
+        return
+      }
+      // Email: старт/стоп каждого парсера по отдельности
       const source = sources.find((item) => item.platform === platform)
       if (!source) return
-
       const action = enabled ? "start" : "stop"
-      await Promise.all(
-        source.groups.map((group) => {
-          return platform === "vk"
-            ? VkApi.updateGroupStatus(group.id, action)
-            : EmailApi.updateParserStatus(group.id, action)
-        }),
-      )
+      await Promise.all(source.groups.map((group) => EmailApi.updateParserStatus(group.id, action)))
     },
     onError: (_error, _variables, context) => {
       if (context?.previousSources) {
@@ -199,11 +215,18 @@ export function useSourceManagement() {
       await queryClient.cancelQueries({ queryKey: sourceKeys.all })
       const previousSources = queryClient.getQueryData<PlatformSource[]>(sourceKeys.all)
 
-      queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
-        patchSourceGroup(current, platform, (groups) =>
-          groups.map((group) => ({ ...group, enabled })),
-        ),
-      )
+      if (platform === "vk") {
+        // Для ВК меняем только allEnabled (состояние глобального мониторинга)
+        queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
+          patchSourceAllEnabled(current, "vk", enabled),
+        )
+      } else {
+        queryClient.setQueryData<PlatformSource[]>(sourceKeys.all, (current = []) =>
+          patchSourceGroup(current, platform, (groups) =>
+            groups.map((group) => ({ ...group, enabled })),
+          ),
+        )
+      }
 
       return { previousSources }
     },

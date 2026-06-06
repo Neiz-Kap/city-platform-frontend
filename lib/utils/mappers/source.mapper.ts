@@ -81,11 +81,7 @@ class VkGroupMapper extends SourceBaseMapper<VkGroupBackend> {
       id: data.id.toString(),
       name: data.name,
       url: data.url || undefined,
-      enabled:
-        data.is_monitoring === true ||
-        data.is_monitoring === 1 ||
-        data.is_active === true ||
-        data.is_active === 1,
+      enabled: data.is_active === true || data.is_active === 1,
       platform: "vk",
       userId: data.userId ?? data.user_id ?? 0,
     }

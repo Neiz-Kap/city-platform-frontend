@@ -6,7 +6,7 @@
  */
 import { format, parseISO, subDays } from "date-fns"
 import { ru } from "date-fns/locale"
-import { FileDown, Loader2 } from "lucide-react"
+import { FileDown, FileSpreadsheet, Loader2 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
@@ -15,8 +15,55 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ComplaintAPI } from "@/lib/api/complaint.api"
+import type { Complaint } from "@/lib/types/complaint.type"
+import { getStatusLabelRu } from "@/lib/types/complaint-status.type"
 import { registerReportFonts } from "@/lib/pdf/register-report-fonts"
+import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
 import { fetchComplaintsReportData } from "@/lib/utils/complaint-report-data"
+
+function csvEscape(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`
+  }
+  return value
+}
+
+function complaintsToCSV(rows: Complaint[]): string {
+  const headers = [
+    "№",
+    "Платформа",
+    "Название",
+    "Описание",
+    "Статус",
+    "Метки",
+    "Дата создания",
+    "Дата обновления",
+    "Ссылка на источник",
+  ]
+
+  const formatDate = (iso: string) => {
+    try {
+      return format(parseISO(iso), "dd.MM.yyyy HH:mm")
+    } catch {
+      return iso
+    }
+  }
+
+  const dataRows = rows.map((c) => [
+    String(c.id),
+    complaintPlatformLabelRu(c.platform),
+    c.name ?? "",
+    c.description ?? "",
+    getStatusLabelRu(c.status),
+    (c.labels ?? []).map((l) => l.name).join("; "),
+    c.createdAt ? formatDate(c.createdAt) : "",
+    c.updatedAt ? formatDate(c.updatedAt) : "",
+    c.source_url ?? c.url ?? "",
+  ])
+
+  const lines = [headers, ...dataRows].map((row) => row.map(csvEscape).join(","))
+  return "﻿" + lines.join("\r\n") // BOM for Excel UTF-8 compatibility
+}
 
 function toStartOfDayIso(d: string) {
   return `${d}T00:00:00`
@@ -36,6 +83,7 @@ export default function ReportPage() {
   const [startDate, setStartDate] = useState(() => format(subDays(new Date(), 30), "yyyy-MM-dd"))
   const [endDate, setEndDate] = useState(() => format(new Date(), "yyyy-MM-dd"))
   const [loading, setLoading] = useState(false)
+  const [loadingCsv, setLoadingCsv] = useState(false)
   const [progress, setProgress] = useState<{ page: number; pages: number } | null>(null)
 
   const periodPreview = useMemo(() => formatPeriodRu(startDate, endDate), [startDate, endDate])
@@ -135,6 +183,52 @@ export default function ReportPage() {
     }
   }, [startDate, endDate])
 
+  const handleExportCsv = useCallback(async () => {
+    if (!startDate || !endDate) {
+      toast.error("Укажите даты начала и окончания периода")
+      return
+    }
+    if (startDate > endDate) {
+      toast.error("Дата начала не может быть позже даты окончания")
+      return
+    }
+
+    const start_date = toStartOfDayIso(startDate)
+    const end_date = toEndOfDayIso(endDate)
+
+    setLoadingCsv(true)
+    setProgress(null)
+    try {
+      const { allRows } = await fetchComplaintsReportData(
+        { start_date, end_date },
+        ({ page, pages }) => setProgress({ page, pages }),
+      )
+
+      const csv = complaintsToCSV(allRows)
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+      const filename = `export_${startDate}_${endDate}.csv`
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      a.rel = "noopener"
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+
+      toast.success(`CSV экспортирован: ${allRows.length} записей`)
+    } catch (e) {
+      console.error(e)
+      toast.error("Не удалось экспортировать CSV", {
+        description: e instanceof Error ? e.message : undefined,
+      })
+    } finally {
+      setLoadingCsv(false)
+      setProgress(null)
+    }
+  }, [startDate, endDate])
+
   return (
     <section className="w-full space-y-6">
       <div>
@@ -185,13 +279,26 @@ export default function ReportPage() {
         <Button
           type="button"
           onClick={handleDownload}
-          disabled={loading}
+          disabled={loading || loadingCsv}
           className="text-white hover:text-white [&_svg]:text-white"
         >
           {loading ? <Loader2 className="size-4 animate-spin" /> : <FileDown className="size-4" />}
           <span className="ml-2">Скачать PDF</span>
         </Button>
-        {loading && progress ? (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleExportCsv}
+          disabled={loading || loadingCsv}
+        >
+          {loadingCsv ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <FileSpreadsheet className="size-4" />
+          )}
+          <span className="ml-2">Экспортировать в CSV</span>
+        </Button>
+        {(loading || loadingCsv) && progress ? (
           <span className="text-muted-foreground text-sm">
             Загрузка данных: страница {progress.page} из {progress.pages}…
           </span>

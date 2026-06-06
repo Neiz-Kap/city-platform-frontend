@@ -47,12 +47,14 @@ function consumeComplaints(
 /**
  * Loads complaints in the date range: first page (up to 100) for the PDF table,
  * then remaining pages only to aggregate KPIs (status / platform / labels).
+ * allRows accumulates every complaint across all pages (used for CSV export).
  */
 export async function fetchComplaintsReportData(
   params: { start_date: string; end_date: string },
   onProgress?: ReportFetchProgress,
 ): Promise<{
   tableRows: Complaint[]
+  allRows: Complaint[]
   total: number
   aggregates: ReportPeriodAggregates
 }> {
@@ -71,6 +73,7 @@ export async function fetchComplaintsReportData(
   const counts_by_platform: Record<string, number> = {}
   const label_counts: Record<string, number> = {}
   const source_urls = new Set<string>()
+  const allRows: Complaint[] = [...first.data]
 
   consumeComplaints(first.data, counts_by_status, counts_by_platform, label_counts, source_urls)
 
@@ -82,11 +85,13 @@ export async function fetchComplaintsReportData(
       page,
       per_page: REPORT_TABLE_LIMIT,
     })
+    allRows.push(...res.data)
     consumeComplaints(res.data, counts_by_status, counts_by_platform, label_counts, source_urls)
   }
 
   return {
     tableRows: first.data,
+    allRows,
     total,
     aggregates: {
       total,
