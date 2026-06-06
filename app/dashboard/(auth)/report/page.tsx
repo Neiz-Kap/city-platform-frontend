@@ -20,6 +20,7 @@ import { getStatusLabelRu } from "@/lib/types/complaint-status.type"
 import { registerReportFonts } from "@/lib/pdf/register-report-fonts"
 import { complaintPlatformLabelRu } from "@/lib/utils/complaint-platform-label"
 import { fetchComplaintsReportData } from "@/lib/utils/complaint-report-data"
+import { uid } from "@/lib/utils/uid"
 
 function csvEscape(value: string): string {
   if (value.includes(",") || value.includes('"') || value.includes("\n")) {
@@ -128,7 +129,7 @@ export default function ReportPage() {
 
     const start_date = toStartOfDayIso(startDate)
     const end_date = toEndOfDayIso(endDate)
-    const reportShortId = crypto.randomUUID().replace(/-/g, "").slice(0, 8)
+    const reportShortId = uid().replace(/-/g, "").slice(0, 8)
 
     setLoading(true)
     setProgress(null)

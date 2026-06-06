@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/table"
 // ** import utils
 import { cn } from "@/lib/utils"
+import { uid } from "@/lib/utils/uid"
 
 import { DataTableResizer } from "./data-table-resizer"
 import { useTableColumnResize } from "./hooks/use-table-column-resize"
@@ -837,10 +838,10 @@ export function DataTable<TData extends ExportableData, TValue>({
             {isLoading ? (
               // Loading state
               Array.from({ length: pageSize }).map((_, i) => (
-                <TableRow key={`loading-row-${crypto.randomUUID()}`} tabIndex={-1}>
+                <TableRow key={`loading-row-${uid()}`} tabIndex={-1}>
                   {Array.from({ length: columns.length }).map((_, j, array) => (
                     <TableCell
-                      key={`skeleton-cell-${crypto.randomUUID()}`}
+                      key={`skeleton-cell-${uid()}`}
                       className="px-4 py-2 truncate max-w-0 text-left"
                       tabIndex={-1}
                     >

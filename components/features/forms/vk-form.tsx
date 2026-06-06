@@ -1,12 +1,12 @@
-"use client"
+'use client'
 
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
-import z from "zod"
+import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
+import z from 'zod'
 
-import { zodResolver } from "@hookform/resolvers/zod"
+import { zodResolver } from '@hookform/resolvers/zod'
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -14,18 +14,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 
 const vkFormSchema = z.object({
   url: z
     .string()
-    .min(1, "Введите ссылку на группу")
+    .min(1, 'Введите ссылку на группу')
     .regex(
       /^(https?:\/\/)?(www\.)?vk\.com\/[a-zA-Z0-9_]+/,
-      "Некорректная ссылка на группу ВКонтакте",
+      'Некорректная ссылка на группу ВКонтакте',
     ),
-  name: z.string().min(1, "Введите название группы").max(100, "Название слишком длинное"),
+  name: z.string().min(1, 'Введите название группы').max(100, 'Название слишком длинное'),
 })
 
 type VkFormValues = z.infer<typeof vkFormSchema>
@@ -39,16 +39,16 @@ export function VkForm({ onSubmit, isSubmitting = false }: VkFormProps) {
   const form = useForm<VkFormValues>({
     resolver: zodResolver(vkFormSchema),
     defaultValues: {
-      url: "",
-      name: "",
+      url: '',
+      name: '',
     },
   })
 
   function handleSubmit(data: VkFormValues) {
     try {
       onSubmit(data)
-    } catch (error) {
-      toast.error("Не удалось отправить форму")
+    } catch () {
+      toast.error('Не удалось отправить форму')
     }
   }
 
@@ -82,7 +82,7 @@ export function VkForm({ onSubmit, isSubmitting = false }: VkFormProps) {
           )}
         />
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Добавление..." : "Добавить источник"}
+          {isSubmitting ? 'Добавление...' : 'Добавить источник'}
         </Button>
       </form>
     </Form>

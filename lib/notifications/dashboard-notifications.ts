@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query"
 import type { Socket } from "socket.io-client"
 import { toast } from "sonner"
 
+import { uid } from "@/lib/utils/uid"
 import { pushDashboardNotification } from "./notification-center-store"
 
 export type DashboardNotificationContext = {
@@ -26,7 +27,7 @@ export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
       createdAt: new Date().toISOString(),
       description: title,
       href,
-      id: `complaint-${complaint?.id ?? crypto.randomUUID()}`,
+      id: `complaint-${complaint?.id ?? uid()}`,
       kind: "complaint",
       title: "Новое предложение",
     })
@@ -54,7 +55,7 @@ export const dashboardSocketHandlers: Record<string, ServerEventHandler> = {
     }
 
     pushDashboardNotification({
-      id: String(notification.id ?? crypto.randomUUID()),
+      id: String(notification.id ?? uid()),
       title: "Обнаружена новая проблема!",
       description: (notification.complaint?.name ?? "").slice(0, 55),
       createdAt: notification.createdAt ?? new Date().toISOString(),
