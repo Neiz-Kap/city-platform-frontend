@@ -47,7 +47,7 @@ export function VkForm({ onSubmit, isSubmitting = false }: VkFormProps) {
   function handleSubmit(data: VkFormValues) {
     try {
       onSubmit(data)
-    } catch () {
+    } catch (error) {
       toast.error('Не удалось отправить форму')
     }
   }
